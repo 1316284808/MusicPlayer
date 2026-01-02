@@ -1,0 +1,91 @@
+<UserControl x:Class="MusicPlayer.Controls.BackgroundControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <converters:BlurEffectConverter x:Key="BlurEffectConverter"/>
+        <converters:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
+        <converters:AlbumArtConverter x:Key="AlbumArtConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Background Image with Blur Effect -->
+        <Border x:Name="BackgroundContainer">
+            <Border.Background>
+                <ImageBrush ImageSource="{Binding CurrentSong, Converter={StaticResource AlbumArtConverter}}" 
+                           Stretch="UniformToFill" 
+                           Opacity="0.6">
+                    <ImageBrush.RelativeTransform>
+                        <ScaleTransform ScaleX="1.05" ScaleY="1.05" CenterX="0.5" CenterY="0.5"/>
+                    </ImageBrush.RelativeTransform>
+                </ImageBrush>
+            </Border.Background>
+            <Border.Effect>
+                <Binding Path="BackgroundBlurRadius" Converter="{StaticResource BlurEffectConverter}"/>
+            </Border.Effect>
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Opacity" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding CurrentSong, Converter={StaticResource AlbumArtConverter}, ConverterParameter='HasImage'}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                       To="1" Duration="0:0:0.8" 
+                                                       AccelerationRatio="0.3" DecelerationRatio="0.3"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                       To="0" Duration="0:0:0.5"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+        
+        <!-- Default Background for when no album art is available -->
+        <Border x:Name="DefaultBackgroundContainer">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="Transparent"  Offset="0"/>
+                    <GradientStop Color="Transparent" Offset="0.5"/>
+                    <GradientStop Color="White"  Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Opacity" Value="0.3"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding CurrentSong, Converter={StaticResource AlbumArtConverter}, ConverterParameter='HasImage'}" Value="True">
+                            <Setter Property="Opacity" Value="0"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+        
+        <!-- Multi-layer Gradient Overlay for better contrast and depth -->
+        <Border>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#50000000" Offset="0"/>
+                    <GradientStop Color="#30000000" Offset="0.4"/>
+                    <GradientStop Color="#60000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+    </Grid>
+</UserControl>

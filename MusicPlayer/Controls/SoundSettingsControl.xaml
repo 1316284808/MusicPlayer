@@ -1,0 +1,283 @@
+﻿<UserControl x:Class="MusicPlayer.Controls.SoundSettingsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+             xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:AudioEngineToStringConverter x:Key="AudioEngineToStringConverter"/>
+        <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="RoBot" Margin="2"/>
+                        <TextBlock Text="音频引擎"  FontSize="14" FontWeight="SemiBold" />
+                    </StackPanel>
+                   
+                    <TextBlock Text="可以切换不同的音频引擎：Auto(由程序自主选择音频引擎)、 DirectX(DirectSound)、 Windows会话(WASAPI)" 
+                              FontSize="12" FontWeight="Normal" Margin="10,5,0,0"/>
+                </StackPanel>
+                <ComboBox x:Name="AudioEngineComboBox" FontWeight="Normal" Grid.Column="1" 
+                           Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"
+                          ItemsSource="{Binding AudioEngineOptions}"
+                          SelectedItem="{Binding CurrentAudioEngine, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource AudioEngineToStringConverter}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+
+            <Separator Margin="10"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center"> 
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="Equalizer" Margin="2"/>
+                        <TextBlock Text="均衡器"  FontSize="14" FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <TextBlock Text="可以切换不同调音风格 "
+                              FontSize="12" FontWeight="Normal" Margin="10,5,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ui:Button ToolTip="重置"     Command="{Binding ResetEqualizerCommand}"   VerticalAlignment="Center">
+                        <Helper:CustomIcon Kind="Reset"  />
+                    </ui:Button>
+                    <ui:ToggleSwitch x:Name="EqualizerEnabledCheckBox" Content="启用"   Background="Black"
+                                     VerticalAlignment="Center" Margin="0,0,10,0"
+                              IsChecked="{Binding IsEqualizerEnabled, Mode=TwoWay}" />
+                   
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+        
+        <Border Grid.Row="1" Margin="10" Padding="15" Background="Transparent" Opacity="0.8" CornerRadius="8"
+                Visibility="{Binding IsEqualizerEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+               
+
+                <!-- 均衡器滑块区域 -->
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"  />
+                        
+                    </Grid.ColumnDefinitions>
+                    <!--Y轴刻度-->
+                    <Grid  Grid.Column="0" Margin="5"  >
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="+12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Red"/>
+                        <TextBlock Grid.Row="1" Text="0dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" Foreground="Blue"/>
+                        <TextBlock Grid.Row="2" Text="-12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Green"/>
+
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="32Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 32Hz -->
+                           <Slider x:Name="Slider32Hz" Height="200" Style="{StaticResource VerticalSliderStyle}" 
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain0, Mode=TwoWay}" Tag="32Hz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain0 }"
+                                Helper:SliderBehavior.HandleDrag="True" />
+
+                        
+                        <TextBlock   Width="40"    Text="{Binding BandGain0, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="64Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 64Hz -->
+                             <Slider x:Name="Slider64Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain1, Mode=TwoWay}" Tag="64Hz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain1 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                         
+                        <TextBlock   Width="40"    Text="{Binding BandGain1, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="125Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 125Hz -->
+                           <Slider x:Name="Slider125Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain2, Mode=TwoWay}" Tag="125Hz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain2 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                       
+                        <TextBlock   Width="40"    Text="{Binding BandGain2, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="250Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 250Hz -->
+                         <Slider x:Name="Slider250Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain3, Mode=TwoWay}" Tag="250Hz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain3 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                         
+                        <TextBlock   Width="40"    Text="{Binding BandGain3, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="5" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="500Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 500Hz -->
+                           <Slider x:Name="Slider500Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain4, Mode=TwoWay}" Tag="500Hz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain4 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                         
+                        <TextBlock   Width="40"    Text="{Binding BandGain4, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="6" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="1kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 1kHz -->
+                           <Slider x:Name="Slider1kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain5, Mode=TwoWay}" Tag="1kHz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain5 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                       
+                        <TextBlock   Width="40"    Text="{Binding BandGain5, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="7" HorizontalAlignment="Center" Orientation="Vertical">   
+                        <TextBlock   Width="40"    Text="2kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 2kHz -->
+                            <Slider x:Name="Slider2kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain6, Mode=TwoWay}" Tag="2kHz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain6 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                         
+                        <TextBlock   Width="40"    Text="{Binding BandGain6, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="8" HorizontalAlignment="Center" Orientation="Vertical">    
+                        <TextBlock   Width="40"    Text="4kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 4kHz -->
+                          <Slider x:Name="Slider4kHz"  Height="200" Style="{StaticResource VerticalSliderStyle}"
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain7, Mode=TwoWay}" Tag="4kHz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain7 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                        
+                        <TextBlock   Width="40"    Text="{Binding BandGain7, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+                    <StackPanel Grid.Column="9" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="8kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 8kHz -->
+
+                        <Slider x:Name="Slider8kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
+                            Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True"    HorizontalAlignment="Center"
+                            Value="{Binding BandGain8, Mode=TwoWay}" Tag="8kHz" 
+                            Orientation="Vertical"  ToolTip="{Binding BandGain8 }"
+                            Helper:SliderBehavior.HandleDrag="True" />      
+
+                        <TextBlock   Width="40"    Text="{Binding BandGain8, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+                    <StackPanel   Grid.Column="10" HorizontalAlignment="Center" Orientation="Vertical">
+                        <TextBlock   Width="40"    Text="16kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                        <!-- 16kHz -->
+                          <Slider x:Name="Slider16kHz"  Height="200" Style="{StaticResource VerticalSliderStyle}" 
+                                Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
+                                Value="{Binding BandGain9, Mode=TwoWay}" Tag="16kHz" 
+                                Orientation="Vertical"  ToolTip="{Binding BandGain9 }"
+                                Helper:SliderBehavior.HandleDrag="True" />  
+                         
+                        <TextBlock   Width="40"    Text="{Binding BandGain9, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                    </StackPanel>
+
+                    <StackPanel   Grid.Column="11" Orientation="Horizontal" VerticalAlignment="Top"  HorizontalAlignment="Right">
+                        <!--另存为新配置-->
+                        <ui:Button Command="{Binding SavePresetCommand}" Width="auto" ToolTip="另存为新配置" Background="Transparent" BorderThickness="0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Helper:CustomIcon Kind="SaveAs" Margin="0,0,15,0"/>
+                                <TextBox x:Name="SavePresetTextBox" Width="{Binding IsSavePresetExpanded, Converter={StaticResource SearchBoxWidthConverter}}"  
+                                        FontSize="14" FontWeight="Normal"  Text="{Binding NewPresetName, UpdateSourceTrigger=PropertyChanged}"   
+                                        HorizontalAlignment="Left" VerticalAlignment="Center"   
+                                        MaxLength="20"
+                                        Background="Transparent" BorderThickness="0">   
+                                    <TextBox.Resources>
+                                        <Style TargetType="TextBox">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsFocused" Value="False">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="Text" Value="{Binding NewPresetName, TargetNullValue='输入预设名称...'}"/>
+                                                    <Setter Property="Foreground" Value="Black"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Resources>
+                                </TextBox>
+                            </StackPanel>
+                        </ui:Button>
+
+                        <ComboBox x:Name="EqualizerComboBox" FontWeight="Normal"   Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center"
+                            ItemsSource="{Binding EqualizerPresets}"
+                            SelectedValue="{Binding CurrentEqualizerPresetName, Mode=TwoWay}"
+                            SelectedValuePath="PresetName"
+                            DisplayMemberPath="PresetName"> 
+                        </ComboBox> 
+                    </StackPanel>
+                </Grid> 
+            </Grid>
+        </Border>
+    </Grid> 
+</UserControl>

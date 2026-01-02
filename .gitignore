@@ -1,0 +1,15 @@
+﻿################################################################################
+# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+
+/.vs
+/.vscode
+/MusicPlayer/bin/Debug/net8.0-windows10.0.19041.0
+/MusicPlayer/obj
+/MusicPlayer/Properties/PublishProfiles
+/MusicPlayer.Core/bin/Debug/net8.0-windows
+/MusicPlayer.Core/obj
+/MusicPlayer.Services/bin
+/MusicPlayer.Services/obj
+/MusicPlayer_Install/bin
+/MusicPlayer_Install/obj

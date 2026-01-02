@@ -1,0 +1,152 @@
+<UserControl x:Class="MusicPlayer.Controls.CenterContentControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+xmlns:controls="clr-namespace:MusicPlayer.Helper"
+            xmlns:behaviors="clr-namespace:MusicPlayer.Helper"
+            xmlns:local="clr-namespace:MusicPlayer.Controls"
+            xmlns:System="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="600">
+
+    <UserControl.Resources>
+        <converters:AlbumArtConverter x:Key="AlbumArtConverter"/>
+        <converters:WindowStateToCoverSizeConverter x:Key="WindowStateToCoverSizeConverter"/>
+        <converters:WindowStateToSpectrumSizeConverter x:Key="WindowStateToSpectrumSizeConverter"/>
+        <converters:WindowStateToSpectrumDisplaySizeConverter x:Key="WindowStateToSpectrumDisplaySizeConverter"/>
+      
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Center"  VerticalAlignment="Bottom" Margin="0,10,0,10"  TextBlock.TextAlignment="Center">
+
+            <TextBlock x:Name="TitleTextBlock" Text="{Binding CurrentSongTitle}"    FontSize="24" FontWeight="Bold"/>
+            
+                <TextBlock x:Name="AlbumTextBlock" Text="{Binding CurrentSongAlbum}"    FontSize="14" Opacity="0.6"/>
+                 
+                <TextBlock x:Name="ArtistTextBlock" Text="{Binding CurrentSongArtist}"    FontSize="16" Opacity="0.8"/> 
+         </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 圆形频谱和封面容器 -->
+            <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center"  
+                  Width="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}"
+                  Height="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}">
+           
+                <!-- 专辑封面容器 - 作为上层，通过Margin居中于频谱 -->
+                    <Border x:Name="AlbumArtBorder" 
+                        Width="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}, ConverterParameter=diameter}"
+                        Height="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}, ConverterParameter=diameter}"
+                        CornerRadius="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="1" BlurRadius="15" Color="Black" Opacity="0.4"/>
+                        </Border.Effect>
+                        <Border.RenderTransform>
+                            <RotateTransform x:Name="AlbumArtRotateTransform" 
+                                CenterX="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}"
+                                CenterY="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}"/>
+                        </Border.RenderTransform>
+                        <Ellipse>
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="{Binding CurrentSong.OriginalAlbumArt}" Stretch="UniformToFill"/>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="SpinningStoryboard">
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
+                                          From="0" To="360" Duration="0:01:30"
+                                          RepeatBehavior="Forever"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="SpinningStoryboard"/>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                    <!-- 圆形频谱控件 - 测试阶段，把频谱至于上层才能更好发现问题 -->
+                    <local:CircularSpectrumControl x:Name="CircularSpectrum"  
+     Width="{Binding DataContext.IsWindowMaximized, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource WindowStateToSpectrumDisplaySizeConverter}}"
+     Height="{Binding DataContext.IsWindowMaximized, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource WindowStateToSpectrumDisplaySizeConverter}}"/>
+
+                
+            </Grid>
+            
+            <!-- Lyrics Section -->
+            <Grid Grid.Column="1" HorizontalAlignment="Stretch">
+                <ListBox x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
+                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Center"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                ScrollViewer.CanContentScroll="False"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                behaviors:LyricsScrollBehavior.AutoScrollToCenter="True"
+                behaviors:LyricsScrollBehavior.ScrollDuration="300"
+                behaviors:LyricsScrollBehavior.ScrollOnLoad="True">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Focusable" Value="False"/>
+                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
+                                        <TextBlock Text="{Binding Text}" FontSize="20" TextAlignment="Center"
+                                          TextWrapping="Wrap"   LineHeight="20" MaxWidth="550" Margin="10,5"   x:Name="LyricTextBlock">
+                                        </TextBlock>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#FF0078D7"/>
+                                            <Setter TargetName="LyricTextBlock" Property="FontSize" Value="28"/>
+                                            <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Bold"/>
+                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/> 
+                                            
+                                        </Trigger>
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter TargetName="LyricTextBlock" Property="Foreground" Value="Black"/>
+                                                <Setter TargetName="LyricTextBlock" Property="FontSize" Value="20"/>
+                                                <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Normal"/>
+                                                <Setter TargetName="LyricTextBlock" Property="Opacity" Value="0.8"/>
+                                               
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+               
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="2"> 
+           
+          
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,121 @@
+<UserControl x:Class="MusicPlayer.Controls.SettingsBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+             xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+         
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+   
+    <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinWidth="60" MinHeight="120"
+               Helper:StackPanelMouseBehavior.MouseEnterCommand="{Binding MouseEnterCommand}"
+                Helper:StackPanelMouseBehavior.MouseLeaveCommand="{Binding MouseLeaveCommand}">
+        <!-- 收纳按钮 -->
+        <ui:Button Padding="0" 
+                   HorizontalAlignment="Left"   
+                   Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+                   HorizontalContentAlignment="Left"
+                   Opacity="{Binding ButtonsOpacity}"
+                   Command="{Binding ToggleButtonsVisibilityCommand}">
+            <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"   >
+                <Helper:CustomIcon.Style>
+                    <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                        <Setter Property="Kind" Value="BackHome"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding AreOtherButtonsVisible}" Value="True">
+                                <Setter Property="Kind" Value="InHome"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Helper:CustomIcon.Style>
+            </Helper:CustomIcon>
+        </ui:Button>
+        
+     
+                <!-- 默认列表按钮 -->
+                <ui:Button Padding="0" ToolTip="默认列表" 
+                            HorizontalAlignment="Left"   
+                          Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+                          HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
+                          Opacity="{Binding ButtonsOpacity}"
+                         Command="{Binding NavigateToDefaultListCommand}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
+                            <Helper:CustomIcon.Style>
+                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                            <Setter Property="Kind" Value="List"/>  <!-- 关状态图标 -->
+                                    <Style.Triggers>
+                                <DataTrigger Binding="{Binding DefaultListIconState}"  Value="True" >
+                                            <Setter Property="Kind" Value="InList"/>  <!-- 开状态图标 -->
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Helper:CustomIcon.Style>
+                        </Helper:CustomIcon>
+                <ui:TextBlock Margin="10,2" Text="默认列表"  FontWeight="SemiBold" Visibility="{Binding AreOtherButtonsVisible, 
+                      Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </ui:Button>
+                
+                <!-- 收藏列表按钮 -->
+        <ui:Button Padding="0" ToolTip="收藏列表"  HorizontalAlignment="Left"   
+                          Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+                         Opacity="{Binding ButtonsOpacity}"
+                         HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
+                          Command="{Binding NavigateToFavoriteListCommand}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Helper:CustomIcon Margin="5,2" HorizontalAlignment="Left"  >
+                            <Helper:CustomIcon.Style>
+                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                            <Setter Property="Kind" Value="InHeart"/>  <!-- 关状态图标 -->
+                                    <Style.Triggers>
+                                <DataTrigger Binding="{Binding FavoriteListIconState}"  Value="True">
+                                    <Setter Property="Kind" Value="InHeart" />   <!-- 开状态图标 -->
+                                    <Setter Property="Foreground" Value="red" /> 
+                                </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Helper:CustomIcon.Style>
+                        </Helper:CustomIcon>
+                <ui:TextBlock Margin="10,2" Text="收藏列表"   FontWeight="SemiBold"    Visibility="{Binding AreOtherButtonsVisible, 
+                             Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </ui:Button>
+                
+                <!-- 设置按钮 -->
+        <ui:Button Padding="0" ToolTip="设置"  HorizontalAlignment="Left"   
+                   Opacity="{Binding ButtonsOpacity}"
+                    Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+                          HorizontalContentAlignment="Left"
+                          Command="{Binding NavigateToSettingsCommand}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
+                    <Helper:CustomIcon.Style>
+                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                            <Setter Property="Kind" Value="Settings"/>
+                            <!-- 关状态图标 -->
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SettingsIconState}"  Value="True" >
+                                    <Setter Property="Kind" Value="InSettings"/>
+                                    <!-- 开状态图标 -->
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Helper:CustomIcon.Style>
+                </Helper:CustomIcon>
+                <ui:TextBlock   Margin="10,2" Text="设置"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+                  Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+        </ui:Button>
+    </StackPanel>
+     
+</UserControl>

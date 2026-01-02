@@ -1,0 +1,126 @@
+using System;
+using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
+using MusicPlayer.Page;
+using MusicPlayer.ViewModels;
+
+namespace MusicPlayer.Navigation
+{
+    /// <summary>
+    /// 导航服务，用于管理页面之间的导航
+    /// </summary>
+    public class NavigationService
+    {
+        private readonly IServiceProvider _serviceProvider;
+        private AnimatedFrame? _mainFrame;
+
+        public NavigationService(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
+
+        /// <summary>
+        /// 获取当前页面类型
+        /// </summary>
+        public Type? CurrentPageType => _mainFrame?.Content?.GetType();
+
+        /// <summary>
+        /// 设置主框架
+        /// </summary>
+        /// <param name="frame">主框架</param>
+        public void SetMainFrame(Frame frame)
+        {
+            _mainFrame = frame as AnimatedFrame;
+        }
+
+        /// <summary>
+        /// 导航到指定页面
+        /// </summary>
+        /// <param name="pageUri">页面URI</param>
+        public void NavigateTo(string pageUri)
+        {
+            if (_mainFrame != null)
+            {
+                // 根据URI类型创建对应的Page实例
+                if (pageUri.Contains("HomePage.xaml"))
+                {
+                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
+                    var homePage = new HomePage(mainViewModel);
+                    _mainFrame.Navigate(homePage);
+                }
+                else if (pageUri.Contains("SettingsPage.xaml"))
+                {
+                    var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
+                    var settingsPage = new SettingsPage(settingsViewModel);
+                    _mainFrame.Navigate(settingsPage);
+                }
+                else if (pageUri.Contains("PlayerPage.xaml"))
+                {
+                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
+                    var playerPage = new PlayerPage(mainViewModel);
+                    _mainFrame.Navigate(playerPage);
+                }
+                else
+                {
+                    // 回退到默认的URI导航
+                    _mainFrame.Navigate(new Uri(pageUri, UriKind.Relative));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 导航到首页
+        /// </summary>
+        public void NavigateToHome()
+        {
+            NavigateTo("Page/HomePage.xaml");
+        }
+
+        /// <summary>
+        /// 导航到设置页面
+        /// </summary>
+        public void NavigateToSettings()
+        {
+            NavigateTo("Page/SettingsPage.xaml");
+        }
+
+        /// <summary>
+        /// 导航到播放页面
+        /// </summary>
+        public void NavigateToPlayer()
+        {
+            NavigateTo("Page/PlayerPage.xaml");
+        }
+
+        /// <summary>
+        /// 检查是否可以返回上一页
+        /// </summary>
+        /// <returns>如果可以返回返回true，否则返回false</returns>
+        public bool CanGoBack()
+        {
+            return _mainFrame != null && _mainFrame.CanGoBack;
+        }
+
+        /// <summary>
+        /// 返回上一页
+        /// </summary>
+        public void GoBack()
+        {
+            if (_mainFrame != null && _mainFrame.CanGoBack)
+            {
+                _mainFrame.GoBack();
+            }
+        }
+
+        /// <summary>
+        /// 前进到下一页
+        /// </summary>
+        public void GoForward()
+        {
+            if (_mainFrame != null && _mainFrame.CanGoForward)
+            {
+                _mainFrame.GoForward();
+            }
+        }
+    }
+}

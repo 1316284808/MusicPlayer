@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>12.0</LangVersion>
+    <PackageIcon>MusicPlayer.png</PackageIcon>
+    <ApplicationIcon>resources\MusicPlayer.ico</ApplicationIcon>
+    <StartupObject></StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="docx\**" />
+    <EmbeddedResource Remove="docx\**" />
+    <None Remove="docx\**" />
+    <Page Remove="docx\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="resources\MusicPlayer.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+	<ItemGroup>
+		
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+		<PackageReference Include="WPF-UI" Version="4.1.0" />
+		<!-- 日志  -->
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+		<!-- 通用ILogger接口 -->
+		<PackageReference Include="Serilog" Version="4.2.0" />
+		<!-- Serilog -->
+		<PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+		<!-- 异步写入避免UI阻塞 -->
+		<PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
+	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MusicPlayer.Services\MusicPlayer.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="resources\MusicPlayer.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="resources\MusicPlayer.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

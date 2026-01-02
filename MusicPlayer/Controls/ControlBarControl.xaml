@@ -1,0 +1,230 @@
+<UserControl x:Class="MusicPlayer.Controls.ControlBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d"
+             d:DesignHeight="80" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <converters:VolumeIconConverter x:Key="VolumeIconConverter"/>
+        <converters:PlayModeIconConverter x:Key="PlayModeIconConverter"/>
+        <converters:VolumeToPercentageConverter x:Key="VolumeToPercentageConverter"/>
+        <converters:BoolToFavoriteTextConverter x:Key="BoolToFavoriteTextConverter"/>
+        <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+    </UserControl.Resources>
+
+
+    <Grid Height="90">
+            <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="8*"/>
+            </Grid.RowDefinitions>
+
+            <Slider x:Name="ProgressSlider" Grid.Row="0"  VerticalAlignment="Top"  
+          Value="{Binding CurrentPosition, Mode=TwoWay}" Maximum="{Binding MaxPosition}"
+          Style="{StaticResource AlignedSliderStyle}" Grid.RowSpan="2"
+          Helper:SliderBehavior.HandleDrag="True"
+          Helper:SliderBehavior.IsDragging="{Binding IsUserDragging, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Width="auto" >
+                <ContentControl Margin="10,0,10,0"
+                    Height="80"
+                    ToolTip="{Binding TogglePlayerPageToolTip}"
+                    Cursor="Hand">
+                    <ContentControl.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding TogglePlayerPageCommand}" />
+                    </ContentControl.InputBindings>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"  >
+                        <Border x:Name="ControlBarAlbumArtBorder" Width="60" Height="60" CornerRadius="30"   VerticalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.3"/>
+                            </Border.Effect>
+                            <Border.RenderTransform>
+                                <RotateTransform x:Name="ControlBarAlbumArtRotateTransform" CenterX="30" CenterY="30"/>
+                            </Border.RenderTransform>
+                            <Ellipse>
+                                <Ellipse.Fill>
+                                    <ImageBrush ImageSource="{Binding CurrentSongAlbumArt}" Stretch="UniformToFill"/>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <!-- 当在PlayerPage时隐藏旋转封面 -->
+                                        <DataTrigger Binding="{Binding IsPlayerPage}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <!-- 播放时旋转 -->
+                                        <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="ControlBarSpinningStoryboard">
+                                                    <Storyboard>
+                                                        <DoubleAnimation 
+                                                Storyboard.TargetProperty="RenderTransform.Angle"  
+                                                From="0" To="360" 
+                                                Duration="0:01:30" 
+                                                RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="ControlBarSpinningStoryboard"/>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+
+                        <!-- 歌曲信息 - 垂直排列的面板 -->
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="10,0,10,0">
+                            <TextBlock Text="{Binding CurrentSongTitle, FallbackValue='未播放歌曲'}" 
+                           FontSize="14" FontWeight="SemiBold" 
+                           TextTrimming="CharacterEllipsis" MaxWidth="200"/>
+                            <TextBlock Text="{Binding CurrentSongArtist, FallbackValue='未知歌手'}" 
+                           FontSize="12" Opacity="0.7" 
+                           TextTrimming="CharacterEllipsis" MaxWidth="200"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+            </StackPanel>
+         
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"     >
+                <ui:Button Command="{Binding ToggleFavoriteCommand}" ToolTip="{Binding IsCurrentSongFavorited, Converter={StaticResource BoolToFavoriteTextConverter}}"  Width="auto" >
+                    <Helper:CustomIcon Foreground="Red"   IconSize="18">
+                        <Helper:CustomIcon.Style>
+                            <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                <Setter Property="Kind">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{StaticResource BoolToIconConverter}">
+                                            <Binding Path="IsCurrentSongFavorited"/>
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Helper:CustomIcon.Style>
+                    </Helper:CustomIcon>
+                </ui:Button>
+                <ui:Button Width="auto">
+                    <StackPanel   Orientation="Horizontal"   HorizontalAlignment="Right"    >
+                        <ui:TextBlock Text="{Binding CurrentTimeText}"    FontSize="14"  VerticalAlignment="Center"  />
+                        <ui:TextBlock Text=" / " FontSize="14"  VerticalAlignment="Center" Opacity="0.7" />
+                        <ui:TextBlock Text="{Binding TotalTimeText}" FontSize="14" VerticalAlignment="Center"   Opacity="0.7"/>
+                    </StackPanel>
+                </ui:Button> 
+                
+               
+                
+                <!-- 上一首按钮 -->
+                <ui:Button Command="{Binding PreviousCommand}" ToolTip="上一首"    >
+                    <Helper:CustomIcon  Kind="Previous"  />
+                </ui:Button>
+
+                <!-- 播放/暂停按钮 - 根据播放状态显示不同图标 -->
+                <ui:Button Command="{Binding PlayPauseCommand}" Width="50" Height="45"    ToolTip="播放/暂停"    >
+                    <Helper:CustomIcon  IconSize="24">
+                        <Helper:CustomIcon.Style>
+                            <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                <!-- 默认显示播放图标 -->
+                                <Setter Property="Kind" Value="Play"/>
+                                <Style.Triggers>
+                                    <!-- 播放时显示暂停图标 -->
+                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                        <Setter Property="Kind" Value="Pause"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Helper:CustomIcon.Style>
+                    </Helper:CustomIcon>
+                </ui:Button>
+
+                <!-- 下一首按钮 -->
+                <ui:Button Command="{Binding NextCommand}" ToolTip="下一首"    >
+                    <Helper:CustomIcon  Kind="Next"  />
+                </ui:Button>
+
+
+                <!-- 音量控制面板 -->
+                <Grid Grid.Column="3"   HorizontalAlignment="Left"  VerticalAlignment="Center"   >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="0"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <ui:Flyout Grid.Row="0"  Background="#e6e6e6"  Opacity="0.5" IsOpen="{Binding IsVolumeFlyoutOpen, Mode=TwoWay}"  Placement="Top"  >
+                        <StackPanel Width="30" >
+                            <!-- 音量滑块控制 - 竖向 -->
+                            <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" 
+                           Orientation="Vertical" Height="120" Width="20"  
+                           Style="{StaticResource VerticalSliderStyle}" ToolTip="音量调节"
+                           />
+                            <TextBlock Text="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
+                             FontWeight="Bold"     FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+
+                        </StackPanel>
+                    </ui:Flyout>
+                    <!-- 音量按钮 - icon视觉效果比较小，所以size给到18 -->
+                    <ui:Button Grid.Row="1" Command="{Binding ToggleVolumePopupCommand}" ToolTip="音量控制"  >
+                        <Helper:CustomIcon   IconSize="18">
+                            <Helper:CustomIcon.Kind>
+                                <MultiBinding Converter="{StaticResource VolumeIconConverter}">
+                                    <Binding Path="IsMuted"/>
+                                    <Binding Path="Volume"/>
+                                </MultiBinding>
+                            </Helper:CustomIcon.Kind>
+                        </Helper:CustomIcon>
+                    </ui:Button>
+
+                </Grid>
+
+                <!-- 桌面歌词按钮面板 -->
+                <StackPanel  Orientation="Horizontal" VerticalAlignment="Center"  >
+                    <!-- 播放模式切换按钮 - 使用转换器根据播放模式显示不同图标 -->
+                    <ui:Button Command="{Binding TogglePlayModeCommand}" ToolTip="{Binding PlayModeText}"    >
+                        <Helper:CustomIcon   >
+                            <Helper:CustomIcon.Style>
+                                <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                    <!-- 默认播放模式图标 -->
+                                    <Setter Property="Kind" Value="PlayModeDefault"/>
+                                    <Style.Triggers>
+                                        <!-- 单曲循环模式 -->
+                                        <DataTrigger Binding="{Binding CurrentPlayMode}" Value="RepeatOne">
+                                            <Setter Property="Kind" Value="RepeatOne"/>
+                                        </DataTrigger>
+                                        <!-- 列表循环模式 -->
+                                        <DataTrigger Binding="{Binding CurrentPlayMode}" Value="RepeatAll">
+                                            <Setter Property="Kind" Value="RepeatAll"/>
+                                        </DataTrigger>
+                                        <!-- 随机播放模式 -->
+                                        <DataTrigger Binding="{Binding CurrentPlayMode}" Value="Shuffle">
+                                            <Setter Property="Kind" Value="Shuffle"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Helper:CustomIcon.Style>
+                        </Helper:CustomIcon>
+                    </ui:Button>
+
+                    <!-- 桌面歌词按钮 -->
+                    <ui:Button Command="{Binding ShowLyricsCommand}" ToolTip="显示桌面歌词" >
+                        <Helper:CustomIcon  Kind="Stop"  />
+                    </ui:Button>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2"  VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="0,0,0,10">
+                
+            </StackPanel>
+
+        </Grid>
+    </Grid> 
+</UserControl>

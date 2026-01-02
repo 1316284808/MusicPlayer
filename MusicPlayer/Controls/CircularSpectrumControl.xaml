@@ -1,0 +1,92 @@
+<UserControl x:Class="MusicPlayer.Controls.CircularSpectrumControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
+             xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+             mc:Ignorable="d"
+             >
+
+    <UserControl.Resources>
+        <converters:CircularSpectrumPathConverter x:Key="CircularSpectrumPathConverter"/>
+        <converters:CircularSpectrumColorConverter x:Key="CircularSpectrumColorConverter"/>
+        <converters:CircularSpectrumColorConverterForEffect x:Key="CircularSpectrumColorConverterForEffect"/>
+
+        <!-- 频谱条样式 -->
+        <Style x:Key="CircularBarStyle" TargetType="Path">
+            <Setter Property="StrokeThickness" Value="0"/>
+            <Setter Property="Opacity" Value="0.2"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Transparent" BlurRadius="3" ShadowDepth="0" Opacity="0.2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 频谱条模板 -->
+        <DataTemplate x:Key="SpectrumBarTemplate">
+            <Path x:Name="SpectrumBar" Style="{StaticResource CircularBarStyle}">
+                <Path.Data>
+                    <MultiBinding Converter="{StaticResource CircularSpectrumPathConverter}">
+                        <Binding Path="."/>
+                        <Binding Path="(ItemsControl.AlternationIndex)" RelativeSource="{RelativeSource TemplatedParent}"/>
+                        <Binding Path="DataContext.CenterX" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="DataContext.CenterY" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="DataContext.InnerRadius" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="DataContext.MaxBarHeight" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                    </MultiBinding>
+                </Path.Data>
+                <Path.Fill>
+                    <MultiBinding Converter="{StaticResource CircularSpectrumColorConverter}">
+                        <Binding Path="(ItemsControl.AlternationIndex)" RelativeSource="{RelativeSource TemplatedParent}"/>
+                        <Binding Path="."/>
+                        <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                    </MultiBinding>
+                </Path.Fill>
+                <Path.Effect>
+                    <DropShadowEffect>
+                        <DropShadowEffect.Color>
+                            <MultiBinding Converter="{StaticResource CircularSpectrumColorConverterForEffect}">
+                                <Binding Path="(ItemsControl.AlternationIndex)" RelativeSource="{RelativeSource TemplatedParent}"/>
+                                <Binding Path="."/>
+                                <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
+                            </MultiBinding>
+                        </DropShadowEffect.Color>
+                    </DropShadowEffect>
+                </Path.Effect>
+            </Path>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding}" Value="0">
+                    <Setter TargetName="SpectrumBar" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid   HorizontalAlignment="Center" VerticalAlignment="Center"
+          x:Name="MainGrid"
+          Width="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualWidth}"
+          Height="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualHeight}"  >
+        
+        <!-- 圆形频谱背景 -->
+        <Ellipse Fill="Transparent" Stroke="Pink" StrokeThickness="0" Opacity="0.3"
+                 Width="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualWidth}"
+                 Height="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualHeight}"/>
+        
+        <!-- 频谱条容器 - 使用ItemsControl替代Canvas -->
+        <ItemsControl x:Name="SpectrumItemsControl"  
+                      Width="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualWidth}"
+                      Height="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualHeight}"
+                      ItemsSource="{Binding DataContext.SpectrumData, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      ItemTemplate="{StaticResource SpectrumBarTemplate}"
+                      AlternationCount="32">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas IsItemsHost="True"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </Grid>
+</UserControl>
