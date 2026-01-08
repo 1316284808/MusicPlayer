@@ -90,8 +90,64 @@
                              Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </ui:Button>
-                
-                <!-- 设置按钮 -->
+
+        <ui:Button Padding="0" ToolTip="歌手列表"  HorizontalAlignment="Left"   
+            Opacity="{Binding ButtonsOpacity}"
+             Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+                   HorizontalContentAlignment="Left"
+                   Command="{Binding NavigateToSingerPageCommand}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
+                    <Helper:CustomIcon.Style>
+                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                            <Setter Property="Kind" Value="Person"/>
+                            <!-- 关状态图标 -->
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SingerIconState}"  Value="True" >
+                                    <Setter Property="Kind" Value="InPerson"/>
+                                    <!-- 开状态图标 -->
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Helper:CustomIcon.Style>
+                </Helper:CustomIcon>
+                <ui:TextBlock   Margin="10,2" Text="歌手列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+           Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+        </ui:Button>
+
+        <ui:Button Padding="0" ToolTip="专辑列表"  HorizontalAlignment="Left"   
+    Opacity="{Binding ButtonsOpacity}"
+     Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
+           HorizontalContentAlignment="Left"
+           Command="{Binding NavigateToAlbumPageCommand}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
+                    <Helper:CustomIcon.Style>
+                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                            <Setter Property="Kind" Value="Album"/>
+                            <!-- 关状态图标 -->
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AlbumIconState}"  Value="True" >
+                                    <Setter Property="Kind" Value="InAlbum"/>
+                                    <!-- 开状态图标 -->
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Helper:CustomIcon.Style>
+                </Helper:CustomIcon>
+                <ui:TextBlock   Margin="10,2" Text="专辑列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+   Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+        </ui:Button>
+
+
+
+
+
+
+
+        <!-- 设置按钮 -->
         <ui:Button Padding="0" ToolTip="设置"  HorizontalAlignment="Left"   
                    Opacity="{Binding ButtonsOpacity}"
                     Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"

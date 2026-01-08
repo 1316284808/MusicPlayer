@@ -517,6 +517,34 @@ namespace MusicPlayer.Services
         }
 
         /// <summary>
+        /// 更新歌词字体大小配置
+        /// </summary>
+        public void UpdateLyricFontSize(double fontSize)
+        {
+            if (Math.Abs(CurrentConfiguration.LyricFontSize - fontSize) > 0.1)
+            {
+                CurrentConfiguration.LyricFontSize = fontSize;
+                CurrentConfiguration.LastSaved = DateTime.Now;
+                _isModified = true;
+                System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateLyricFontSize: 已更新歌词字体大小为{fontSize}");
+            }
+        }
+
+        /// <summary>
+        /// 更新歌词文本对齐方式配置
+        /// </summary>
+        public void UpdateLyricTextAlignment(System.Windows.TextAlignment textAlignment)
+        {
+            if (CurrentConfiguration.LyricTextAlignment != textAlignment)
+            {
+                CurrentConfiguration.LyricTextAlignment = textAlignment;
+                CurrentConfiguration.LastSaved = DateTime.Now;
+                _isModified = true;
+                System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateLyricTextAlignment: 已更新歌词文本对齐方式为{textAlignment}");
+            }
+        }
+
+        /// <summary>
         /// 保存所有配置
         /// </summary>
         public void SaveAll()
@@ -688,9 +716,12 @@ namespace MusicPlayer.Services
                 // 释放所有Timer资源
                 _saveTimer?.Dispose();
                 _saveTimer = null;
-                
+
                 _autoSaveTimer?.Dispose();
                 _autoSaveTimer = null;
+
+                // 释放ConfigurationDAL（包含LiteDB数据库连接）
+                _configurationDal?.Dispose();
 
                 // 清理事件处理器
                 ConfigurationChanged = null;
@@ -699,6 +730,14 @@ namespace MusicPlayer.Services
 
                 _disposed = true;
             }
+        }
+
+        /// <summary>
+        /// 析构函数
+        /// </summary>
+        ~ConfigurationService()
+        {
+            Dispose(false);
         }
     }
 }

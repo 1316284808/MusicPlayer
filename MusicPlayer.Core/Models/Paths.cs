@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace MusicPlayer.Core.Models
@@ -63,6 +64,11 @@ namespace MusicPlayer.Core.Models
         public static string LogsDirectory { get; } = Path.Combine(ExecutableDirectory, "logs");
         
         /// <summary>
+        /// 封面缓存文件夹路径
+        /// </summary>
+        public static string AlbumArtCacheDirectory { get; } = Path.Combine(ExecutableDirectory, "cache", "albumarts");
+        
+        /// <summary>
         /// 获取程序执行目录
         /// </summary>
         /// <returns>程序执行目录路径</returns>
@@ -102,6 +108,45 @@ namespace MusicPlayer.Core.Models
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
+            }
+        }
+
+        /// <summary>
+        /// 清理封面缓存
+        /// </summary>
+        /// <param name="maxSizeMB">最大缓存大小（MB），0表示不限制大小</param>
+        /// <param name="maxAgeDays">最大缓存天数，0表示不限制</param>
+        public static void CleanAlbumArtCache(long maxSizeMB = 0, int maxAgeDays = 0)
+        {
+            var cacheDir = Path.Combine(ExecutableDirectory, "cache", "albumarts");
+            if (!Directory.Exists(cacheDir))
+                return;
+                
+            var cacheFiles = Directory.GetFiles(cacheDir, "*.png");
+            
+            // 按文件最后访问时间排序，保留最新的文件
+            Array.Sort(cacheFiles, (a, b) => DateTime.Compare(File.GetLastWriteTime(b), File.GetLastWriteTime(a)));
+            
+            // 计算当前缓存大小
+            long currentSize = cacheFiles.Sum(file => new FileInfo(file).Length) / (1024 * 1024); // MB
+            
+            // 如果当前大小超过限制，删除 oldest files
+            foreach (var file in cacheFiles)
+            {
+                if (currentSize <= maxSizeMB)
+                    break;
+                
+                try
+                {
+                    long fileSize = new FileInfo(file).Length / (1024 * 1024);
+                    File.Delete(file);
+                    currentSize -= fileSize;
+                    System.Diagnostics.Debug.WriteLine($"清理封面缓存: 删除文件 {file}, 释放 {fileSize} MB");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"清理封面缓存失败: {ex.Message}");
+                }
             }
         }
 

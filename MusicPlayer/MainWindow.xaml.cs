@@ -235,6 +235,32 @@ namespace MusicPlayer;
             }
         });
         
+        // 注册导航到歌手页面的消息处理器
+        _serviceCoordinator.MessagingService.Register<NavigateToSingerPageMessage>(this, (r, m) =>
+        {
+            try
+            {
+                _navigationService.NavigateToSinger();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"导航到歌手页面失败: {ex.Message}");
+            }
+        });
+        
+        // 注册导航到专辑页面的消息处理器
+        _serviceCoordinator.MessagingService.Register<NavigateToAlbumPageMessage>(this, (r, m) =>
+        {
+            try
+            {
+                _navigationService.NavigateToAlbum();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"导航到专辑页面失败: {ex.Message}");
+            }
+        });
+        
         // 注册返回上一页的消息处理器
         _serviceCoordinator.MessagingService.Register<GoBackMessage>(this, (r, m) =>
         {

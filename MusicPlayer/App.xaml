@@ -6,6 +6,7 @@
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
              xmlns:tb="http://www.hardcodet.net/taskbar"
              DispatcherUnhandledException="App_DispatcherUnhandledException"
+           
             >
     <Application.Resources>
         <ResourceDictionary>
@@ -15,7 +16,8 @@
                 <ui:ControlsDictionary />
                 <ResourceDictionary Source="Styles/MainStyles.xaml" />
                 <ResourceDictionary Source="Styles/ComboBoxStyles.xaml" />
-                <ResourceDictionary Source="Styles/TreeViewStyles.xaml" />
+                
+                <!--<ResourceDictionary Source="Styles/TreeViewStyles.xaml" />-->
             </ResourceDictionary.MergedDictionaries>
             
             <!-- 应用资源转换器 - 这些转换器用于处理特定的UI绑定逻辑 -->

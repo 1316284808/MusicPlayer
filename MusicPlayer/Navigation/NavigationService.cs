@@ -60,6 +60,16 @@ namespace MusicPlayer.Navigation
                     var playerPage = new PlayerPage(mainViewModel);
                     _mainFrame.Navigate(playerPage);
                 }
+                else if (pageUri.Contains("SingerPage.xaml"))
+                {
+                    var singerPage = new SingerPage();
+                    _mainFrame.Navigate(singerPage);
+                }
+                else if (pageUri.Contains("AlbumPage.xaml"))
+                {
+                    var albumPage = new AlbumPage();
+                    _mainFrame.Navigate(albumPage);
+                }
                 else
                 {
                     // 回退到默认的URI导航
@@ -90,6 +100,22 @@ namespace MusicPlayer.Navigation
         public void NavigateToPlayer()
         {
             NavigateTo("Page/PlayerPage.xaml");
+        }
+
+        /// <summary>
+        /// 导航到歌手页面
+        /// </summary>
+        public void NavigateToSinger()
+        {
+            NavigateTo("Page/SingerPage.xaml");
+        }
+
+        /// <summary>
+        /// 导航到专辑页面
+        /// </summary>
+        public void NavigateToAlbum()
+        {
+            NavigateTo("Page/AlbumPage.xaml");
         }
 
         /// <summary>

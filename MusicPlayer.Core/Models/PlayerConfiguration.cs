@@ -1,6 +1,7 @@
 using MusicPlayer.Core.Enums;
 using System;
 using System.ComponentModel;
+using System.Windows;
 
 namespace MusicPlayer.Core.Models
 {
@@ -28,6 +29,8 @@ namespace MusicPlayer.Core.Models
         private string _equalizerPresetName = "平衡";
         private float[] _equalizerGains = new float[10] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f };
         private int _lastPlayedSongId = -1; // 最后播放的歌曲ID，-1表示无
+        private double _lyricFontSize = 20.0; // 歌词字体大小
+        private TextAlignment _lyricTextAlignment = TextAlignment.Center; // 歌词文本对齐方式
 
         /// <summary>
         /// 音量大小 (0.0 - 1.0)
@@ -314,6 +317,38 @@ namespace MusicPlayer.Core.Models
         }
 
         /// <summary>
+        /// 歌词字体大小
+        /// </summary>
+        public double LyricFontSize
+        {
+            get => _lyricFontSize;
+            set
+            {
+                if (Math.Abs(_lyricFontSize - value) > 0.1)
+                {
+                    _lyricFontSize = Math.Max(10, Math.Min(50, value)); // 限制字体大小在10-50之间
+                    OnPropertyChanged(nameof(LyricFontSize));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 歌词文本对齐方式
+        /// </summary>
+        public TextAlignment LyricTextAlignment
+        {
+            get => _lyricTextAlignment;
+            set
+            {
+                if (_lyricTextAlignment != value)
+                {
+                    _lyricTextAlignment = value;
+                    OnPropertyChanged(nameof(LyricTextAlignment));
+                }
+            }
+        }
+
+        /// <summary>
         /// 获取或设置指定频段的增益值
         /// </summary>
         /// <param name="bandIndex">频段索引 (0-9)</param>
@@ -386,6 +421,8 @@ namespace MusicPlayer.Core.Models
             EqualizerPresetName = "平衡"; // 默认平直响应
             EqualizerGains = new float[10] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f }; // 默认平直响应
             LastPlayedSongId = -1; // 默认无最后播放歌曲
+            LyricFontSize = 20.0; // 默认歌词字体大小
+            LyricTextAlignment = TextAlignment.Center; // 默认歌词居中对齐
         }
 
       

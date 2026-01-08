@@ -1,5 +1,6 @@
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Models;
+using System.Windows;
 
 namespace MusicPlayer.Core.Interface
 {
@@ -69,6 +70,16 @@ namespace MusicPlayer.Core.Interface
         /// 更新最后播放的歌曲ID
         /// </summary>
         void UpdateLastPlayedSongId(int songId);
+
+        /// <summary>
+        /// 更新歌词字体大小配置
+        /// </summary>
+        void UpdateLyricFontSize(double fontSize);
+
+        /// <summary>
+        /// 更新歌词文本对齐方式配置
+        /// </summary>
+        void UpdateLyricTextAlignment(System.Windows.TextAlignment textAlignment);
 
         /// <summary>
         /// 保存所有配置

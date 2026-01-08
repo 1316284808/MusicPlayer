@@ -354,9 +354,9 @@
     </Style>
 
     <!-- 全局文本样式 - 让整个程序的文本都使用LabelStyle -->
-    <Style TargetType="TextBlock" BasedOn="{StaticResource LabelStyle}"/>
+    <!--<Style TargetType="TextBlock" BasedOn="{StaticResource LabelStyle}"/>
     <Style TargetType="ui:TextBlock" BasedOn="{StaticResource LabelStyle}"/>
-    <Style TargetType="Label" BasedOn="{StaticResource LabelStyle}"/>
+    <Style TargetType="Label" BasedOn="{StaticResource LabelStyle}"/>-->
     <!-- 控件颜色定义 -->
     <Color x:Key="PrimaryColor">#007ACC</Color>
     <Color x:Key="AccentColor">#FF0078D7</Color>

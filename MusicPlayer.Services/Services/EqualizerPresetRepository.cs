@@ -242,42 +242,27 @@ namespace MusicPlayer.Services.Services
             {
                 int successCount = 0;
                 
-                // 开始事务
-                using var transaction = _dal.BeginTransaction();
-                
-                try
+                foreach (var preset in presets)
                 {
-                    foreach (var preset in presets)
+                    try
                     {
-                        try
+                        // 检查名称是否已存在
+                        if (!NameExists(preset.PresetName))
                         {
-                            // 检查名称是否已存在
-                            if (!NameExists(preset.PresetName))
+                            int id = _dal.Insert(preset);
+                            if (id > 0)
                             {
-                                int id = _dal.Insert(preset);
-                                if (id > 0)
-                                {
-                                    successCount++;
-                                }
+                                successCount++;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"EqualizerPresetRepository: 添加预设 '{preset.PresetName}' 失败: {ex.Message}");
-                        }
                     }
-                    
-                    // 提交事务
-                    transaction.Commit();
-                    Debug.WriteLine($"EqualizerPresetRepository: 批量添加预设完成，成功 {successCount}/{presets.Count}");
-                }
-                catch (Exception)
-                {
-                    // 回滚事务
-                    transaction.Rollback();
-                    throw;
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"EqualizerPresetRepository: 添加预设 '{preset.PresetName}' 失败: {ex.Message}");
+                    }
                 }
                 
+                Debug.WriteLine($"EqualizerPresetRepository: 批量添加预设完成，成功 {successCount}/{presets.Count}");
                 return successCount;
             }
             catch (Exception ex)

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Media;
-using Microsoft.Data.Sqlite;
+using LiteDB;
 using MusicPlayer.Core.Models;
 
 namespace MusicPlayer.Core.Data
@@ -16,94 +16,31 @@ namespace MusicPlayer.Core.Data
         { 
         }
 
-         
-       
-        /// <summary>
-        /// 创建歌曲列表
-        /// </summary>
-        private void CreateSongS() {
-            var createSongsTable = @"CREATE TABLE IF NOT EXISTS Songs (
-                Id INTEGER PRIMARY KEY, 
-                FilePath TEXT NOT NULL UNIQUE,
-                Title TEXT,
-                Artist TEXT,
-                Album TEXT,
-                Duration INTEGER,
-                FileSize INTEGER,
-                Heart INTEGER DEFAULT 0,
-                IsDeleted INTEGER DEFAULT 0,
-                AddedTime TEXT NOT NULL
-            )";
-            ExecuteNonQuery(createSongsTable); 
-        }
-
-        /// <summary>
-        /// 检查播放列表是否存在，不存在则创建
-        /// </summary>
         
-
-         
        
         /// <summary>
-        /// 批量插入或更新歌曲 - 使用INSERT OR REPLACE简化实现
+        /// 批量插入或更新歌曲
         /// </summary>
-        public int InsertSongs(  List<Song> songs, SqliteTransaction? externalTransaction = null)
+        public int InsertSongs(List<Song> songs)
         {
             if (songs.Count == 0) return 0;
             
-            // 使用外部事务或创建新事务
-            SqliteTransaction? transaction = externalTransaction;
-            bool shouldCommit = false;
-            
-            if (transaction == null)
-            {
-                transaction = BeginTransaction();
-                shouldCommit = true;
-            }
-            
+            var collection = GetCollection<Song>("Songs");
             int processedCount = 0;
             
             try
             {
                 foreach (var song in songs)
                 {
-                    // 使用INSERT OR REPLACE语句，如果记录存在则替换，不存在则插入
-                    ExecuteNonQuery(@"
-                        INSERT  INTO Songs 
-                        ( Id, FilePath, Title, Artist, Album, Duration, FileSize, Heart, IsDeleted, AddedTime)
-                        VALUES ( @Id, @FilePath, @Title, @Artist, @Album, @Duration, @FileSize, @Heart, @IsDeleted, @AddedTime)",
-                        transaction,
-                        
-                        new SqliteParameter("@Id", song.Id),
-                        new SqliteParameter("@FilePath", song.FilePath),
-                        new SqliteParameter("@Title", song.Title),
-                        new SqliteParameter("@Artist", song.Artist),
-                        new SqliteParameter("@Album", song.Album),
-                        new SqliteParameter("@Duration", (long)song.Duration.TotalSeconds),
-                        new SqliteParameter("@FileSize", song.FileSize),
-                        new SqliteParameter("@Heart", song.Heart ? 1 : 0),
-                        new SqliteParameter("@IsDeleted", song.IsDeleted ? 1 : 0),
-                        new SqliteParameter("@AddedTime", song.AddedTime.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz")));
-                    
+                    // 使用Upsert方法，如果记录存在则更新，不存在则插入
+                    collection.Upsert(song);
                     processedCount++;
-                }
-                
-                // 只有当是我们创建的事务时才提交
-                if (shouldCommit)
-                {
-                    transaction.Commit();
                 }
                 
                 return processedCount;
             }
             catch (Exception ex)
             {
-                // 只有当是我们创建的事务时才回滚
-                if (shouldCommit)
-                {
-                    transaction?.Rollback();
-                }
-                
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 批量插入或更新歌曲失败: {ex.Message}");
                 throw;
             }
@@ -112,40 +49,12 @@ namespace MusicPlayer.Core.Data
         /// <summary>
         /// 从数据库加载所有歌曲
         /// </summary>
-        public List<Song> LoadAllSongs( )
+        public List<Song> LoadAllSongs()
         {
-            var songs = new List<Song>();
-            if (!ExistsTable("Songs")) { CreateSongS(); }
+            var collection = GetCollection<Song>("Songs");
             try
             {
-                using var reader = ExecuteReader(@"
-                    SELECT Id, FilePath, Title, Artist, Album, Duration, FileSize, Heart, IsDeleted, AddedTime
-                    FROM Songs
-                    WHERE  1 = 1
-                    ORDER BY AddedTime" );
-                
-                while (reader.Read())
-                {
-                    var song = new Song
-                    {
-                        Id = reader.IsDBNull(0) ? -1 : reader.GetInt32(0),
-                        FilePath = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                        Title = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                        Artist = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                        Album = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                        Duration = TimeSpan.FromSeconds(reader.IsDBNull(5) ? 0 : reader.GetInt64(5)),
-                        FileSize = reader.IsDBNull(6) ? 0 : reader.GetInt64(6),
-                        Heart = !reader.IsDBNull(7) && reader.GetInt32(7) == 1,
-                        IsDeleted = !reader.IsDBNull(8) && reader.GetInt32(8) == 1,
-                        AddedTime = reader.IsDBNull(9) ? DateTime.Now : DateTime.Parse(reader.GetString(9)),
-                        DelayAlbumArtLoading = true // 设置延迟加载标志
-                    };
-                    
-                    songs.Add(song);
-                }
-                
-                reader.Close();
-                return songs;
+                return collection.FindAll().OrderBy(x => x.AddedTime).ToList();
             }
             catch (Exception ex)
             {
@@ -157,13 +66,12 @@ namespace MusicPlayer.Core.Data
         /// <summary>
         /// 清空播放列表中的所有歌曲
         /// </summary>
-        public void ClearPlaylist(  SqliteTransaction? transaction = null)
+        public void ClearPlaylist()
         {
             try
             {
-                
-                    ExecuteNonQuery("DELETE FROM Songs WHERE 1 =1", transaction  );
-                 
+                var collection = GetCollection<Song>("Songs");
+                collection.DeleteAll();
             }
             catch (Exception ex)
             {
@@ -179,34 +87,8 @@ namespace MusicPlayer.Core.Data
         {
             try
             {
-                using var reader = ExecuteReader(@"
-                    SELECT FilePath, Title, Artist, Album, Duration, FileSize, Heart, IsDeleted, AddedTime
-                    FROM Songs
-                    WHERE FilePath = @FilePath",
-                    new SqliteParameter("@FilePath", filePath));
-                
-                if (reader.Read())
-                {
-                    var song = new Song
-                    {
-                        FilePath = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                        Title = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                        Artist = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                        Album = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                        Duration = TimeSpan.FromSeconds(reader.IsDBNull(4) ? 0 : reader.GetInt64(4)),
-                        FileSize = reader.IsDBNull(5) ? 0 : reader.GetInt64(5),
-                        Heart = !reader.IsDBNull(6) && reader.GetInt32(6) == 1,
-                        IsDeleted = !reader.IsDBNull(7) && reader.GetInt32(7) == 1,
-                        AddedTime = reader.IsDBNull(8) ? DateTime.Now : DateTime.Parse(reader.GetString(8)),
-                        DelayAlbumArtLoading = true
-                    };
-                    
-                    reader.Close();
-                    return song;
-                }
-                
-                reader.Close();
-                return null;
+                var collection = GetCollection<Song>("Songs");
+                return collection.FindOne(x => x.FilePath == filePath);
             }
             catch (Exception ex)
             {
@@ -222,10 +104,8 @@ namespace MusicPlayer.Core.Data
         {
             try
             {
-                var count = ExecuteScalar<long>("SELECT COUNT(*) FROM Songs WHERE FilePath = @FilePath",
-                    new SqliteParameter("@FilePath", filePath));
-                
-                return count > 0;
+                var collection = GetCollection<Song>("Songs");
+                return collection.Exists(x => x.FilePath == filePath);
             }
             catch (Exception ex)
             {
@@ -237,49 +117,20 @@ namespace MusicPlayer.Core.Data
         /// <summary>
         /// 更新单个歌曲的状态（收藏状态、删除状态等）
         /// </summary>
-        public int UpdateSong(Song song, SqliteTransaction? externalTransaction = null)
+        public int UpdateSong(Song song)
         {
             if (song == null) return 0;
             
-            // 使用外部事务或创建新事务
-            SqliteTransaction? transaction = externalTransaction;
-            bool shouldCommit = false;
-            
-            if (transaction == null)
-            {
-                transaction = BeginTransaction();
-                shouldCommit = true;
-            }
-            
             try
             {
-                // 只更新状态相关字段，其他字段保持不变
-                int rowsAffected = ExecuteNonQuery(@"
-                    UPDATE Songs 
-                    SET Heart = @Heart, IsDeleted = @IsDeleted
-                    WHERE FilePath = @FilePath",
-                    transaction,
-                    new SqliteParameter("@FilePath", song.FilePath),
-                    new SqliteParameter("@Heart", song.Heart ? 1 : 0),
-                    new SqliteParameter("@IsDeleted", song.IsDeleted ? 1 : 0));
-                
-                // 只有当是我们创建的事务时才提交
-                if (shouldCommit)
-                {
-                    transaction.Commit();
-                }
+                var collection = GetCollection<Song>("Songs");
+                bool updated = collection.Update(song);
                 
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 更新歌曲状态: {song.Title}, Heart: {song.Heart}, IsDeleted: {song.IsDeleted}");
-                return rowsAffected;
+                return updated ? 1 : 0;
             }
             catch (Exception ex)
             {
-                // 只有当是我们创建的事务时才回滚
-                if (shouldCommit)
-                {
-                    transaction?.Rollback();
-                }
-                
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 更新歌曲状态失败: {ex.Message}");
                 throw;
             }

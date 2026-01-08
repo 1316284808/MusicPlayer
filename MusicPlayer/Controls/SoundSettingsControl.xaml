@@ -75,19 +75,9 @@
             </Grid>
         </StackPanel>
         
-        <Border Grid.Row="1" Margin="10" Padding="15" Background="Transparent" Opacity="0.8" CornerRadius="8"
-                Visibility="{Binding IsEqualizerEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-               
-
+        <Border Grid.Row="1" Margin="10" Padding="15" Background="Transparent" Opacity="0.8" CornerRadius="8" > 
                 <!-- 均衡器滑块区域 -->
-
-                <Grid>
+            <Grid Visibility="{Binding IsEqualizerEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="auto"/>
@@ -276,8 +266,7 @@
                             DisplayMemberPath="PresetName"> 
                         </ComboBox> 
                     </StackPanel>
-                </Grid> 
-            </Grid>
+                </Grid>  
         </Border>
     </Grid> 
 </UserControl>

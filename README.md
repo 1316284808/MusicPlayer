@@ -68,6 +68,9 @@
 ### 音频设置
 ![音频设置](Image/音频设置.png)
 
+### 歌手列表
+![默认播放列表](Image/歌手列表.png)
+
 ## 🏗️ 技术架构
 
 ### 核心技术栈
@@ -333,7 +336,8 @@ MusicPlayer/
  
 - [一个功能强大、界面现代的 C# WPF 本地音乐播放器](https://github.com/ceng10086/MusicPlayer.git)
 - [🎵 原音 HQ 播放器（Original Sound HQ Player）🎶](https://github.com/Johnwikix/original-sound-hq-player.git)
-- [SpectrumVisualization](https://github.com/Johnwikix/SpectrumVisualization.git)
+- [音频可视化（SpectrumVisualization）](https://github.com/Johnwikix/SpectrumVisualization.git)
+- [懒加载的流式布局（VirtualizingWrapPanel）](https://github.com/sbaeumlisberger/VirtualizingWrapPanel.git)
 
  
 

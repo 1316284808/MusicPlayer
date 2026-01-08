@@ -117,4 +117,14 @@ namespace MusicPlayer.Services.Messages
     {
         public NavigationCompletedMessage(Type pageType) : base(pageType) { }
     }
+
+    /// <summary>
+    /// 导航到歌手页面消息
+    /// </summary>
+    public class NavigateToSingerPageMessage : RequestMessage<bool> { }
+
+    /// <summary>
+    /// 导航到专辑页面消息
+    /// </summary>
+    public class NavigateToAlbumPageMessage : RequestMessage<bool> { }
 }
