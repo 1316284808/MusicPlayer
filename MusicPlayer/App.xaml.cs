@@ -171,33 +171,46 @@ namespace MusicPlayer;
     }
 
     protected override async void OnExit(ExitEventArgs e)
-    {
-        try
         {
-            
-            
-            // 保存配置到SQLite数据库
-            SaveConfigurationOnExit();
-            
-            // 清理托盘图标
-            _notifyIcon?.Dispose();
-            
-            // 清理频谱分析管理器
-            if (_serviceProvider != null)
+            try
             {
-                var spectrumManager = _serviceProvider.GetService<MusicPlayer.Config.ISpectrumAnalyzerManager>();
-                spectrumManager?.Cleanup();
-                System.Diagnostics.Debug.WriteLine("App: 频谱分析管理器已清理");
+                // 保存配置到SQLite数据库（先保存，再停止服务）
+                SaveConfigurationOnExit();
+
+                // 清理托盘图标
+                _notifyIcon?.Dispose();
+
+                // 清理频谱分析管理器
+                if (_serviceProvider != null)
+                {
+                    var spectrumManager = _serviceProvider.GetService<MusicPlayer.Config.ISpectrumAnalyzerManager>();
+                    spectrumManager?.Cleanup();
+                    System.Diagnostics.Debug.WriteLine("App: 频谱分析管理器已清理");
+
+                    // 手动释放IDisposable服务，特别是数据库连接
+                    var configurationService = _serviceProvider.GetService<IConfigurationService>();
+                    if (configurationService is IDisposable disposableConfig)
+                    {
+                        disposableConfig.Dispose();
+                        System.Diagnostics.Debug.WriteLine("App: ConfigurationService已释放");
+                    }
+
+                    var equalizerPresetRepository = _serviceProvider.GetService<IEqualizerPresetRepository>();
+                    if (equalizerPresetRepository is IDisposable disposableEqualizer)
+                    {
+                        disposableEqualizer.Dispose();
+                        System.Diagnostics.Debug.WriteLine("App: EqualizerPresetRepository已释放");
+                    }
+                }
+
+                // 清理所有ViewModel
+                _lifecycleManager?.CleanupAllViewModels();
+
+                // 停止服务
+                await Startup.StopAsync();
+
+                System.Diagnostics.Debug.WriteLine("Application shutdown completed successfully");
             }
-            
-            // 清理所有ViewModel
-            _lifecycleManager?.CleanupAllViewModels();
-            
-            // 停止服务
-            await Startup.StopAsync();
-            
-            System.Diagnostics.Debug.WriteLine("Application shutdown completed successfully");
-        }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Application shutdown failed: {ex.Message}");

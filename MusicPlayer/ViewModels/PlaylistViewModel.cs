@@ -41,6 +41,7 @@ namespace MusicPlayer.ViewModels
         private readonly IMessagingService _messagingService;
         private readonly IConfigurationService? _configurationService;
         private readonly IPlaylistDataService _playlistDataService;
+        private readonly IPlaybackContextService _playbackContextService;
         
         // 本地状态通过消息同步
         // 注意：_playlist已移除，使用FilteredPlaylist作为主要的数据集合
@@ -283,11 +284,12 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, IPlaybackContextService? playbackContextService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
+            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -436,6 +438,20 @@ namespace MusicPlayer.ViewModels
         {
             if (song != null)
             {
+                // 根据当前过滤模式设置播放上下文
+                var contextType = _currentFilterMode == FilterMode.Favorites 
+                    ? PlaybackContextType.Favorites 
+                    : PlaybackContextType.DefaultPlaylist;
+                
+                var context = contextType == PlaybackContextType.Favorites 
+                    ? PlaybackContext.CreateFavorites() 
+                    : PlaybackContext.CreateDefault();
+                
+                // 设置播放上下文
+                _playbackContextService.SetPlaybackContext(context.Type, context.Identifier, context.DisplayName);
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 设置播放上下文为 {context.DisplayName}");
+                
+                // 发送播放消息
                 _messagingService.Send(new PlaySelectedSongMessage(song));
             }
         }

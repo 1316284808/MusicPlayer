@@ -35,8 +35,8 @@ namespace MusicPlayer.Converters
             {
                 SortRule.ByAddedTime => IconKind.Clock,     // 时钟图标
                 SortRule.ByTitle => IconKind.Text,         // 文本图标
-                SortRule.ByArtist => IconKind.Person,      // 人物图标
-                SortRule.ByAlbum => IconKind.Album,        // 专辑图标
+                SortRule.ByArtist => IconKind.InPerson,      // 人物图标
+                SortRule.ByAlbum => IconKind.InAlbum,        // 专辑图标
                 SortRule.ByDuration => IconKind.Time,      // 时间图标
                 SortRule.ByFileSize => IconKind.Storage,   // 存储图标
                 _ => IconKind.SortDefault                  // 默认排序图标

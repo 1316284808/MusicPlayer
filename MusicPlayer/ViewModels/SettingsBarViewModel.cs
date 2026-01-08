@@ -28,6 +28,8 @@ namespace MusicPlayer.ViewModels
         private bool _defaultListIconState = true;  // true表示开，false表示关
         private bool _favoriteListIconState = false;
         private bool _settingsIconState = false;
+        private bool _singerIconState = false; // 歌手页面图标状态
+        private bool _albumIconState = false; // 专辑页面图标状态
 
         /// <summary>
         /// 构造函数
@@ -39,6 +41,8 @@ namespace MusicPlayer.ViewModels
             ToggleButtonsVisibilityCommand = new RelayCommand(ExecuteToggleButtonsVisibility);
             NavigateToDefaultListCommand = new RelayCommand(ExecuteNavigateToDefaultList);
             NavigateToFavoriteListCommand = new RelayCommand(ExecuteNavigateToFavoriteList);
+            NavigateToSingerPageCommand = new RelayCommand(ExecuteNavigateToSingerPage);
+            NavigateToAlbumPageCommand = new RelayCommand(ExecuteNavigateToAlbumPage);
             NavigateToSettingsCommand = new RelayCommand(ExecuteNavigateToSettings);
             MouseEnterCommand = new RelayCommand(ExecuteMouseEnter);
             MouseLeaveCommand = new RelayCommand(ExecuteMouseLeave);
@@ -185,6 +189,38 @@ namespace MusicPlayer.ViewModels
         }
 
         /// <summary>
+        /// 歌手页面图标状态
+        /// </summary>
+        public bool SingerIconState
+        {
+            get => _singerIconState;
+            set
+            {
+                if (_singerIconState != value)
+                {
+                    _singerIconState = value;
+                    OnPropertyChanged(nameof(SingerIconState));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 专辑页面图标状态
+        /// </summary>
+        public bool AlbumIconState
+        {
+            get => _albumIconState;
+            set
+            {
+                if (_albumIconState != value)
+                {
+                    _albumIconState = value;
+                    OnPropertyChanged(nameof(AlbumIconState));
+                }
+            }
+        }
+
+        /// <summary>
         /// 收纳按钮
         /// </summary>
         public ICommand ToggleButtonsVisibilityCommand { get; }
@@ -198,6 +234,16 @@ namespace MusicPlayer.ViewModels
         /// 导航到收藏列表命令
         /// </summary>
         public ICommand NavigateToFavoriteListCommand { get; }
+        
+        /// <summary>
+        /// 导航到歌手页面命令
+        /// </summary>
+        public ICommand NavigateToSingerPageCommand { get; }
+        
+        /// <summary>
+        /// 导航到专辑页面命令
+        /// </summary>
+        public ICommand NavigateToAlbumPageCommand { get; }
         
         /// <summary>
         /// 导航到设置页面命令
@@ -329,14 +375,34 @@ namespace MusicPlayer.ViewModels
         }
         
         /// <summary>
+        /// 执行导航到歌手页面操作
+        /// </summary>
+        private void ExecuteNavigateToSingerPage()
+        {
+            // 更新图标状态
+            UpdateIconsByIndex(2);
+            
+            _messagingService?.Send<NavigateToSingerPageMessage, bool>(new NavigateToSingerPageMessage());
+        }
+        
+        /// <summary>
+        /// 执行导航到专辑页面操作
+        /// </summary>
+        private void ExecuteNavigateToAlbumPage()
+        {
+            // 更新图标状态
+            UpdateIconsByIndex(3);
+            
+            _messagingService?.Send<NavigateToAlbumPageMessage, bool>(new NavigateToAlbumPageMessage());
+        }
+        
+        /// <summary>
         /// 执行导航到设置页面操作
         /// </summary>
         private void ExecuteNavigateToSettings()
         {
             // 更新图标状态
-            UpdateIconsByIndex(2);
-            
-         
+            UpdateIconsByIndex(4);
             
             _messagingService?.Send<NavigateToSettingsMessage, bool>(new NavigateToSettingsMessage());
         }
@@ -346,26 +412,31 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         private void UpdateIconsByIndex(int selectedIndex)
         { 
-            if (selectedIndex == 0)
+            // 先重置所有图标状态
+            DefaultListIconState = false;
+            FavoriteListIconState = false;
+            SingerIconState = false;
+            AlbumIconState = false;
+            SettingsIconState = false;
+            
+            // 根据选中的索引设置对应的图标状态为true
+            switch (selectedIndex)
             {
-                DefaultListIconState = true;   // 开
-                FavoriteListIconState = false;  // 关
-                SettingsIconState = false;      // 关
-                return;
-            }
-         if (selectedIndex == 1)
-            {
-                DefaultListIconState = false;   // 关
-                FavoriteListIconState = true;   // 开
-                SettingsIconState = false;      // 关
-                return;
-            }
-           if (selectedIndex == 2)
-            {
-                DefaultListIconState = false;   // 关
-                FavoriteListIconState = false;  // 关
-                SettingsIconState = true;       // 开
-                return;
+                case 0: // 默认列表
+                    DefaultListIconState = true;
+                    break;
+                case 1: // 收藏列表
+                    FavoriteListIconState = true;
+                    break;
+                case 2: // 歌手列表
+                    SingerIconState = true;
+                    break;
+                case 3: // 专辑列表
+                    AlbumIconState = true;
+                    break;
+                case 4: // 设置
+                    SettingsIconState = true;
+                    break;
             }
         }
 
@@ -379,7 +450,7 @@ namespace MusicPlayer.ViewModels
             // 当鼠标进入时，停止计时器并显示所有按钮
             _hideButtonsTimer.Stop();
             AreAllButtonsVisible = true;
-            System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 鼠标进入，显示所有按钮");
+           
         }
         
         /// <summary>
@@ -392,12 +463,8 @@ namespace MusicPlayer.ViewModels
             {
                 _hideButtonsTimer.Stop();
                 _hideButtonsTimer.Start();
-                System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 鼠标离开，启动3秒隐藏计时器");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 鼠标离开，但文本可见，不启动计时器");
-            }
+               
+            } 
         }
         
         /// <summary>
@@ -450,10 +517,20 @@ namespace MusicPlayer.ViewModels
                     UpdateIconsByIndex(1);
                 }
             }
+            else if (pageType == typeof(SingerPage))
+            {
+                // 歌手页面
+                UpdateIconsByIndex(2);
+            }
+            else if (pageType == typeof(AlbumPage))
+            {
+                // 专辑页面
+                UpdateIconsByIndex(3);
+            }
             else if (pageType == typeof(SettingsPage))
             {
                 // 设置页面
-                UpdateIconsByIndex(2);
+                UpdateIconsByIndex(4);
             }
             else if (pageType == typeof(PlayerPage))
             {
@@ -461,6 +538,8 @@ namespace MusicPlayer.ViewModels
                 // 这里可以选择将所有图标状态设置为false
                 DefaultListIconState = false;
                 FavoriteListIconState = false;
+                SingerIconState = false;
+                AlbumIconState = false;
                 SettingsIconState = false;
             }
         }

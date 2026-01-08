@@ -16,6 +16,55 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Vertical">
+
+
+            <Grid >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <!-- 左侧：设置项描述 -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="Photo"  Margin="2"/>
+                        <TextBlock Text=" 封面缓存"  FontSize="14" FontWeight="SemiBold"   />
+                    </StackPanel>
+
+                    <TextBlock Text="封面缓存将显著提高歌曲封面的加载速度，禁用可能导致加载变慢"  FontWeight="Normal" FontSize="12"  Margin="10,5,0,0"/>
+                </StackPanel>
+                <ui:Button Padding="0" ToolTip="打开缓存目录" Grid.Column="1" 
+           Width="50" 
+           Margin="5,0,5,0"     >
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  />
+                </ui:Button>
+                <ui:ToggleSwitch x:Name="SpectrumToggleSwitch" 
+             Grid.Column="2"    Background="Black"
+             HorizontalAlignment="Center" VerticalAlignment="Center" 
+             Content="启用"/>
+            </Grid>
+            <Separator  Margin="10" />
+            <Grid >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <!-- 左侧：设置项描述 -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="Stop"  Margin="2"/>
+                        <TextBlock Text="歌词文件目录"  FontSize="14" FontWeight="SemiBold"   />
+                    </StackPanel>
+
+                    <TextBlock Text="歌曲若无内嵌歌词，则默认检索歌曲同目录的同名歌词文件。同时支持检索指定目录:[ ] "  FontWeight="Normal" FontSize="12"  Margin="10,5,0,0"/>
+                </StackPanel>
+                <ui:Button Padding="0" ToolTip="选择目录" Grid.Column="1" 
+                           Width="50" 
+                           Margin="5,0,5,0"     > 
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  /> 
+                </ui:Button>
+            </Grid>
+            <Separator  Margin="10" />
             <Grid >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -40,7 +89,11 @@
                            Command="{Binding ClearPlaylistCommand}"> 
                     <Helper:CustomIcon Kind="Delete" Foreground="red" />
                 </ui:Button> 
-            </Grid> 
+            </Grid>
+           
+           
+
+
         </StackPanel>
 
     </Grid>

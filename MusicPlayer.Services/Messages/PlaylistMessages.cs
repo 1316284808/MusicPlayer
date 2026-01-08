@@ -183,4 +183,17 @@ namespace MusicPlayer.Services.Messages
             CurrentSong = currentSong;
         }
     }
+    
+    /// <summary>
+    /// 添加歌曲到播放列表消息
+    /// </summary>
+    public class AddToPlaylistMessage
+    {
+        public Song Song { get; }
+        
+        public AddToPlaylistMessage(Song song)
+        {
+            Song = song;
+        }
+    }
 }

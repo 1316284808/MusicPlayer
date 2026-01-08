@@ -33,11 +33,12 @@
 
                     <!-- 右侧：开关控件 -->
                     <ComboBox   FontWeight="Normal" Grid.Column="1"  Width="120" Height="40"  HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                ItemsSource="{Binding ThemeOptions}"
+                                ItemsSource="{Binding ThemeOptions}"  
                                 SelectedItem="{Binding CurrentTheme, Mode=TwoWay}"/> 
                 </Grid>
-                <Separator  Margin="10" />
-                <Grid >
+
+            <Separator  Margin="10" />
+            <Grid >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>

@@ -12,12 +12,8 @@
     <StartupObject></StartupObject>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="docx\**" />
-    <EmbeddedResource Remove="docx\**" />
-    <None Remove="docx\**" />
-    <Page Remove="docx\**" />
-  </ItemGroup>
+
+
 
   <ItemGroup>
     <Content Include="resources\MusicPlayer.ico">
@@ -27,10 +23,13 @@
 
 	<ItemGroup>
 		
+		<PackageReference Include="CingZeoi.ChinesePinyinConverter" Version="1.0.0" />
+		
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+
 		<PackageReference Include="WPF-UI" Version="4.1.0" />
 		<!-- 日志  -->
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
@@ -42,6 +41,7 @@
 		<PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
 	</ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MusicPlayer.Core\MusicPlayer.Core.csproj" />
     <ProjectReference Include="..\MusicPlayer.Services\MusicPlayer.Services.csproj" />
   </ItemGroup>
 

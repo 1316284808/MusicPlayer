@@ -48,6 +48,8 @@ namespace MusicPlayer.Services.Handlers
             // 导航消息
             _messagingService.Register<NavigateToSettingsMessage>(this, OnNavigateToSettingsRequested);
             _messagingService.Register<NavigateToHomeMessage>(this, OnNavigateToHomeRequested);
+            _messagingService.Register<NavigateToSingerPageMessage>(this, OnNavigateToSingerPageRequested);
+            _messagingService.Register<NavigateToAlbumPageMessage>(this, OnNavigateToAlbumPageRequested);
             
             // 收藏相关消息
             _messagingService.Register<UpdateSongFavoriteStatusMessage>(this, OnUpdateSongFavoriteStatusRequested);
@@ -249,6 +251,34 @@ namespace MusicPlayer.Services.Handlers
             catch (Exception ex)
             {
                 HandleError("OnNavigateToHomeRequested", ex);
+                message.Reply(false);
+            }
+        }
+        
+        private void OnNavigateToSingerPageRequested(object recipient, NavigateToSingerPageMessage message)
+        {
+            try
+            {
+                // 只需要回复消息，导航由MainWindow处理
+                message.Reply(true);
+            }
+            catch (Exception ex)
+            {
+                HandleError("OnNavigateToSingerPageRequested", ex);
+                message.Reply(false);
+            }
+        }
+        
+        private void OnNavigateToAlbumPageRequested(object recipient, NavigateToAlbumPageMessage message)
+        {
+            try
+            {
+                // 只需要回复消息，导航由MainWindow处理
+                message.Reply(true);
+            }
+            catch (Exception ex)
+            {
+                HandleError("OnNavigateToAlbumPageRequested", ex);
                 message.Reply(false);
             }
         }

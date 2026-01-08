@@ -5,6 +5,7 @@ using MusicPlayer.ViewModels;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Handlers;
 using MusicPlayer.Services.Services;
+using MusicPlayer.Services.Providers;
  
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Helper;
@@ -73,7 +74,26 @@ namespace MusicPlayer.Config
             // 播放列表缓存服务 - 全部使用单例模式
             services.AddSingleton<IPlaylistCacheService, PlaylistCacheService>();
             services.AddSingleton<IPlaylistService, PlaylistService>();
-            services.AddSingleton<IPlaylistDataService, PlaylistDataService>();
+            services.AddSingleton<IPlaylistDataService>(provider => {
+                var instance = new PlaylistDataService(
+                    provider.GetRequiredService<IPlaylistCacheService>(),
+                    provider.GetRequiredService<IPlaylistService>(),
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IDispatcherService>(),
+                    provider.GetRequiredService<IConfigurationService>(),
+                    provider.GetRequiredService<IPlaybackContextService>());
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
+                return instance;
+            });
+            
+            // 播放上下文服务 - 单例模式
+            services.AddSingleton<IPlaybackContextService, PlaybackContextService>();
+            
+            // 播放上下文提供者 - 单例模式
+            services.AddSingleton<IPlaybackContextProvider, DefaultPlaylistProvider>();
+            services.AddSingleton<FavoritesProvider>();
+            services.AddSingleton<ArtistProvider>();
+            services.AddSingleton<AlbumProvider>();
             
             // 消息服务必须在这里注册，因为PlayerStateService需要它
             services.AddSingleton<IMessagingService, MessagingService>();
@@ -105,12 +125,13 @@ namespace MusicPlayer.Config
                 return instance;
             });
             
-            // 2. 注册PlayerStateService为单例，它依赖于 PlaylistDataService, ConfigurationService 和 MessagingService
+            // 2. 注册PlayerStateService为单例，它依赖于 PlaylistDataService, ConfigurationService, MessagingService 和 PlaybackContextService
             services.AddSingleton<IPlayerStateService>(provider => {
                 var instance = new PlayerStateService(
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IConfigurationService>(),
-                    provider.GetRequiredService<IMessagingService>());
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IPlaybackContextService>());
                 System.Diagnostics.Debug.WriteLine($"PlayerStateService: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 
                 // 在PlayerStateService创建后，设置ConfigurationService的PlayerStateService引用
@@ -230,7 +251,13 @@ namespace MusicPlayer.Config
                 return instance;
             });
             
-            services.AddSingleton<ICenterContentViewModel, CenterContentViewModel>();
+            services.AddSingleton<ICenterContentViewModel>(provider => {
+                var instance = new CenterContentViewModel(
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IConfigurationService>());
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
+                return instance;
+            });
             
             // 注册歌词视图模型工厂，用于创建新的歌词视图模型实例
             services.AddSingleton<ILyricsViewModelFactory, LyricsViewModelFactory>();
@@ -247,7 +274,8 @@ namespace MusicPlayer.Config
                 new PlaylistViewModel(
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IConfigurationService>(),
-                    provider.GetRequiredService<IPlaylistDataService>()));
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaybackContextService>()));
             
             // SettingsPageViewModel - 单例模式
             services.AddSingleton<ISettingsPageViewModel, SettingsPageViewModel>(provider => 
@@ -261,6 +289,21 @@ namespace MusicPlayer.Config
             services.AddSingleton<ISettingsBarViewModel, SettingsBarViewModel>(provider => 
                 new SettingsBarViewModel(
                     provider.GetRequiredService<IMessagingService>()));
+            
+            // AlbumViewModel - 单例模式
+            services.AddSingleton<IAlbumViewModel>(provider => 
+                new AlbumViewModel(
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<IMessagingService>()));
+            
+            // SingerViewModel - 单例模式
+            services.AddSingleton<ISingerViewModel>(provider => 
+                new SingerViewModel(
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<IMessagingService>())); 
+           
             
             // PlaylistSettingViewModel - 单例模式
             services.AddSingleton<PlaylistSettingViewModel>(provider => 
@@ -333,6 +376,9 @@ namespace MusicPlayer.Config
             
             // 添加ServiceCoordinator初始化服务
             services.AddSingleton<IHostedService, ServiceCoordinatorInitializationService>();
+            
+            // 添加播放上下文初始化服务
+            services.AddSingleton<IHostedService, PlaybackContextInitializationService>();
 
             return services;
         }
@@ -649,6 +695,62 @@ namespace MusicPlayer.Config
         {
             _logger?.LogError("[INFO] 停止ServiceCoordinator初始化服务");
             System.Diagnostics.Debug.WriteLine("ServiceCoordinatorInitializationService: 停止ServiceCoordinator初始化服务");
+            return Task.CompletedTask;
+        }
+    }
+    
+    /// <summary>
+    /// 播放上下文初始化服务
+    /// 负责在应用启动时初始化播放上下文提供者
+    /// </summary>
+    public class PlaybackContextInitializationService : IHostedService
+    {
+        private readonly IPlaybackContextService _playbackContextService;
+        private readonly IPlaybackContextProvider _defaultProvider;
+        private readonly FavoritesProvider _favoritesProvider;
+        private readonly ArtistProvider _artistProvider;
+        private readonly AlbumProvider _albumProvider;
+
+        public PlaybackContextInitializationService(
+            IPlaybackContextService playbackContextService,
+            IPlaybackContextProvider defaultProvider,
+            FavoritesProvider favoritesProvider,
+            ArtistProvider artistProvider,
+            AlbumProvider albumProvider)
+        {
+            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
+            _defaultProvider = defaultProvider ?? throw new ArgumentNullException(nameof(defaultProvider));
+            _favoritesProvider = favoritesProvider ?? throw new ArgumentNullException(nameof(favoritesProvider));
+            _artistProvider = artistProvider ?? throw new ArgumentNullException(nameof(artistProvider));
+            _albumProvider = albumProvider ?? throw new ArgumentNullException(nameof(albumProvider));
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 开始初始化播放上下文提供者");
+                
+                // 注册各种播放上下文提供者
+                _playbackContextService.RegisterProvider(PlaybackContextType.DefaultPlaylist, _defaultProvider);
+                _playbackContextService.RegisterProvider(PlaybackContextType.Favorites, _favoritesProvider);
+                _playbackContextService.RegisterProvider(PlaybackContextType.Artist, _artistProvider);
+                _playbackContextService.RegisterProvider(PlaybackContextType.Album, _albumProvider);
+                
+                System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 播放上下文提供者初始化完成");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaybackContextInitializationService: 初始化失败: {ex.Message}");
+                throw;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 停止播放上下文初始化服务");
             return Task.CompletedTask;
         }
     }

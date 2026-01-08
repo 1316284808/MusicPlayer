@@ -52,8 +52,10 @@ namespace MusicPlayer.Core.Interface
                 IconKind.SortDefault => "\uE8CB",//排序
                 IconKind.Clock => "\uE917",//时钟
                 IconKind.Text => "\uE8D3",//文本文件
-                IconKind.Person => "\uE77B",//歌手头像
-                IconKind.Album => "\uE93C",//专辑封面
+                IconKind.InPerson => "\uE77B",//空心歌手头像
+                IconKind.Person => "\uea8c",//实心歌手头像
+                IconKind.Album => "\ue735",//实心专辑封面
+                IconKind.InAlbum => "\ue734",//空心专辑封面
                 IconKind.Time => "\uEe93",//时间
                 IconKind.Storage => "\uE8F1",//文件柜
                 IconKind.InSettings => "\ue713",//空心设置-开
@@ -77,6 +79,12 @@ namespace MusicPlayer.Core.Interface
               IconKind.SaveAs=> "\ueb4e",//保存
               IconKind.Reset=> "\uedab",//重置
               IconKind.Position=> "\ue759",//查找歌曲位置  	e759  e7c8  f272	Bullseye
+                IconKind.BigFont => "\uecc8",   //字体+  ecc8                       
+                IconKind.SmallFont => "\uecc9", //字体-  ecc9                                                  
+                IconKind.Right => "\ue8e2",//左对齐 edd9
+                IconKind.Center => "\ue8e3", //中间对齐 ee95
+                IconKind.Left => "\ue8e4", //右对齐 edda 
+               IconKind .Photo=> "\ue7c5", //图片 e91b
                 _ => ""
             };
         }

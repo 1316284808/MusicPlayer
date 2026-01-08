@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -81,16 +83,32 @@ namespace MusicPlayer.Core.Models
 
         /// <summary>
         /// 专辑封面
-        /// 即取即用即走即清策略，不使用缓存
+        /// 优先从磁盘缓存加载，缓存不存在则从文件提取并保存到缓存
         /// </summary>
         public BitmapImage? AlbumArt
         {
             get
             {
-                // 如果封面为空，且有封面数据，且没有设置延迟加载，且不在加载过程中，则自动加载
-                if (_albumArt == null && _albumArtData != null && _albumArtData.Length > 0 && !_delayAlbumArtLoading && !_isLoadingAlbumArt)
+                // 如果封面为空，且没有设置延迟加载，且不在加载过程中，则自动加载
+                if (_albumArt == null && !_delayAlbumArtLoading && !_isLoadingAlbumArt)
                 {
-                    EnsureAlbumArtLoaded();
+                    // 先尝试从缓存加载
+                    if (!TryLoadAlbumArtFromCache() && (_albumArtData == null || _albumArtData.Length == 0))
+                    {
+                        // 缓存不存在且没有封面数据，从文件加载
+                        EnsureAlbumArtDataLoaded();
+                        if (_albumArtData != null && _albumArtData.Length > 0)
+                        {
+                            LoadAlbumArtFromData();
+                            // 保存到缓存
+                            SaveAlbumArtToCache();
+                        }
+                    }
+                    else if (_albumArtData != null && _albumArtData.Length > 0)
+                    {
+                        // 已有封面数据，直接加载
+                        LoadAlbumArtFromData();
+                    }
                 }
                 return _albumArt;
             }
@@ -529,6 +547,12 @@ namespace MusicPlayer.Core.Models
         {
             if (_albumArt == null)
             {
+                // 优先从缓存加载
+                if (TryLoadAlbumArtFromCache())
+                {
+                    return;
+                }
+                
                 // 如果还没有加载封面数据，先从文件中加载封面数据
                 if (_albumArtData == null || _albumArtData.Length == 0)
                 {
@@ -539,6 +563,8 @@ namespace MusicPlayer.Core.Models
                 if (_albumArtData != null && _albumArtData.Length > 0)
                 {
                     LoadAlbumArtFromData();
+                    // 保存到缓存
+                    SaveAlbumArtToCache();
                 }
             }
         }
@@ -660,6 +686,12 @@ namespace MusicPlayer.Core.Models
             {
                 LoadAlbumArtDataFromFile();
                 //System.Diagnostics.Debug.WriteLine($"Song: 从文件重新加载封面数据 - {Title}");
+                
+                // 如果加载到了封面数据，保存到缓存
+                if (_albumArtData != null && _albumArtData.Length > 0)
+                {
+                    SaveAlbumArtToCache();
+                }
             }
         }
 
@@ -869,6 +901,84 @@ namespace MusicPlayer.Core.Models
         public override int GetHashCode()
         {
             return FilePath?.GetHashCode(StringComparison.OrdinalIgnoreCase) ?? 0;
+        }
+
+        /// <summary>
+        /// 生成文件路径的哈希值，用于缓存文件名
+        /// </summary>
+        /// <returns>文件路径的SHA1哈希值</returns>
+        private string GenerateFileHash()
+        {
+            if (string.IsNullOrEmpty(FilePath))
+                return string.Empty;
+
+            using (var sha1 = SHA1.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(FilePath);
+                var hash = sha1.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").ToLower();
+            }
+        }
+
+        /// <summary>
+        /// 获取封面缓存文件路径
+        /// </summary>
+        /// <returns>封面缓存文件的完整路径</returns>
+        private string GetAlbumArtCachePath()
+        {
+            var hash = GenerateFileHash();
+            return Path.Combine(Paths.AlbumArtCacheDirectory, $"{hash}.png");
+        }
+
+        /// <summary>
+        /// 从缓存加载封面
+        /// </summary>
+        /// <returns>是否成功从缓存加载</returns>
+        private bool TryLoadAlbumArtFromCache()
+        {
+            var cachePath = GetAlbumArtCachePath();
+            if (File.Exists(cachePath))
+            {
+                try
+                {
+                    var imageBytes = File.ReadAllBytes(cachePath);
+                    if (imageBytes != null && imageBytes.Length > 0)
+                    {
+                        // 使用现有的图像加载逻辑
+                        _albumArtData = imageBytes;
+                        LoadAlbumArtFromData();
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Song: 从缓存加载封面失败 - {Title}, 错误: {ex.Message}");
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 将封面保存到缓存
+        /// </summary>
+        private void SaveAlbumArtToCache()
+        {
+            if (_albumArtData == null || _albumArtData.Length == 0)
+                return;
+
+            try
+            {
+                // 确保缓存目录存在
+                Paths.EnsureDirectoryExists(Paths.AlbumArtCacheDirectory);
+                
+                var cachePath = GetAlbumArtCachePath();
+                File.WriteAllBytes(cachePath, _albumArtData);
+                //System.Diagnostics.Debug.WriteLine($"Song: 封面已保存到缓存 - {Title}, 路径: {cachePath}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Song: 保存封面到缓存失败 - {Title}, 错误: {ex.Message}");
+            }
         }
 
         /// <summary>

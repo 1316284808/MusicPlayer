@@ -19,6 +19,7 @@ namespace MusicPlayer.ViewModels
     public class CenterContentViewModel : ObservableObject, ICenterContentViewModel
     {
         private readonly IMessagingService _messagingService;
+        private readonly IConfigurationService _configurationService;
         
         // 状态属性通过消息同步
         private Core.Models.Song? _currentSong;
@@ -27,6 +28,79 @@ namespace MusicPlayer.ViewModels
         
         private ObservableCollection<Core.Models.LyricLine> _lyrics = new();
         private Core.Models.LyricLine? _currentLyricLine;
+        
+        // 歌词对齐方式
+        private System.Windows.TextAlignment _lyricTextAlignment = System.Windows.TextAlignment.Right;
+        
+        /// <summary>
+        /// 歌词对齐方式
+        /// </summary>
+        public System.Windows.TextAlignment LyricTextAlignment
+        {
+            get => _lyricTextAlignment;
+            set
+            {
+                if (_lyricTextAlignment != value)
+                {
+                    _lyricTextAlignment = value;
+                    OnPropertyChanged(nameof(LyricTextAlignment));
+                    OnPropertyChanged(nameof(LyricAlignmentIconKind));
+                    // 更新配置
+                    _configurationService.UpdateLyricTextAlignment(value);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 歌词对齐图标类型
+        /// </summary>
+        public string LyricAlignmentIconKind
+        {
+            get
+            {
+                switch (LyricTextAlignment)
+                {
+                    case System.Windows.TextAlignment.Left:
+                        return "Left";
+                    case System.Windows.TextAlignment.Center:
+                        return "Center";
+                    case System.Windows.TextAlignment.Right:
+                        return "Right";
+                    default:
+                        return "Right";
+                }
+            }
+        }
+        
+        // 歌词字体大小
+        private double _lyricFontSize = 20;
+        
+        /// <summary>
+        /// 歌词字体大小
+        /// </summary>
+        public double LyricFontSize
+        {
+            get => _lyricFontSize;
+            set
+            {
+                if (_lyricFontSize != value)
+                {
+                    _lyricFontSize = value;
+                    OnPropertyChanged(nameof(LyricFontSize));
+                    OnPropertyChanged(nameof(SelectedLyricFontSize));
+                    // 更新配置
+                    _configurationService.UpdateLyricFontSize(value);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中歌词字体大小（始终比普通大8）
+        /// </summary>
+        public double SelectedLyricFontSize
+        {
+            get => LyricFontSize + 8;
+        }
         
 
         /// <summary>
@@ -208,22 +282,70 @@ namespace MusicPlayer.ViewModels
 
         // 命令定义
         public ICommand PlayPauseCommand { get; }
+        public ICommand ToggleLyricAlignmentCommand { get; }
+        public ICommand IncreaseLyricFontSizeCommand { get; }
+        public ICommand DecreaseLyricFontSizeCommand { get; }
 
        
 
-        public CenterContentViewModel(IMessagingService messagingService)
+        public CenterContentViewModel(IMessagingService messagingService, IConfigurationService configurationService)
         {
             _messagingService = messagingService;
+            _configurationService = configurationService;
+            
+            // 从配置中初始化歌词样式
+            _lyricFontSize = _configurationService.CurrentConfiguration.LyricFontSize;
+            _lyricTextAlignment = _configurationService.CurrentConfiguration.LyricTextAlignment;
             
             // 初始化默认歌曲信息
             InitializeDefaultSongInfo();
             
             // 初始化命令
             PlayPauseCommand = new RelayCommand(ExecutePlayPause);
+            ToggleLyricAlignmentCommand = new RelayCommand(ToggleLyricAlignment);
+            IncreaseLyricFontSizeCommand = new RelayCommand(IncreaseLyricFontSize);
+            DecreaseLyricFontSizeCommand = new RelayCommand(DecreaseLyricFontSize);
 
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
           
+        }
+        
+        /// <summary>
+        /// 切换歌词对齐方式
+        /// </summary>
+        private void ToggleLyricAlignment()
+        {
+            switch (LyricTextAlignment)
+            {
+                case System.Windows.TextAlignment.Left:
+                    LyricTextAlignment = System.Windows.TextAlignment.Center;
+                    break;
+                case System.Windows.TextAlignment.Center:
+                    LyricTextAlignment = System.Windows.TextAlignment.Right;
+                    break;
+                case System.Windows.TextAlignment.Right:
+                    LyricTextAlignment = System.Windows.TextAlignment.Left;
+                    break;
+            }
+        }
+        
+        /// <summary>
+        /// 增加歌词字体大小
+        /// </summary>
+        private void IncreaseLyricFontSize()
+        {
+            if (LyricFontSize >= 40) return;
+            LyricFontSize += 1;
+        }
+        
+        /// <summary>
+        /// 减少歌词字体大小
+        /// </summary>
+        private void DecreaseLyricFontSize()
+        {
+            if (LyricFontSize <= 10) return;
+            LyricFontSize -= 1;
         }
 
         /// <summary>

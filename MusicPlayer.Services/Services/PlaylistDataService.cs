@@ -31,6 +31,7 @@ namespace MusicPlayer.Services
         private readonly IMessagingService _messagingService;
         private readonly IDispatcherService _dispatcherService;
         private readonly IConfigurationService _configurationService;
+        private readonly IPlaybackContextService _playbackContextService;
 
         private Song? _currentSong;
         private SortRule _currentSortRule = SortRule.ByAddedTime;
@@ -120,7 +121,8 @@ namespace MusicPlayer.Services
             IPlaylistService playlistService,
             IMessagingService messagingService,
             IDispatcherService dispatcherService,
-            IConfigurationService configurationService)
+            IConfigurationService configurationService,
+            IPlaybackContextService playbackContextService)
         {
             System.Diagnostics.Debug.WriteLine("PlaylistDataService: 构造函数开始执行");
             
@@ -129,6 +131,7 @@ namespace MusicPlayer.Services
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _dispatcherService = dispatcherService ?? throw new ArgumentNullException(nameof(dispatcherService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
 
             // 获取当前排序规则
             _currentSortRule = _configurationService.CurrentConfiguration.SortRule;
@@ -403,73 +406,36 @@ namespace MusicPlayer.Services
         {
             lock (_lock)
             {
-                // 从缓存获取当前播放列表
-                var playlist = _cacheService.GetPlaylist();
+                // 获取当前播放上下文
+                var context = _playbackContextService.CurrentPlaybackContext;
+                var currentSong = CurrentSong;
                 
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong 开始 - 播放模式: {playMode}, 当前歌曲: {CurrentSong?.Title}, 数据源数量: {playlist.Count}");
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong 开始 - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}");
                 
-                // 如果播放列表为空或当前歌曲为空，返回null
-                if (playlist.Count == 0 || CurrentSong == null) 
+                // 如果当前歌曲为空，返回null
+                if (currentSong == null) 
                 {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 数据源为空或当前歌曲为空，返回null");
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 当前歌曲为空，返回null");
                     return null;
                 }
 
-                Song? nextSong = null;
-                string? reason = null;
-
+                // 获取对应的提供者
                 try
                 {
-                    switch (playMode)
-                    {
-                        case PlayMode.RepeatOne:
-                            nextSong = CurrentSong;
-                            reason = "单曲循环";
-                            break;
-
-                        case PlayMode.Shuffle:
-                            var random = new Random();
-                            var randomIndex = random.Next(0, playlist.Count);
-                            nextSong = playlist[randomIndex];
-                            reason = $"随机播放 (索引: {randomIndex}/{playlist.Count})";
-                            break;
-
-                        case PlayMode.RepeatAll:
-                        default:
-                            var currentIndex = playlist.IndexOf(CurrentSong);
-                            System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 当前歌曲索引: {currentIndex}");
-                            
-                            if (currentIndex == -1) 
-                            {
-                                nextSong = playlist.Count > 0 ? playlist[0] : null;
-                                reason = nextSong != null ? "当前歌曲未找到，返回第一首" : "播放列表为空";
-                            }
-                            else
-                            {
-                                var nextIndex = currentIndex + 1;
-                                if (nextIndex >= playlist.Count)
-                                {
-                                    nextSong = playlist[0];
-                                    reason = "列表循环，返回第一首";
-                                }
-                                else
-                                {
-                                    nextSong = playlist[nextIndex];
-                                    reason = $"下一首 (索引: {nextIndex}/{playlist.Count})";
-                                }
-                            }
-                            break;
-                    }
+                    var provider = _playbackContextService.GetProvider(context.Type);
+                    
+                    // 使用提供者获取下一首歌曲
+                    var nextSong = provider.GetNextSong(context, currentSong, playMode);
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}, 下一首: {nextSong?.Title}");
+                    
+                    return nextSong;
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 异常: {ex.Message}");
                     return null;
                 }
-
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - {reason}, 排序规则: {CurrentSortRule}, 当前歌曲: {CurrentSong?.Title}, 下一首: {nextSong?.Title}");
-                
-                return nextSong;
             }
         }
 
@@ -481,39 +447,35 @@ namespace MusicPlayer.Services
         {
             lock (_lock)
             {
-                // 从缓存获取当前播放列表
-                var playlist = _cacheService.GetPlaylist();
+                // 获取当前播放上下文
+                var context = _playbackContextService.CurrentPlaybackContext;
+                var currentSong = CurrentSong;
                 
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong 开始 - 播放模式: {playMode}, 当前歌曲: {CurrentSong?.Title}, 数据源数量: {playlist.Count}");
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong 开始 - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}");
                 
-                if (playlist.Count == 0 || CurrentSong == null) 
+                // 如果当前歌曲为空，返回null
+                if (currentSong == null) 
                 {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 数据源为空或当前歌曲为空，返回null");
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 当前歌曲为空，返回null");
                     return null;
                 }
 
-                switch (playMode)
+                // 获取对应的提供者
+                try
                 {
-                    case PlayMode.RepeatOne:
-                        return CurrentSong;
-
-                    case PlayMode.Shuffle:
-                        var random = new Random();
-                        var randomIndex = random.Next(0, playlist.Count);
-                        return playlist[randomIndex];
-
-                    case PlayMode.RepeatAll:
-                    default:
-                        var currentIndex = playlist.IndexOf(CurrentSong);
-                        if (currentIndex == -1) return playlist.Count > 0 ? playlist[playlist.Count - 1] : null;
-
-                        var previousIndex = currentIndex - 1;
-                        if (previousIndex < 0)
-                        {
-                            return playlist[playlist.Count - 1];
-                        }
-
-                        return playlist[previousIndex];
+                    var provider = _playbackContextService.GetProvider(context.Type);
+                    
+                    // 使用提供者获取上一首歌曲
+                    var previousSong = provider.GetPreviousSong(context, currentSong, playMode);
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}, 上一首: {previousSong?.Title}");
+                    
+                    return previousSong;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 异常: {ex.Message}");
+                    return null;
                 }
             }
         }

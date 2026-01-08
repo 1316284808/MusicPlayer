@@ -87,10 +87,26 @@ namespace MusicPlayer.Core.Audio
         public int Read(float[] buffer, int offset, int count)
         {
             if (_disposed) return 0;
-            
+            int samplesRead = 0;//声明时给初始值，不然报错；
+            if (_source == null) return 0;
+            try
+            {
+                samplesRead = _source.Read(buffer, offset, count);
+            }
+            catch (Exception ex) {
+                /*
+                 System.NullReferenceException
+  HResult=0x80004003
+  Message=Object reference not set to an instance of an object.
+  Source=NAudio.Wasapi
+  StackTrace:
+   在 NAudio.Wave.MediaFoundationReader.Read(Byte[] buffer, Int32 offset, Int32 count)
 
-            int samplesRead = _source.Read(buffer, offset, count);
+                 
+                 */
 
+                System.Diagnostics.Debug.WriteLine( ex.Message);
+            }
             for (int i = 0; i < samplesRead; i += _channels)
             {
                 // 多通道混音为单声道

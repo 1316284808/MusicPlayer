@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
-xmlns:controls="clr-namespace:MusicPlayer.Helper"
+            xmlns:Helper="clr-namespace:MusicPlayer.Helper"
             xmlns:behaviors="clr-namespace:MusicPlayer.Helper"
             xmlns:local="clr-namespace:MusicPlayer.Controls"
             xmlns:System="clr-namespace:System;assembly=mscorlib"
@@ -96,23 +96,75 @@ xmlns:controls="clr-namespace:MusicPlayer.Helper"
             <!-- Lyrics Section -->
             <Grid Grid.Column="1" HorizontalAlignment="Stretch">
                 <ListBox x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
-                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Center"
+                BorderThickness="0" HorizontalContentAlignment="Left"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.CanContentScroll="False"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 behaviors:LyricsScrollBehavior.AutoScrollToCenter="True"
                 behaviors:LyricsScrollBehavior.ScrollDuration="300"
                 behaviors:LyricsScrollBehavior.ScrollOnLoad="True">
-                <ListBox.ItemContainerStyle>
+                    <ListBox.ContextMenu  >
+                        <ContextMenu >
+                            <StackPanel Orientation="Horizontal"  >
+                                <ui:Button CornerRadius="8" Width="auto" ToolTip="字号+" Command="{Binding IncreaseLyricFontSizeCommand}">
+
+                                    <Helper:CustomIcon Kind="BigFont" IconSize="12" Margin="2,0,0,0"/>
+
+                                </ui:Button>
+                                <ui:TextBlock Text="{Binding LyricFontSize }"   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ui:Button CornerRadius="8" Width="auto" ToolTip="字号-" Command="{Binding DecreaseLyricFontSizeCommand}">
+
+                                    <Helper:CustomIcon Kind="SmallFont" IconSize="12"  Margin="0,0,2,0"/>
+
+
+                                </ui:Button>
+
+                                <Separator Margin="2" />
+                                       
+
+                                        <ui:Button CornerRadius="8" ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
+                                            <Helper:CustomIcon>
+                                                <Helper:CustomIcon.Style>
+                                                    <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                                        <!-- 默认右对齐图标 -->
+                                                        <Setter Property="Kind" Value="Right"/>
+                                                        <Style.Triggers>
+                                                            <!-- 左对齐 -->
+                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Left">
+                                                                <Setter Property="Kind" Value="Left"/>
+                                                            </DataTrigger>
+                                                            <!-- 居中对齐 -->
+                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Center">
+                                                                <Setter Property="Kind" Value="Center"/>
+                                                            </DataTrigger>
+                                                            <!-- 右对齐 -->
+                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Right">
+                                                                <Setter Property="Kind" Value="Right"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Helper:CustomIcon.Style>
+                                            </Helper:CustomIcon>
+                                        </ui:Button>
+
+                                       
+                                    </StackPanel>
+                              
+                             
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+
+
+                    <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Focusable" Value="False"/>
-                        <Setter Property="Padding" Value="5"/>
-                        <Setter Property="Template">
+                            <Setter Property="Padding" Value="5"/>
+                            <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
-                                        <TextBlock Text="{Binding Text}" FontSize="20" TextAlignment="Center"
-                                          TextWrapping="Wrap"   LineHeight="20" MaxWidth="550" Margin="10,5"   x:Name="LyricTextBlock">
+                                    <Border x:Name="ItemBorder" Margin="0,0,15,0" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
+                                        <TextBlock Text="{Binding Text}"   TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                          TextWrapping="Wrap" FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"  LineHeight="20" MaxWidth="550"  Margin="5"  x:Name="LyricTextBlock">
                                         </TextBlock>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -121,17 +173,16 @@ xmlns:controls="clr-namespace:MusicPlayer.Helper"
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#FF0078D7"/>
-                                            <Setter TargetName="LyricTextBlock" Property="FontSize" Value="28"/>
+                                            <Setter TargetName="LyricTextBlock" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                             <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Bold"/>
-                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/> 
+                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
                                             
                                         </Trigger>
                                             <Trigger Property="IsSelected" Value="False">
                                                 <Setter TargetName="LyricTextBlock" Property="Foreground" Value="Black"/>
-                                                <Setter TargetName="LyricTextBlock" Property="FontSize" Value="20"/>
                                                 <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Normal"/>
                                                 <Setter TargetName="LyricTextBlock" Property="Opacity" Value="0.8"/>
-                                               
+                                                
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -142,11 +193,11 @@ xmlns:controls="clr-namespace:MusicPlayer.Helper"
             </ListBox>
                
             </Grid>
+            
+
         </Grid>
 
         <Grid Grid.Row="2"> 
-           
-          
         </Grid>
     </Grid>
 </UserControl>

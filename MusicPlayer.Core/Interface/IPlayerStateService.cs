@@ -56,6 +56,11 @@ namespace MusicPlayer.Core.Interface
         float[] SpectrumData { get; }
         
         /// <summary>
+        /// 当前播放上下文
+        /// </summary>
+        PlaybackContext CurrentPlaybackContext { get; set; }
+        
+        /// <summary>
         /// 更新当前歌曲
         /// </summary>
         void UpdateCurrentSong(Song? song);

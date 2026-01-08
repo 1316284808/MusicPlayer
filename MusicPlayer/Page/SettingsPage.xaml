@@ -11,7 +11,7 @@
       d:DesignHeight="700" d:DesignWidth="1000"
       Title="SettingsPage">
 
-    <Grid Background="Transparent">
+    <Grid  >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -19,37 +19,25 @@
         </Grid.RowDefinitions>
 
         <!-- 页面标题 -->
-        <TextBlock Grid.Row="0" Text="设置" FontSize="24" FontWeight="Bold" 
-                   HorizontalAlignment="Center" VerticalAlignment="Center" 
-                   Margin="10"   />
+        <StackPanel HorizontalAlignment="Center">
+                <ui:TextBlock   Margin="10,2" Text="设置"  FontWeight="Bold"  FontSize="24"   />
 
+        </StackPanel>
         <!-- 内容区域 -->
-        <TabControl Grid.Row="1" VerticalContentAlignment="Top"  Margin="10">
+        <TabControl Grid.Row="1"  VerticalContentAlignment="Top" BorderThickness="0" BorderBrush="Transparent"  Margin="10" Background="Transparent" >
 
-            <TabItem Background="Transparent"   >
+            <TabItem BorderThickness="0" BorderBrush="Transparent"   >
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Settings" Margin="2" />
-                        <TextBlock Text="窗体设置" FontSize="14"    FontWeight="Bold"/>
+                        <TextBlock Text="外观设置" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
                     <controls:WindowSettingsControl x:Name="WindowSettingsControl"   />
                 </ScrollViewer>
-            </TabItem>
-            <TabItem Background="Transparent">
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <Helper:CustomIcon Kind="List" Margin="2" />
-                        <TextBlock Text="列表设置" FontSize="14"    FontWeight="Bold"/>
-                    </StackPanel>
-                </TabItem.Header>
-                <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
-                    <controls:PlaylistSettingControl x:Name="PlaylistSettingControl"    />
-                </ScrollViewer>
-            </TabItem>
-
-            <TabItem   Background="Transparent"   >
+            </TabItem> 
+            <TabItem     >
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Sound" Margin="2" />
@@ -60,7 +48,17 @@
                     <controls:SoundSettingsControl DataContext="{Binding SoundSettingsViewModel}" />
                 </ScrollViewer>
             </TabItem>
-
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="List" Margin="2" />
+                        <TextBlock Text="数据管理" FontSize="14"    FontWeight="Bold"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
+                    <controls:PlaylistSettingControl x:Name="PlaylistSettingControl"    />
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
         <StackPanel  Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center"  >
             <!--<Button Content="应用设置" 

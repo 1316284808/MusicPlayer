@@ -128,6 +128,14 @@ namespace MusicPlayer.Navigation
                         {
                             pageType = typeof(PlayerPage);
                         }
+                        else if (e.Content is SingerPage)
+                        {
+                            pageType = typeof(SingerPage);
+                        }
+                        else if (e.Content is AlbumPage)
+                        {
+                            pageType = typeof(AlbumPage);
+                        }
                         
                         if (pageType != null)
                         {

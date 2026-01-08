@@ -18,6 +18,7 @@ namespace MusicPlayer.Services
     {
         private readonly IConfigurationService _configurationService;
         private readonly IMessagingService _messagingService;
+        private readonly IPlaybackContextService _playbackContextService;
         private readonly object _lockObject = new();
         private bool _disposed = false;
         private bool _isRestoringFromPersistence = false; // 标记是否正在从持久化恢复状态
@@ -38,6 +39,7 @@ namespace MusicPlayer.Services
         private float[] _spectrumData = new float[32];
         private Song? _currentSong;
         private DateTime _lastSpectrumMessageTime = DateTime.MinValue;
+        private PlaybackContext _currentPlaybackContext;
         
         public event PropertyChangedEventHandler? PropertyChanged;
         public event Action<string, object>? StateChanged;
@@ -204,6 +206,21 @@ namespace MusicPlayer.Services
             }
         }
         
+        public PlaybackContext CurrentPlaybackContext
+        {
+            get => _currentPlaybackContext;
+            set
+            {
+                if (_currentPlaybackContext != value)
+                {
+                    _currentPlaybackContext = value ?? PlaybackContext.CreateDefault();
+                    OnPropertyChanged();
+                    StateChanged?.Invoke(nameof(CurrentPlaybackContext), _currentPlaybackContext);
+                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: 播放上下文更新为 {_currentPlaybackContext}");
+                }
+            }
+        }
+        
         public float[] SpectrumData
         {
             get => _spectrumData;
@@ -255,13 +272,15 @@ namespace MusicPlayer.Services
         public PlayerStateService(
             IPlaylistDataService playlistDataService, 
             IConfigurationService configurationService, 
-            IMessagingService messagingService)
+            IMessagingService messagingService,
+            IPlaybackContextService playbackContextService)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"PlayerStateService: 创建新实例，ID: {GetHashCode()}, 线程ID: {Thread.CurrentThread.ManagedThreadId}");
             
             _configurationService = configurationService;
             _messagingService = messagingService;
+            _playbackContextService = playbackContextService;
             
             // 加载配置
             LoadConfiguration();
@@ -271,6 +290,9 @@ namespace MusicPlayer.Services
             
             // 订阅配置变更事件
             _configurationService.ConfigurationChanged += OnConfigurationChanged;
+            
+            // 初始化播放上下文
+            _currentPlaybackContext = _playbackContextService.CurrentPlaybackContext;
             
             // 订阅播放状态变化消息，同步状态
             _messagingService.Register<PlaybackStateChangedMessage>(this, (r, m) =>

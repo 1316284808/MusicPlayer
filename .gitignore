@@ -13,3 +13,9 @@
 /MusicPlayer.Services/obj
 /MusicPlayer_Install/bin
 /MusicPlayer_Install/obj
+/MusicPlayer/bin/Release
+/MusicPlayer.Core/bin/Release/net8.0-windows
+/build.log
+/log.txt
+/TestLiteDB.cs
+/播放上下文系统设计文档.md

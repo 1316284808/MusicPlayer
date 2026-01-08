@@ -10,10 +10,16 @@
     <Compile Update="Controls\SoundSettingsControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Page\AlbumPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Page\HomePage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Page\PlayerPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Page\SingerPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

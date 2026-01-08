@@ -7,7 +7,6 @@ using MusicPlayer.Core.Models;
 using System.Text.Json;
 using File = System.IO.File;
 using MusicPlayer.Core.Data;
-using Microsoft.Data.Sqlite;
 using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Enums;
 
@@ -261,21 +260,10 @@ public class PlaylistCacheService : IPlaylistCacheService
         {
             System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 开始异步保存 {newSongs.Count} 首新歌曲到数据库");
             
-            // 使用事务保存到SQLite数据库
-            using var transaction = _playlistDataDal.BeginTransaction();
-            try
-            {
-                // 只保存新添加的歌曲
-                _playlistDataDal.InsertSongs(newSongs, transaction);
-                transaction.Commit();
+            // 使用LiteDB保存新添加的歌曲
+            _playlistDataDal.InsertSongs(newSongs);
                 
-                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 成功保存 {newSongs.Count} 首新歌曲到数据库");
-            }
-            catch
-            {
-                transaction.Rollback();
-                throw;
-            }
+            System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 成功保存 {newSongs.Count} 首新歌曲到数据库");
         }
         catch (Exception ex)
         {
@@ -374,27 +362,13 @@ public class PlaylistCacheService : IPlaylistCacheService
             {
                 try
                 {
-              
-
-                // 使用事务保存到SQLite数据库
-                using var transaction = _playlistDataDal.BeginTransaction();
-                try
-                {
-                  
-                    // 使用INSERT OR REPLACE简化插入/更新操作
-                    _playlistDataDal.InsertSongs(  playlist, transaction);
-                        transaction.Commit();
+                    // 使用LiteDB保存播放列表
+                    _playlistDataDal.InsertSongs(playlist);
                         
-                        System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 已保存 {playlist.Count} 首歌曲到数据库，排序规则: {sortRule}");
+                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 已保存 {playlist.Count} 首歌曲到数据库，排序规则: {sortRule}");
 
                     // 更新缓存
                     UpdatePlaylist(_playlistDataDal.LoadAllSongs());
-                }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -417,21 +391,10 @@ public class PlaylistCacheService : IPlaylistCacheService
             {
                 System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 开始异步更新歌曲状态到数据库: {song.Title}");
                 
-                // 使用事务更新单个歌曲状态到SQLite数据库
-                using var transaction = _playlistDataDal.BeginTransaction();
-                try
-                {
-                    // 更新单个歌曲的状态
-                    _playlistDataDal.UpdateSong(song, transaction);
-                    transaction.Commit();
+                // 使用LiteDB更新单个歌曲状态
+                _playlistDataDal.UpdateSong(song);
                     
-                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 成功更新歌曲状态到数据库: {song.Title}");
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 成功更新歌曲状态到数据库: {song.Title}");
             }
             catch (Exception ex)
             {

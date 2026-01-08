@@ -13,7 +13,7 @@ namespace MusicPlayer.Core.Enums
         Play,//播放
         Pause,//暂停
         Next,//下一曲
-        Stop, //⏹
+        Stop, // 
         VolumeHigh,//高
         VolumeMedium,//中
         VolumeLow,//低
@@ -37,7 +37,9 @@ namespace MusicPlayer.Core.Enums
         Clock,//时间排序
         Text,
         Person,
+        InPerson,
         Album,
+        InAlbum,
         Time,
         Storage, 
         Heart,// 心形图标，表示收藏或喜欢 /关
@@ -59,6 +61,12 @@ namespace MusicPlayer.Core.Enums
         SaveAs,//保存
         Reset,//重置
         Position,// 定位
+        BigFont,//字体加大
+        SmallFont,//字体减小
+        Left,//左对齐
+        Center,//中间对齐
+        Right,//右对齐
+        Photo,//图片
 
     }
 }
