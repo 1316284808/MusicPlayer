@@ -73,7 +73,8 @@ namespace MusicPlayer.Config
         {
             // 播放列表缓存服务 - 全部使用单例模式
             services.AddSingleton<IPlaylistCacheService, PlaylistCacheService>();
-            services.AddSingleton<IPlaylistService, PlaylistService>();
+            services.AddSingleton<IPlaylistService>(provider => new PlaylistService(
+                provider.GetRequiredService<IConfigurationService>()));
             services.AddSingleton<IPlaylistDataService>(provider => {
                 var instance = new PlaylistDataService(
                     provider.GetRequiredService<IPlaylistCacheService>(),
@@ -310,7 +311,8 @@ namespace MusicPlayer.Config
                 new PlaylistSettingViewModel(
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IDispatcherService>()));
+                    provider.GetRequiredService<IDispatcherService>(),
+                    provider.GetRequiredService<IConfigurationService>()));
 
             // MainViewModel - 单例模式
             services.AddSingleton<IMainViewModel>(provider => 

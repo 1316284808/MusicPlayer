@@ -10,10 +10,7 @@ namespace MusicPlayer.ViewModels
     /// </summary>
     public interface IPlaylistViewModel : IViewModelLifecycle
     {
-        /// <summary>
-        /// 播放列表集合
-        /// </summary>
-        ObservableCollection<Song> Playlist { get; }
+        
 
         /// <summary>
         /// 当前播放歌曲

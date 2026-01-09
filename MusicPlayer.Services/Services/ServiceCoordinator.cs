@@ -96,6 +96,10 @@ namespace MusicPlayer.Services
                 
                 // 标记为正在初始化，防止重复调用
                 _initialized = true;
+                
+                // 从配置读取封面缓存设置，并应用到Song类的静态属性
+                MusicPlayer.Core.Models.Song.IsCoverCacheEnabled = ConfigurationService.CurrentConfiguration.IsCoverCacheEnabled;
+                System.Diagnostics.Debug.WriteLine($"ServiceCoordinator: 封面缓存设置已应用，当前状态: {MusicPlayer.Core.Models.Song.IsCoverCacheEnabled}");
             }
 
             try

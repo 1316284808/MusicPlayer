@@ -31,6 +31,8 @@ namespace MusicPlayer.Core.Models
         private int _lastPlayedSongId = -1; // 最后播放的歌曲ID，-1表示无
         private double _lyricFontSize = 20.0; // 歌词字体大小
         private TextAlignment _lyricTextAlignment = TextAlignment.Center; // 歌词文本对齐方式
+        private bool _isCoverCacheEnabled = true; // 是否启用封面缓存
+        private string _lyricDirectory = string.Empty; // 歌词文件目录
 
         /// <summary>
         /// 音量大小 (0.0 - 1.0)
@@ -349,6 +351,38 @@ namespace MusicPlayer.Core.Models
         }
 
         /// <summary>
+        /// 是否启用封面缓存
+        /// </summary>
+        public bool IsCoverCacheEnabled
+        {
+            get => _isCoverCacheEnabled;
+            set
+            {
+                if (_isCoverCacheEnabled != value)
+                {
+                    _isCoverCacheEnabled = value;
+                    OnPropertyChanged(nameof(IsCoverCacheEnabled));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 歌词文件目录
+        /// </summary>
+        public string LyricDirectory
+        {
+            get => _lyricDirectory;
+            set
+            {
+                if (_lyricDirectory != value)
+                {
+                    _lyricDirectory = value;
+                    OnPropertyChanged(nameof(LyricDirectory));
+                }
+            }
+        }
+
+        /// <summary>
         /// 获取或设置指定频段的增益值
         /// </summary>
         /// <param name="bandIndex">频段索引 (0-9)</param>
@@ -423,6 +457,8 @@ namespace MusicPlayer.Core.Models
             LastPlayedSongId = -1; // 默认无最后播放歌曲
             LyricFontSize = 20.0; // 默认歌词字体大小
             LyricTextAlignment = TextAlignment.Center; // 默认歌词居中对齐
+            IsCoverCacheEnabled = true; // 默认启用封面缓存
+            LyricDirectory = string.Empty; // 默认歌词目录为空，使用同目录下的歌词文件
         }
 
       

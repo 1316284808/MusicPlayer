@@ -60,12 +60,7 @@ namespace MusicPlayer.ViewModels
         
         private FilterMode _currentFilterMode = FilterMode.All;
 
-        /// <summary>
-        /// 播放列表（已弃用，请使用FilteredPlaylist）
-        /// 为了保持向后兼容性保留此属性，但不再维护内部状态
-        /// </summary>
-        [Obsolete("请使用FilteredPlaylist替代此属性")]
-        public ObservableCollection<Song> Playlist => _filteredPlaylist;
+        
 
         /// <summary>
         /// 专辑加载请求事件
@@ -414,22 +409,7 @@ namespace MusicPlayer.ViewModels
 
         }
 
-        /// <summary>
-        /// 处理歌曲选择
-        /// </summary>
-        private void HandleSongSelection(Song song)
-        {
-            // 检查是否是同一首歌，避免重复播放
-            if (_playlistDataService.CurrentSong != null && _playlistDataService.CurrentSong.FilePath == song.FilePath)
-            {
-                // 已经是当前歌曲，不需要重新播放
-                System.Diagnostics.Debug.WriteLine($"HandleSongSelection: 选中歌曲与当前播放歌曲相同，跳过播放 - {song.Title}");
-                return;
-            }
-
-            // 通过消息系统播放选中的歌曲
-            _messagingService.Send(new PlaySelectedSongMessage(song));
-        }
+       
 
         /// <summary>
         /// 执行播放选中歌曲操作

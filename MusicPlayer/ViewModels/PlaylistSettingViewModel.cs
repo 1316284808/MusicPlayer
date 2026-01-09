@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Models;
 using MusicPlayer.Services.Messages;
 
 namespace MusicPlayer.ViewModels
@@ -27,7 +29,10 @@ namespace MusicPlayer.ViewModels
         private readonly IMessagingService _messagingService;
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IDispatcherService _dispatcherService;
+        private readonly IConfigurationService _configurationService;
         private bool _isClearingPlaylist;
+        private bool _isCoverCacheEnabled;
+        private string _lyricDirectory;
 
         /// <summary>
         /// 是否正在清空播放列表
@@ -45,11 +50,33 @@ namespace MusicPlayer.ViewModels
                 }
             }
         }
-
+        /// <summary>
+        /// 缓存路径
+        /// </summary>
+        public string AlbumArtCachePath => Paths.AlbumArtCacheDirectory;
         /// <summary>
         /// 是否可以清空播放列表
         /// </summary>
         public bool CanClearPlaylist => !IsClearingPlaylist;
+
+        /// <summary>
+        /// 是否启用封面缓存
+        /// </summary>
+        public bool IsCoverCacheEnabled
+        {
+            get => _isCoverCacheEnabled;
+            set
+            {
+                if (_isCoverCacheEnabled != value)
+                {
+                    _isCoverCacheEnabled = value;
+                    OnPropertyChanged(nameof(IsCoverCacheEnabled));
+                    // 更新配置并保存
+                    _configurationService.CurrentConfiguration.IsCoverCacheEnabled = value;
+                    _configurationService.SaveCurrentConfiguration();
+                }
+            }
+        }
 
         /// <summary>
         /// 清空播放列表命令
@@ -57,21 +84,56 @@ namespace MusicPlayer.ViewModels
         public ICommand ClearPlaylistCommand { get; }
 
         /// <summary>
+        /// 打开缓存目录命令
+        /// </summary>
+        public ICommand OpenCacheDirectoryCommand { get; }
+
+        /// <summary>
+        /// 歌词文件目录
+        /// </summary>
+        public string LyricDirectory
+        {
+            get => _lyricDirectory;
+            set
+            {
+                if (_lyricDirectory != value)
+                {
+                    _lyricDirectory = value;
+                    OnPropertyChanged(nameof(LyricDirectory));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 选择歌词目录命令
+        /// </summary>
+        public ICommand SelectLyricDirectoryCommand { get; }
+
+        /// <summary>
         /// 初始化 PlaylistSettingViewModel 类的新实例
         /// </summary>
         /// <param name="messagingService">消息服务</param>
         /// <param name="playlistDataService">播放列表数据服务</param>
         /// <param name="dispatcherService">UI线程调度服务</param>
+        /// <param name="configurationService">配置服务</param>
         public PlaylistSettingViewModel(
             IMessagingService messagingService,
             IPlaylistDataService playlistDataService,
-            IDispatcherService dispatcherService)
+            IDispatcherService dispatcherService,
+            IConfigurationService configurationService)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _dispatcherService = dispatcherService ?? throw new ArgumentNullException(nameof(dispatcherService));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
 
             ClearPlaylistCommand = new RelayCommand(async () => await ExecuteClearPlaylist(), () => CanClearPlaylist);
+            OpenCacheDirectoryCommand = new RelayCommand(ExecuteOpenCacheDirectory);
+            SelectLyricDirectoryCommand = new RelayCommand(ExecuteSelectLyricDirectory);
+
+            // 从配置初始化封面缓存开关状态
+            _isCoverCacheEnabled = _configurationService.CurrentConfiguration.IsCoverCacheEnabled;
+            _lyricDirectory = _configurationService.CurrentConfiguration.LyricDirectory;
         }
 
         /// <summary>
@@ -177,6 +239,71 @@ namespace MusicPlayer.ViewModels
                 
                 System.Windows.MessageBox.Show(message, "提示", System.Windows.MessageBoxButton.OK, icon);
             });
+        }
+
+        /// <summary>
+        /// 执行打开缓存目录操作
+        /// </summary>
+        private void ExecuteOpenCacheDirectory()
+        {
+            try
+            {
+                // 获取封面缓存目录路径
+                string cacheDirectory = Paths.AlbumArtCacheDirectory;
+
+                // 确保目录存在
+                if (!Directory.Exists(cacheDirectory))
+                {
+                    Directory.CreateDirectory(cacheDirectory);
+                }
+                
+                // 打开目录
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = cacheDirectory,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistSettingViewModel: 打开缓存目录失败: {ex.Message}");
+                _ = ShowMessageAsync("打开缓存目录失败", MessageType.Error);
+            }
+        }
+
+        /// <summary>
+        /// 执行选择歌词目录操作
+        /// </summary>
+        private void ExecuteSelectLyricDirectory()
+        {
+            try
+            {
+                // 创建文件夹选择器
+                var folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+                folderBrowserDialog.Description = "请选择歌词文件目录";
+                folderBrowserDialog.SelectedPath = string.IsNullOrEmpty(_lyricDirectory) ? Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) : _lyricDirectory;
+                
+                // 显示文件夹选择器
+                var result = folderBrowserDialog.ShowDialog();
+                if (result == System.Windows.Forms.DialogResult.OK)
+                {
+                    // 更新歌词目录
+                    LyricDirectory = folderBrowserDialog.SelectedPath;
+                    
+                    // 保存到配置
+                    _configurationService.CurrentConfiguration.LyricDirectory = folderBrowserDialog.SelectedPath;
+                    _configurationService.SaveCurrentConfiguration();
+                    
+                    // 显示成功消息
+                    _ = ShowMessageAsync("歌词目录已设置", MessageType.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistSettingViewModel: 选择歌词目录失败: {ex.Message}");
+                _ = ShowMessageAsync("选择歌词目录失败", MessageType.Error);
+            }
         }
     }
 }

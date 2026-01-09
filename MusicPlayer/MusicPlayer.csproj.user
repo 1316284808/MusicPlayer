@@ -7,6 +7,9 @@
     <Compile Update="Controls\PlaylistSettingControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Controls\SingerControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Controls\SoundSettingsControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

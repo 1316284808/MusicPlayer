@@ -29,7 +29,9 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="RoBot" Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="音频引擎"  FontSize="14" FontWeight="SemiBold" />
+                        <Separator Margin="2" />
                     </StackPanel>
                    
                     <TextBlock Text="可以切换不同的音频引擎：Auto(由程序自主选择音频引擎)、 DirectX(DirectSound)、 Windows会话(WASAPI)" 
@@ -57,7 +59,9 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center"> 
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Equalizer" Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="均衡器"  FontSize="14" FontWeight="SemiBold" />
+                        <Separator Margin="2" />
                     </StackPanel>
 
                     <TextBlock Text="可以切换不同调音风格 "
@@ -67,6 +71,7 @@
                     <ui:Button ToolTip="重置"     Command="{Binding ResetEqualizerCommand}"   VerticalAlignment="Center">
                         <Helper:CustomIcon Kind="Reset"  />
                     </ui:Button>
+                    <Separator Margin="2" />
                     <ui:ToggleSwitch x:Name="EqualizerEnabledCheckBox" Content="启用"   Background="Black"
                                      VerticalAlignment="Center" Margin="0,0,10,0"
                               IsChecked="{Binding IsEqualizerEnabled, Mode=TwoWay}" />
@@ -238,8 +243,9 @@
                         <!--另存为新配置-->
                         <ui:Button Command="{Binding SavePresetCommand}" Width="auto" ToolTip="另存为新配置" Background="Transparent" BorderThickness="0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Helper:CustomIcon Kind="SaveAs" Margin="0,0,15,0"/>
-                                <TextBox x:Name="SavePresetTextBox" Width="{Binding IsSavePresetExpanded, Converter={StaticResource SearchBoxWidthConverter}}"  
+                            <Helper:CustomIcon Kind="SaveAs" />
+                            <Separator Margin="2" />
+                            <TextBox x:Name="SavePresetTextBox" Width="{Binding IsSavePresetExpanded, Converter={StaticResource SearchBoxWidthConverter}}"  
                                         FontSize="14" FontWeight="Normal"  Text="{Binding NewPresetName, UpdateSourceTrigger=PropertyChanged}"   
                                         HorizontalAlignment="Left" VerticalAlignment="Center"   
                                         MaxLength="20"
@@ -258,8 +264,8 @@
                                 </TextBox>
                             </StackPanel>
                         </ui:Button>
-
-                        <ComboBox x:Name="EqualizerComboBox" FontWeight="Normal"   Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    <Separator Margin="2" />
+                    <ComboBox x:Name="EqualizerComboBox" FontWeight="Normal"   Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center"
                             ItemsSource="{Binding EqualizerPresets}"
                             SelectedValue="{Binding CurrentEqualizerPresetName, Mode=TwoWay}"
                             SelectedValuePath="PresetName"

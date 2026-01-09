@@ -38,6 +38,7 @@
                     </Style>
                 </Helper:CustomIcon.Style>
             </Helper:CustomIcon>
+            
         </ui:Button>
         
      
@@ -61,7 +62,8 @@
                                 </Style>
                             </Helper:CustomIcon.Style>
                         </Helper:CustomIcon>
-                <ui:TextBlock Margin="10,2" Text="默认列表"  FontWeight="SemiBold" Visibility="{Binding AreOtherButtonsVisible, 
+                <Separator Margin="2" />
+                <ui:TextBlock Margin="2" Text="默认列表"  FontWeight="SemiBold" Visibility="{Binding AreOtherButtonsVisible, 
                       Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </ui:Button>
@@ -86,7 +88,8 @@
                                 </Style>
                             </Helper:CustomIcon.Style>
                         </Helper:CustomIcon>
-                <ui:TextBlock Margin="10,2" Text="收藏列表"   FontWeight="SemiBold"    Visibility="{Binding AreOtherButtonsVisible, 
+                <Separator Margin="2" />
+                <ui:TextBlock Margin="2" Text="收藏列表"   FontWeight="SemiBold"    Visibility="{Binding AreOtherButtonsVisible, 
                              Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </ui:Button>
@@ -111,7 +114,8 @@
                         </Style>
                     </Helper:CustomIcon.Style>
                 </Helper:CustomIcon>
-                <ui:TextBlock   Margin="10,2" Text="歌手列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+                <Separator Margin="2" />
+                <ui:TextBlock   Margin="2" Text="歌手列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
            Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </ui:Button>
@@ -136,7 +140,8 @@
                         </Style>
                     </Helper:CustomIcon.Style>
                 </Helper:CustomIcon>
-                <ui:TextBlock   Margin="10,2" Text="专辑列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+                <Separator Margin="2" />
+                <ui:TextBlock   Margin="2" Text="专辑列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
    Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </ui:Button>
@@ -168,7 +173,8 @@
                         </Style>
                     </Helper:CustomIcon.Style>
                 </Helper:CustomIcon>
-                <ui:TextBlock   Margin="10,2" Text="设置"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
+                <Separator Margin="2" />
+                <ui:TextBlock   Margin="2" Text="设置"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
                   Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </ui:Button>

@@ -22,8 +22,8 @@
                    Cursor="Hand" ToolTip="返回上一页" Padding="0"    Command="{Binding GoBackCommand}">
                 <StackPanel   Orientation="Horizontal"  HorizontalAlignment="Left"  >
                     <controls:CustomIcon HorizontalAlignment="Left"   Kind="Back" Margin="5,2" />
-                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Margin="15,0,15,0" 
-FontSize="14" FontWeight="SemiBold" />
+                    <Separator Margin="2" />
+                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"  Margin="5,2" FontSize="14" FontWeight="SemiBold" />
                    
                 </StackPanel> 
             </ui:Button>

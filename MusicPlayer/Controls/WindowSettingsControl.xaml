@@ -25,7 +25,9 @@
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Theme" Margin="2"/>
-                            <TextBlock Text="主题切换"   FontSize="14"  FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
+                        <TextBlock Text="主题切换"   FontSize="14"  FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
                     </StackPanel>
                        
                     <TextBlock Text="可以切换四种不同的主题：None、Acrylic、Mica、Tabbed  " FontSize="12"   FontWeight="Normal"  Margin="20,5,0,0"/>
@@ -48,7 +50,9 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Spectrum" Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="频谱显示"   FontSize="14"  FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
                         <Border Background="Pink" CornerRadius="4" Margin="10,0" Padding="2" Opacity="0.7" >
                             <TextBlock Text="⚠GPU高占用"  HorizontalAlignment="Left" VerticalAlignment="Center" FontStretch="Normal" FontSize="10" FontWeight="SemiBold"   Foreground="Red"  />
                         </Border>
@@ -75,7 +79,9 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="AppIcon" Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="程序托盘"   FontSize="14"  FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
                     </StackPanel>
                     <TextBlock Text="点击关闭主窗口自动最小化到程序托盘" FontSize="12"  FontWeight="Normal"  Margin="20,5,0,0"/>
                 </StackPanel>

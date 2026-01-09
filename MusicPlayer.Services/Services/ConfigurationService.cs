@@ -55,6 +55,9 @@ namespace MusicPlayer.Services
             // 保存PlayerStateService引用，用于同步状态
             _playerStateService = playerStateService;
 
+            // 订阅配置变化事件，用于更新Song类的静态属性
+            ConfigurationChanged += OnConfigurationChanged;
+
             // 加载配置
             CurrentConfiguration = LoadConfiguration();
             
@@ -95,6 +98,17 @@ namespace MusicPlayer.Services
             ConfigurationLoaded?.Invoke(config);
             
             return config;
+        }
+
+        /// <summary>
+        /// 处理配置变化事件，更新Song类的静态属性
+        /// </summary>
+        /// <param name="configuration">更新后的配置</param>
+        private void OnConfigurationChanged(PlayerConfiguration configuration)
+        {
+            // 更新Song类的封面缓存设置
+            MusicPlayer.Core.Models.Song.IsCoverCacheEnabled = configuration.IsCoverCacheEnabled;
+            System.Diagnostics.Debug.WriteLine($"ConfigurationService: 配置变化，更新封面缓存设置为: {configuration.IsCoverCacheEnabled}");
         }
 
         public void SaveConfiguration(PlayerConfiguration configuration)

@@ -16,6 +16,12 @@ namespace MusicPlayer.Services
     /// </summary>
     public class PlaylistService : IPlaylistService, IDisposable
     {
+        private readonly IConfigurationService _configurationService;
+
+        public PlaylistService(IConfigurationService configurationService)
+        {
+            _configurationService = configurationService;
+        }
         
         public List<Song> LoadSongsFromFolder(string folderPath)
         {
@@ -139,21 +145,11 @@ namespace MusicPlayer.Services
 
         public List<LyricLine> LoadLyrics(string filePath)
         {
-            // 1. Check for external .lrc file first (preferred)
-            var lrcPath = Paths.GetLrcFilePath(filePath);
-            if (Paths.FileExists(lrcPath))
-            {
-                return ParseLrc(System.IO.File.ReadAllText(lrcPath, System.Text.Encoding.UTF8));
-            }
+            // 获取用户设置的歌词目录
+            string lyricDirectory = _configurationService.CurrentConfiguration.LyricDirectory;
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
 
-            // 2. Check for external .srt file
-            var srtPath = Paths.GetSrtFilePath(filePath);
-            if (Paths.FileExists(srtPath))
-            {
-                return ParseSrt(System.IO.File.ReadAllText(srtPath, System.Text.Encoding.UTF8));
-            }
-
-            // 3. Check for embedded lyrics
+            // 1. Check for embedded lyrics first (preferred)
             try
             {
                 var tagFile = TagLib.File.Create(filePath);
@@ -168,6 +164,37 @@ namespace MusicPlayer.Services
                 }
             }
             catch (Exception) { }
+
+            // 2. Check for external .lrc file in specified lyric directory
+            if (!string.IsNullOrEmpty(lyricDirectory))
+            {
+                var lrcPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.lrc");
+                if (Paths.FileExists(lrcPathInSpecifiedDir))
+                {
+                    return ParseLrc(System.IO.File.ReadAllText(lrcPathInSpecifiedDir, System.Text.Encoding.UTF8));
+                }
+
+                // 3. Check for external .srt file in specified lyric directory
+                var srtPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.srt");
+                if (Paths.FileExists(srtPathInSpecifiedDir))
+                {
+                    return ParseSrt(System.IO.File.ReadAllText(srtPathInSpecifiedDir, System.Text.Encoding.UTF8));
+                }
+            }
+
+            // 4. Check for external .lrc file in song directory
+            var lrcPath = Paths.GetLrcFilePath(filePath);
+            if (Paths.FileExists(lrcPath))
+            {
+                return ParseLrc(System.IO.File.ReadAllText(lrcPath, System.Text.Encoding.UTF8));
+            }
+
+            // 5. Check for external .srt file in song directory
+            var srtPath = Paths.GetSrtFilePath(filePath);
+            if (Paths.FileExists(srtPath))
+            {
+                return ParseSrt(System.IO.File.ReadAllText(srtPath, System.Text.Encoding.UTF8));
+            }
 
             return new List<LyricLine>();
         }

@@ -68,9 +68,8 @@ namespace MusicPlayer.Core.Models
         /// <summary>是否延迟加载专辑封面（用于批量处理优化）</summary>
         private bool _delayAlbumArtLoading = false;
 
-
-
-
+        /// <summary>静态属性：是否启用封面缓存，根据配置动态设置</summary>
+        public static bool IsCoverCacheEnabled { get; set; } = true;
 
         /// <summary>专辑封面图像（可选）- 懒加载</summary>
         private BitmapImage? _albumArt;
@@ -963,7 +962,8 @@ namespace MusicPlayer.Core.Models
         /// </summary>
         private void SaveAlbumArtToCache()
         {
-            if (_albumArtData == null || _albumArtData.Length == 0)
+            // 根据静态配置决定是否保存缓存
+            if (!IsCoverCacheEnabled || _albumArtData == null || _albumArtData.Length == 0)
                 return;
 
             try

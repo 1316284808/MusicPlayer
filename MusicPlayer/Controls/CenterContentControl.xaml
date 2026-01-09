@@ -104,53 +104,47 @@
                 behaviors:LyricsScrollBehavior.ScrollDuration="300"
                 behaviors:LyricsScrollBehavior.ScrollOnLoad="True">
                     <ListBox.ContextMenu  >
-                        <ContextMenu >
-                            <StackPanel Orientation="Horizontal"  >
-                                <ui:Button CornerRadius="8" Width="auto" ToolTip="字号+" Command="{Binding IncreaseLyricFontSizeCommand}">
+                        <ContextMenu   >
 
-                                    <Helper:CustomIcon Kind="BigFont" IconSize="12" Margin="2,0,0,0"/>
+                            <StackPanel Orientation="Horizontal"   HorizontalAlignment="Left"  VerticalAlignment="Center">
 
-                                </ui:Button>
-                                <ui:TextBlock Text="{Binding LyricFontSize }"   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                <ui:Button CornerRadius="8" Width="auto" ToolTip="字号-" Command="{Binding DecreaseLyricFontSizeCommand}">
-
-                                    <Helper:CustomIcon Kind="SmallFont" IconSize="12"  Margin="0,0,2,0"/>
-
-
+                                <ui:Button CornerRadius="8" Margin="2"  ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
+                                    <Helper:CustomIcon>
+                                        <Helper:CustomIcon.Style>
+                                            <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                                <!-- 默认右对齐图标 -->
+                                                <Setter Property="Kind" Value="Right"/>
+                                                <Style.Triggers>
+                                                    <!-- 左对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Left">
+                                                        <Setter Property="Kind" Value="Left"/>
+                                                    </DataTrigger>
+                                                    <!-- 居中对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Center">
+                                                        <Setter Property="Kind" Value="Center"/>
+                                                    </DataTrigger>
+                                                    <!-- 右对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Right">
+                                                        <Setter Property="Kind" Value="Right"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Helper:CustomIcon.Style>
+                                    </Helper:CustomIcon>
                                 </ui:Button>
 
                                 <Separator Margin="2" />
+                                <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号+" Command="{Binding IncreaseLyricFontSizeCommand}">
+                                    <Helper:CustomIcon Kind="BigFont" IconSize="12" Margin="2,0,0,0"/>
+                                </ui:Button>
+                                <ui:TextBlock Text="{Binding LyricFontSize }"  Margin="2"    HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号-" Command="{Binding DecreaseLyricFontSizeCommand}">
+                                    <Helper:CustomIcon Kind="SmallFont" IconSize="12"  Margin="0,0,2,0"/>
+                                </ui:Button> 
                                        
+                            </StackPanel>
 
-                                        <ui:Button CornerRadius="8" ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
-                                            <Helper:CustomIcon>
-                                                <Helper:CustomIcon.Style>
-                                                    <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
-                                                        <!-- 默认右对齐图标 -->
-                                                        <Setter Property="Kind" Value="Right"/>
-                                                        <Style.Triggers>
-                                                            <!-- 左对齐 -->
-                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Left">
-                                                                <Setter Property="Kind" Value="Left"/>
-                                                            </DataTrigger>
-                                                            <!-- 居中对齐 -->
-                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Center">
-                                                                <Setter Property="Kind" Value="Center"/>
-                                                            </DataTrigger>
-                                                            <!-- 右对齐 -->
-                                                            <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Right">
-                                                                <Setter Property="Kind" Value="Right"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Helper:CustomIcon.Style>
-                                            </Helper:CustomIcon>
-                                        </ui:Button>
-
-                                       
-                                    </StackPanel>
-                              
-                             
+                            
                         </ContextMenu>
                     </ListBox.ContextMenu>
 

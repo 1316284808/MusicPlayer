@@ -30,6 +30,7 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Settings" Margin="2" />
+                        <Separator Margin="2" />
                         <TextBlock Text="外观设置" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
@@ -41,6 +42,7 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Sound" Margin="2" />
+                        <Separator Margin="2" />
                         <TextBlock Text="音频设置" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
@@ -52,6 +54,7 @@
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="List" Margin="2" />
+                        <Separator Margin="2" />
                         <TextBlock Text="数据管理" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>

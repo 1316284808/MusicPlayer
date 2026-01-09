@@ -1082,7 +1082,8 @@ namespace MusicPlayer.Helper
         /// <param name="imageBytes">封面图像字节数据</param>
         private static void SaveAlbumArtToCache(string filePath, byte[] imageBytes)
         {
-            if (imageBytes == null || imageBytes.Length == 0)
+            // 根据Song类的静态配置决定是否保存缓存
+            if (imageBytes == null || imageBytes.Length == 0 || !MusicPlayer.Core.Models.Song.IsCoverCacheEnabled)
                 return;
 
             try

@@ -15,9 +15,6 @@ namespace MusicPlayer.Page
             InitializeComponent();
             DataContext = mainViewModel;
             this.PlaylistControl.DataContext = mainViewModel.PlaylistViewModel;
-
-
-
         }
 
 

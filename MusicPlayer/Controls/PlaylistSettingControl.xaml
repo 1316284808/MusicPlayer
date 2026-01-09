@@ -20,28 +20,39 @@
 
             <Grid >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/> 
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <!-- 左侧：设置项描述 -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Photo"  Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text=" 封面缓存"  FontSize="14" FontWeight="SemiBold"   />
+                          <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="封面缓存将显著提高歌曲封面的加载速度，禁用可能导致加载变慢"  FontWeight="Normal" FontSize="12"  Margin="10,5,0,0"/>
+                    <TextBlock FontWeight="Normal" FontSize="12"  Margin="10,2,0,0"  Text="启用封面缓存可以提高页面加载歌曲封面的加载速度，禁用将导致歌曲封面加载变慢页面卡顿" />
+
+                    <TextBlock FontWeight="Normal" FontSize="12"  Margin="10,2,0,0"  TextWrapping="Wrap"  >
+                        <Run Text="缓存目录:"/> 
+                        <Run Text="[" FontWeight="Bold"/>
+                        <Run Text="{Binding AlbumArtCachePath,Mode=OneWay }" FontWeight="Normal" Foreground="#FF0078D7"/>
+                        <Run Text="]" FontWeight="Bold"/>
+                    </TextBlock>
                 </StackPanel>
-                <ui:Button Padding="0" ToolTip="打开缓存目录" Grid.Column="1" 
-           Width="50" 
-           Margin="5,0,5,0"     >
-                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  />
-                </ui:Button>
-                <ui:ToggleSwitch x:Name="SpectrumToggleSwitch" 
-             Grid.Column="2"    Background="Black"
-             HorizontalAlignment="Center" VerticalAlignment="Center" 
-             Content="启用"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ui:Button Padding="0" ToolTip="打开缓存目录"    Width="50"  Margin="5,0,5,0" 
+                           Command="{Binding OpenCacheDirectoryCommand}">
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  />
+                    </ui:Button>
+                    <Separator Margin="2" />
+                    <ui:ToggleSwitch x:Name="CoverCacheToggleSwitch" 
+                     Background="Black"  
+                     HorizontalAlignment="Center" VerticalAlignment="Center" 
+                     Content="启用"
+                     IsChecked="{Binding IsCoverCacheEnabled, Mode=TwoWay}"/>
+                </StackPanel>
             </Grid>
             <Separator  Margin="10" />
             <Grid >
@@ -53,14 +64,23 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Stop"  Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="歌词文件目录"  FontSize="14" FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="歌曲若无内嵌歌词，则默认检索歌曲同目录的同名歌词文件。同时支持检索指定目录:[ ] "  FontWeight="Normal" FontSize="12"  Margin="10,5,0,0"/>
+                    <TextBlock FontWeight="Normal" FontSize="12"  Margin="10,2,0,0" Text="歌曲若无内嵌歌词，则检索指定目录" />
+                    <TextBlock FontWeight="Normal" FontSize="12"  Margin="10,2,0,0"> 
+                         <Run Text="指定目录:"/> 
+                        <Run Text="[" FontWeight="Bold"/>
+                        <Run Text="{Binding LyricDirectory, FallbackValue='未设置'}" FontWeight="Normal" Foreground="#FF0078D7"/>
+                        <Run Text="]" FontWeight="Bold"/>
+                    </TextBlock>
                 </StackPanel>
                 <ui:Button Padding="0" ToolTip="选择目录" Grid.Column="1" 
                            Width="50" 
-                           Margin="5,0,5,0"     > 
+                           Margin="5,0,5,0" 
+                           Command="{Binding SelectLyricDirectoryCommand}"> 
                         <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  /> 
                 </ui:Button>
             </Grid>
@@ -75,7 +95,9 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="ClearList"  Margin="2"/>
+                        <Separator Margin="2" />
                         <TextBlock Text="清空播放列表"  FontSize="14" FontWeight="SemiBold"   />
+                        <Separator Margin="2" />
                     </StackPanel>
                    
                     <TextBlock Text="将删除播放列表中的所有歌曲，但不会影响电脑本地文件"  FontWeight="Normal" FontSize="12"  Margin="10,5,0,0"/>
