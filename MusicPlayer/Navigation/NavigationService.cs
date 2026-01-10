@@ -62,7 +62,8 @@ namespace MusicPlayer.Navigation
                 }
                 else if (pageUri.Contains("SingerPage.xaml"))
                 {
-                    var singerPage = new SingerPage();
+                    var singerViewModel = _serviceProvider.GetRequiredService<ISingerViewModel>();
+                    var singerPage = new SingerPage(singerViewModel);
                     _mainFrame.Navigate(singerPage);
                 }
                 else if (pageUri.Contains("AlbumPage.xaml"))

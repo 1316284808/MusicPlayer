@@ -11,17 +11,12 @@
     <UserControl.Resources>
         <converters:CircularSpectrumPathConverter x:Key="CircularSpectrumPathConverter"/>
         <converters:CircularSpectrumColorConverter x:Key="CircularSpectrumColorConverter"/>
-        <converters:CircularSpectrumColorConverterForEffect x:Key="CircularSpectrumColorConverterForEffect"/>
 
         <!-- 频谱条样式 -->
         <Style x:Key="CircularBarStyle" TargetType="Path">
             <Setter Property="StrokeThickness" Value="0"/>
-            <Setter Property="Opacity" Value="0.2"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="Transparent" BlurRadius="3" ShadowDepth="0" Opacity="0.2"/>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Opacity" Value="0.3"/>
+            <!-- 移除阴影效果，减少GPU消耗 -->
         </Style>
 
         <!-- 频谱条模板 -->
@@ -45,17 +40,6 @@
                         <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
                     </MultiBinding>
                 </Path.Fill>
-                <Path.Effect>
-                    <DropShadowEffect>
-                        <DropShadowEffect.Color>
-                            <MultiBinding Converter="{StaticResource CircularSpectrumColorConverterForEffect}">
-                                <Binding Path="(ItemsControl.AlternationIndex)" RelativeSource="{RelativeSource TemplatedParent}"/>
-                                <Binding Path="."/>
-                                <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>
-                            </MultiBinding>
-                        </DropShadowEffect.Color>
-                    </DropShadowEffect>
-                </Path.Effect>
             </Path>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding}" Value="0">
@@ -71,7 +55,7 @@
           Height="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualHeight}"  >
         
         <!-- 圆形频谱背景 -->
-        <Ellipse Fill="Transparent" Stroke="Pink" StrokeThickness="0" Opacity="0.3"
+        <Ellipse  
                  Width="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualWidth}"
                  Height="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ActualHeight}"/>
         

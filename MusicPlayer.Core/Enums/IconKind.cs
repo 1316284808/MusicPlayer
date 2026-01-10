@@ -13,7 +13,7 @@ namespace MusicPlayer.Core.Enums
         Play,//播放
         Pause,//暂停
         Next,//下一曲
-        Stop, // 
+        Lyrics, // 
         VolumeHigh,//高
         VolumeMedium,//中
         VolumeLow,//低
@@ -67,6 +67,9 @@ namespace MusicPlayer.Core.Enums
         Center,//中间对齐
         Right,//右对齐
         Photo,//图片
+        NewFolder,//新建路径
+        FolderOpen,//打开文件夹
+        MusicInfo,//播放队列
 
     }
 }

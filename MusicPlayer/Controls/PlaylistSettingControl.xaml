@@ -44,7 +44,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <ui:Button Padding="0" ToolTip="打开缓存目录"    Width="50"  Margin="5,0,5,0" 
                            Command="{Binding OpenCacheDirectoryCommand}">
-                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  />
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="FolderOpen"  />
                     </ui:Button>
                     <Separator Margin="2" />
                     <ui:ToggleSwitch x:Name="CoverCacheToggleSwitch" 
@@ -63,7 +63,7 @@
                 <!-- 左侧：设置项描述 -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <Helper:CustomIcon Kind="Stop"  Margin="2"/>
+                        <Helper:CustomIcon Kind="Lyrics"  Margin="2"/>
                         <Separator Margin="2" />
                         <TextBlock Text="歌词文件目录"  FontSize="14" FontWeight="SemiBold"   />
                         <Separator Margin="2" />
@@ -80,8 +80,8 @@
                 <ui:Button Padding="0" ToolTip="选择目录" Grid.Column="1" 
                            Width="50" 
                            Margin="5,0,5,0" 
-                           Command="{Binding SelectLyricDirectoryCommand}"> 
-                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="List"  /> 
+                           Command="{Binding SelectLyricDirectoryCommand}">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="NewFolder"  /> 
                 </ui:Button>
             </Grid>
             <Separator  Margin="10" />

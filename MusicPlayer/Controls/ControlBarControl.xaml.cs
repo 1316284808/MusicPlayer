@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using MusicPlayer.ViewModels;
 
 namespace MusicPlayer.Controls
 {
@@ -10,8 +9,5 @@ namespace MusicPlayer.Controls
         {
             InitializeComponent();
         }
-
-      
-         
     }
 }

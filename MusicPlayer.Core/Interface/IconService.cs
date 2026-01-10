@@ -21,7 +21,7 @@ namespace MusicPlayer.Core.Interface
                 IconKind.Play => "\uF5b0",//播放
                 IconKind.Pause => "\uF8ae",//暂停
                 IconKind.Next => "\uf8ad",//下一首
-                IconKind.Stop => "\uf4a5",//停止
+                IconKind.Lyrics => "\uf4a5",//歌词
 
                 // 音量控制图标
                 IconKind.VolumeHigh => "\uE995",//高音量
@@ -76,8 +76,8 @@ namespace MusicPlayer.Core.Interface
                IconKind.ClearList=> "\ue7bc" ,//清除列表
                IconKind.RoBot => "\ue99a",//音频引擎设置
               IconKind.Equalizer=> "\ued4d",//均衡器设置
-              IconKind.SaveAs=> "\ueb4e",//保存
-              IconKind.Reset=> "\uedab",//重置
+              IconKind.SaveAs=> "\uea35",//保存 eb4e
+                IconKind.Reset=> "\uedab",//重置
               IconKind.Position=> "\ue759",//查找歌曲位置  	e759  e7c8  f272	Bullseye
                 IconKind.BigFont => "\uecc8",   //字体+  ecc8                       
                 IconKind.SmallFont => "\uecc9", //字体-  ecc9                                                  
@@ -85,6 +85,9 @@ namespace MusicPlayer.Core.Interface
                 IconKind.Center => "\ue8e3", //中间对齐 ee95
                 IconKind.Left => "\ue8e4", //右对齐 edda 
                IconKind .Photo=> "\ue7c5", //图片 e91b
+               IconKind.NewFolder=> "\ue8f4",//新建路径
+               IconKind. FolderOpen=> "\ue838",//打开文件夹
+              IconKind.MusicInfo=> "\ue90b",//播放队列
                 _ => ""
             };
         }

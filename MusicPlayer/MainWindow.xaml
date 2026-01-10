@@ -18,7 +18,11 @@
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">
-
+    <Border Background="Transparent">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
+        </Border.Effect>
+   
         <Grid>
         <Grid.RowDefinitions>
             <!--标题栏 -->
@@ -68,6 +72,6 @@
         <!-- 标题栏（最顶层，确保可交互） -->
         <controls:TitleBarControl x:Name="TitleBarControl" Grid.Row="0"   />
     </Grid>
-  
+    </Border>
 
 </ui:FluentWindow>

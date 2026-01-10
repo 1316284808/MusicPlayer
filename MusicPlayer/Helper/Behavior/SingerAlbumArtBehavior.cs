@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using MusicPlayer.Core.Models;
@@ -149,100 +150,18 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 尝试从附加属性获取ViewModel
-                var viewModel = GetViewModel(listBox);
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 开始启用ListBox专辑封面懒加载行为");
                 
-                // 如果附加属性未设置，尝试从ListBox的DataContext获取
-                if (viewModel == null && listBox.DataContext is ISingerViewModel dataContextViewModel)
-                {
-                    viewModel = dataContextViewModel;
-                   }
+                // 为ListBox添加DataContextChanged事件监听，确保当ViewModel被父级设置后能重新初始化
+                listBox.DataContextChanged += OnListBoxDataContextChanged;
                 
-                if (viewModel != null)
-                {
-                    // 为ListBox添加滚动事件处理
-                    var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
-                    if (scrollViewer != null)
-                    {
-                        scrollViewer.ScrollChanged += OnScrollChanged;
-                        System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox专辑封面懒加载行为已启用");
-                        
-                        // 监听DataContext变化，以防ViewModel在初始化后被设置
-                        var dataContextBinding = System.Windows.Data.BindingOperations.GetBinding(listBox, System.Windows.Controls.ListBox.DataContextProperty);
-                        if (dataContextBinding == null)
-                        {
-                           
-                        }
-                        
-                        // 监听Loaded事件，确保在ListBox完全加载后再尝试
-                        listBox.Loaded += (sender, e) => {
-                            System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox已加载，尝试获取ViewModel");
-                            // 重新获取ViewModel，因为此时DataContext应该已经设置
-                            var currentViewModel = GetViewModel(listBox);
-                            if (currentViewModel == null && listBox.DataContext is ISingerViewModel contextViewModel)
-                            {
-                                currentViewModel = contextViewModel;
-                                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 从Loaded事件获取ViewModel");
-                            }
-                            
-                            if (currentViewModel != null)
-                            {
-                                // 监听FilteredSingers集合的变化（索引切换时会更新）
-                                if (currentViewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
-                                {
-                                    filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
-                                         // 延迟一小段时间，确保UI更新完成后再加载封面
-                                        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                                            // 只加载可视区域的封面
-                                            var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                                            var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                                            LoadVisibleAlbumCovers(currentViewModel, scrollViewer, viewport, scrollOffset);
-                                        }), System.Windows.Threading.DispatcherPriority.Background);
-                                    };
-                                }
-                                
-                                // 延迟一小段时间，确保ListBox完全初始化后再加载封面
-                                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                                    // 只加载可视区域的封面
-                                    var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                                    var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                                    LoadVisibleAlbumCovers(currentViewModel, scrollViewer, viewport, scrollOffset);
-                                }), System.Windows.Threading.DispatcherPriority.Background);
-                            }
-                        };
-                        
-                        // 如果ListBox已经加载，立即尝试
-                    // 监听FilteredSingers集合的变化（索引切换时会更新）
-                    if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
-                    {
-                        filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
-                             // 延迟一小段时间，确保UI更新完成后再加载封面
-                            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                                // 只加载可视区域的封面
-                                var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                                var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                                LoadVisibleAlbumCovers(viewModel, scrollViewer, viewport, scrollOffset);
-                            }), System.Windows.Threading.DispatcherPriority.Background);
-                        };
-                    }
-                    
-                    if (listBox.IsLoaded)
-                    {
-                          // 只加载可视区域的封面
-                        var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                        var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                        LoadVisibleAlbumCovers(viewModel, scrollViewer, viewport, scrollOffset);
-                    }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 无法找到ListBox的ScrollViewer");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ViewModel 未设置");
-                }
+                // 为ListBox添加Loaded事件监听，确保在ListBox完全加载后再尝试获取ViewModel
+                listBox.Loaded += OnListBoxLoaded;
+                
+                // 初始化ScrollViewer和相关事件
+                InitializeScrollViewer(listBox);
+                
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox专辑封面懒加载行为已启用");
             }
             catch (Exception ex)
             {
@@ -254,11 +173,18 @@ namespace MusicPlayer.Helper
         {
             try
             {
+                // 移除ScrollViewer事件
                 var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
                 if (scrollViewer != null)
                 {
                     scrollViewer.ScrollChanged -= OnScrollChanged;
-                 }
+                }
+                
+                // 移除ListBox事件
+                listBox.DataContextChanged -= OnListBoxDataContextChanged;
+                listBox.Loaded -= OnListBoxLoaded;
+                
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox专辑封面懒加载行为已禁用");
             }
             catch (Exception ex)
             {
@@ -295,6 +221,119 @@ namespace MusicPlayer.Helper
                 return parent;
 
             return FindVisualParent<T>(parentObject);
+        }
+        
+        /// <summary>
+        /// 初始化ScrollViewer和相关事件
+        /// </summary>
+        private static void InitializeScrollViewer(System.Windows.Controls.ListBox listBox)
+        {
+            try
+            {
+                var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
+                if (scrollViewer != null)
+                {
+                    // 添加滚动事件处理
+                    scrollViewer.ScrollChanged += OnScrollChanged;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 初始化ScrollViewer失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// ListBox DataContext变化事件处理
+        /// </summary>
+        private static void OnListBoxDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ListBox listBox)
+            {
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox DataContext已变化，重新初始化封面加载");
+                
+                // 检查新的DataContext是否为ISingerViewModel
+                if (e.NewValue is ISingerViewModel viewModel)
+                {
+                    InitializeCoverLoading(listBox, viewModel);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// ListBox Loaded事件处理
+        /// </summary>
+        private static void OnListBoxLoaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ListBox listBox)
+            {
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox已加载，尝试获取ViewModel");
+                
+                // 尝试获取ViewModel
+                var viewModel = GetViewModel(listBox);
+                if (viewModel == null && listBox.DataContext is ISingerViewModel dataContextViewModel)
+                {
+                    viewModel = dataContextViewModel;
+                    System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 从Loaded事件获取ViewModel");
+                }
+                
+                if (viewModel != null)
+                {
+                    InitializeCoverLoading(listBox, viewModel);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 初始化封面加载逻辑
+        /// </summary>
+        private static void InitializeCoverLoading(System.Windows.Controls.ListBox listBox, ISingerViewModel viewModel)
+        {
+            try
+            {
+                var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
+                if (scrollViewer == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 无法找到ListBox的ScrollViewer");
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 开始初始化封面加载逻辑");
+                
+                // 确保ScrollViewer的ScrollChanged事件被正确绑定
+                // 先移除旧的事件绑定，避免重复绑定
+                scrollViewer.ScrollChanged -= OnScrollChanged;
+                // 重新添加事件绑定
+                scrollViewer.ScrollChanged += OnScrollChanged;
+                
+                // 监听FilteredSingers集合的变化（索引切换时会更新）
+                if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
+                {
+                    filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
+                         // 延迟一小段时间，确保UI更新完成后再加载封面
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                            // 只加载可视区域的封面
+                            var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                            var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                            LoadVisibleAlbumCovers(viewModel, scrollViewer, viewport, scrollOffset);
+                        }), System.Windows.Threading.DispatcherPriority.Background);
+                    };
+                }
+                
+                // 延迟一小段时间，确保ListBox完全初始化后再加载封面
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                    // 只加载可视区域的封面
+                    var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                    var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                    LoadVisibleAlbumCovers(viewModel, scrollViewer, viewport, scrollOffset);
+                }), System.Windows.Threading.DispatcherPriority.Background);
+                
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 封面加载逻辑初始化完成");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 初始化封面加载逻辑失败: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -439,20 +478,16 @@ namespace MusicPlayer.Helper
         /// <summary>
         /// 同步加载可视区域内及预加载区域的歌手封面（用于初始化）
         /// </summary>
-        private static void LoadVisibleAlbumCovers(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
+        private static async Task LoadVisibleAlbumCovers(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
         {
              
             // 创建一个列表来保存需要加载封面的歌手
-            var singersToLoad = new List<SingerInfo>();
-            
-            // 扩大可视区域检测范围，实现预加载
-            // 在当前可视区域上下各增加1.5倍视口高度的预加载区域
-            double preloadFactor = 1.5;
+            var singersToLoad = new List<SingerInfo>(); 
             var extendedViewport = new Rect(
                 viewport.X,
-                viewport.Y - viewport.Height * preloadFactor,
+                viewport.Y,
                 viewport.Width,
-                viewport.Height * (1 + 2 * preloadFactor)
+                viewport.Height  
             );
             
             
@@ -485,25 +520,22 @@ namespace MusicPlayer.Helper
             {
                 try
                 {
-                    LoadAlbumCover(singer);
+                   await LoadAlbumCoverAsync(singer);
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 同步加载歌手 {singer.Name} 封面失败: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 异步加载歌手 {singer.Name} 封面失败: {ex.Message}");
                 }
             }
         }
 
         private static async Task CleanupInvisibleAlbumCovers(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
-        {
-            
-            // 使用与预加载相同的扩展视口，只清理超出这个区域的封面
-            double preloadFactor = 1.5;
+        { 
             var extendedViewport = new Rect(
                 viewport.X,
-                viewport.Y - viewport.Height * preloadFactor,
+                viewport.Y  ,
                 viewport.Width,
-                viewport.Height * (1 + 2 * preloadFactor)
+                viewport.Height  
             );
             
             // 遍历过滤后的歌手项
@@ -677,105 +709,6 @@ namespace MusicPlayer.Helper
             }
         }
         
-        /// <summary>
-        /// 同步加载歌手封面（用于初始化）
-        /// </summary>
-        private static void LoadAlbumCover(SingerInfo singer)
-        {
-            if (singer.HasCoverImage) return; // 已有封面则跳过
-
-            // 获取歌曲文件路径
-            if (string.IsNullOrEmpty(singer.FirstSongFilePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 没有文件路径");
-                // 设置默认封面
-                SetDefaultCover(singer);
-                return;
-            }
-
-            // 检查文件是否存在
-            if (!System.IO.File.Exists(singer.FirstSongFilePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 的文件不存在: {singer.FirstSongFilePath}");
-                // 设置默认封面
-                SetDefaultCover(singer);
-                return;
-            }
-
-            // 优先从缓存加载封面
-            var bitmapFromCache = TryLoadAlbumArtFromCache(singer.FirstSongFilePath);
-            if (bitmapFromCache != null)
-            {
-                // 确保在UI线程上更新封面
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    // 先设置为null，再设置为新图片，强制UI更新
-                    singer.CoverImage = null;
-                    singer.CoverImage = bitmapFromCache;
-                });
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 从缓存加载歌手 {singer.Name} 的封面完成");
-                return;
-            }
-
-            // 从文件中提取专辑封面
-            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 开始同步加载歌手 {singer.Name} 的封面，文件路径: {singer.FirstSongFilePath}");
-            
-            // 异步加载封面，避免阻塞UI
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                try
-                {
-                    // 使用TagLib#库提取专辑封面数据
-                    byte[]? albumArtData = null;
-                    try
-                    {
-                        var tagFile = TagLib.File.Create(singer.FirstSongFilePath);
-                        if (tagFile?.Tag?.Pictures?.Length > 0)
-                        {
-                            var picture = tagFile.Tag.Pictures[0];
-                            albumArtData = picture.Data.Data;
-                            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 成功从文件提取封面数据，大小: {albumArtData.Length} 字节");
-                            
-                            // 保存到缓存
-                            SaveAlbumArtToCache(singer.FirstSongFilePath, albumArtData);
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 文件中没有找到封面信息");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 从文件提取封面数据失败: {ex.Message}");
-                    }
-
-                    // 如果成功提取到封面数据，加载为图像
-                    if (albumArtData != null && albumArtData.Length > 0)
-                    {
-                        var bitmap = LoadBitmapFromBytes(albumArtData);
-                        if (bitmap != null)
-                        {
-                            // 确保在UI线程上更新封面
-                            System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                                // 先设置为null，再设置为新图片，强制UI更新
-                                singer.CoverImage = null;
-                                singer.CoverImage = bitmap;
-                            });
-                            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 的封面加载完成");
-                            return;
-                        }
-                    }
-
-                    // 如果加载失败，设置默认封面
-                    SetDefaultCover(singer);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 加载歌手 {singer.Name} 的封面失败: {ex.Message}");
-                    // 设置默认封面
-                    //SetDefaultCover(singer);
-                }
-            }));
-        }
 
         /// <summary>
         /// 异步设置默认封面

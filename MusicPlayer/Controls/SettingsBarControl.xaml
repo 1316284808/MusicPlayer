@@ -15,16 +15,23 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-   
-    <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinWidth="60" MinHeight="120"
+    <Border  Opacity="{Binding ButtonsOpacity}">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>
+        </Border.Effect>
+        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinWidth="60" MinHeight="120"
                Helper:StackPanelMouseBehavior.MouseEnterCommand="{Binding MouseEnterCommand}"
                 Helper:StackPanelMouseBehavior.MouseLeaveCommand="{Binding MouseLeaveCommand}">
         <!-- 收纳按钮 -->
+      
+            
+       
+        
         <ui:Button Padding="0" 
                    HorizontalAlignment="Left"   
                    Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
                    HorizontalContentAlignment="Left"
-                   Opacity="{Binding ButtonsOpacity}"
+               
                    Command="{Binding ToggleButtonsVisibilityCommand}">
             <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"   >
                 <Helper:CustomIcon.Style>
@@ -47,7 +54,7 @@
                             HorizontalAlignment="Left"   
                           Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
                           HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
-                          Opacity="{Binding ButtonsOpacity}"
+                        
                          Command="{Binding NavigateToDefaultListCommand}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
                         <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
@@ -71,7 +78,7 @@
                 <!-- 收藏列表按钮 -->
         <ui:Button Padding="0" ToolTip="收藏列表"  HorizontalAlignment="Left"   
                           Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-                         Opacity="{Binding ButtonsOpacity}"
+                      
                          HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
                           Command="{Binding NavigateToFavoriteListCommand}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -95,7 +102,7 @@
                 </ui:Button>
 
         <ui:Button Padding="0" ToolTip="歌手列表"  HorizontalAlignment="Left"   
-            Opacity="{Binding ButtonsOpacity}"
+          
              Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
                    HorizontalContentAlignment="Left"
                    Command="{Binding NavigateToSingerPageCommand}">
@@ -121,7 +128,7 @@
         </ui:Button>
 
         <ui:Button Padding="0" ToolTip="专辑列表"  HorizontalAlignment="Left"   
-    Opacity="{Binding ButtonsOpacity}"
+  
      Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
            HorizontalContentAlignment="Left"
            Command="{Binding NavigateToAlbumPageCommand}">
@@ -154,7 +161,7 @@
 
         <!-- 设置按钮 -->
         <ui:Button Padding="0" ToolTip="设置"  HorizontalAlignment="Left"   
-                   Opacity="{Binding ButtonsOpacity}"
+                 
                     Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
                           HorizontalContentAlignment="Left"
                           Command="{Binding NavigateToSettingsCommand}">
@@ -178,6 +185,7 @@
                   Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </ui:Button>
+      
     </StackPanel>
-     
+    </Border>
 </UserControl>

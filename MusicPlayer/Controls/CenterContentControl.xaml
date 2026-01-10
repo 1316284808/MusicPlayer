@@ -105,7 +105,11 @@
                 behaviors:LyricsScrollBehavior.ScrollOnLoad="True">
                     <ListBox.ContextMenu  >
                         <ContextMenu   >
-
+                            <Border>
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>
+                                </Border.Effect>
+                           
                             <StackPanel Orientation="Horizontal"   HorizontalAlignment="Left"  VerticalAlignment="Center">
 
                                 <ui:Button CornerRadius="8" Margin="2"  ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
@@ -144,7 +148,7 @@
                                        
                             </StackPanel>
 
-                            
+                            </Border>
                         </ContextMenu>
                     </ListBox.ContextMenu>
 
@@ -158,7 +162,8 @@
                                 <ControlTemplate TargetType="ListBoxItem">
                                     <Border x:Name="ItemBorder" Margin="0,0,15,0" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
                                         <TextBlock Text="{Binding Text}"   TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                          TextWrapping="Wrap" FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"  LineHeight="20" MaxWidth="550"  Margin="5"  x:Name="LyricTextBlock">
+                                          TextWrapping="Wrap" FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                   LineHeight="20" MaxWidth="550"   x:Name="LyricTextBlock">
                                         </TextBlock>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -166,13 +171,15 @@
                                             <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#FF0078D7"/>
+                                             <Setter TargetName="LyricTextBlock" Property="Margin" Value="5"/>
+                                             <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#FF0078D7"/>
                                             <Setter TargetName="LyricTextBlock" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                             <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Bold"/>
                                             <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
                                             
                                         </Trigger>
                                             <Trigger Property="IsSelected" Value="False">
+                                                <Setter TargetName="LyricTextBlock" Property="Margin" Value="35,5"/>
                                                 <Setter TargetName="LyricTextBlock" Property="Foreground" Value="Black"/>
                                                 <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Normal"/>
                                                 <Setter TargetName="LyricTextBlock" Property="Opacity" Value="0.8"/>

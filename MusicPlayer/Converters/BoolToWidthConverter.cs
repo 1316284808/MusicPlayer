@@ -21,9 +21,9 @@ namespace MusicPlayer.Converters
         {
             if (value is bool boolValue)
             {
-                return boolValue ? 100.0 : 40.0;
+                return boolValue ? 125 : 40.0;
             }
-            return 100.0; // 默认值
+            return 125; // 默认值
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

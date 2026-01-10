@@ -170,13 +170,13 @@
 
                             <Style.Triggers>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#e6e6e6"/>
+                                    <Setter Property="Background" Value="#E6FFFFFF"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="False">
                                     <Setter Property="Background" Value="Transparent"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#e6e6e6"/> 
+                                    <Setter Property="Background" Value="#E6FFFFFF"/> 
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

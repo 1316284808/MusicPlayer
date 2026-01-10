@@ -28,6 +28,8 @@ namespace MusicPlayer.ViewModels
         private bool _isSearchExpanded = false;
         private readonly List<string> _indexList = new() { "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
 
+     
+
         /// <summary>
         /// 歌手列表
         /// </summary>
@@ -119,6 +121,7 @@ namespace MusicPlayer.ViewModels
 
             PlaySingerCommand = new RelayCommand<string>(ExecutePlaySinger);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
+            LoadSingers();
         }
         
         /// <summary>
@@ -179,10 +182,10 @@ namespace MusicPlayer.ViewModels
             System.Diagnostics.Debug.WriteLine($"SingerViewModel: 歌手列表加载完成，歌手数量: {_singers.Count}");
 
             // 通知SingerAlbumArtBehavior重新加载封面
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                System.Diagnostics.Debug.WriteLine("SingerViewModel: 通知SingerAlbumArtBehavior数据已更新");
-            }));
+            //System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            //{
+            //    System.Diagnostics.Debug.WriteLine("SingerViewModel: 通知SingerAlbumArtBehavior数据已更新");
+            //}));
         }
 
         /// <summary>

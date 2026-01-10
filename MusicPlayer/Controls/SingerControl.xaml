@@ -92,11 +92,11 @@
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="True">
-                                            <Setter Property="Foreground" Value="#e6e6e6" />
+                                            <Setter Property="Foreground" Value="#E6FFFFFF" />
                                             <Setter Property="FontSize" Value="14"/>
                                         </DataTrigger>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Foreground"  Value="#e6e6e6"/>
+                                            <Setter Property="Foreground"  Value="#E6FFFFFF"/>
                                             <Setter Property="FontSize" Value="14"/>
                                         </Trigger>
                                     </Style.Triggers>
@@ -127,7 +127,9 @@
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto" 
                  ScrollViewer.CanContentScroll="False"  
-                 Helper:SingerAlbumArtBehavior.IsEnabled="True">
+                  Helper:SingerAlbumArtBehavior.IsEnabled="True"
+Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
+                 >
            
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -138,7 +140,7 @@
 
             <ListBox.ItemTemplate >
                 <DataTemplate >
-                    <Border Background="#e6e6e6"
+                    <Border Background="#E6FFFFFF"
                            CornerRadius="8"
                            Margin="10"
                            Width="280"
@@ -206,7 +208,7 @@
 
 
 
-                                <ui:Button  Grid.Column="0" Background="#e6e6e6"
+                                <ui:Button  Grid.Column="0" Background="#E6FFFFFF"
                                             HorizontalAlignment="Right"   VerticalAlignment="Top" 
                                             CornerRadius="15"
                                              Command="{Binding DataContext.PlaySingerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

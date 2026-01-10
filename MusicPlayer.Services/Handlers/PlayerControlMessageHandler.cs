@@ -214,32 +214,33 @@ namespace MusicPlayer.Services.Handlers
                 
                 if (nextSong != null)
                 {
-                    // 检测下一首歌曲是否与当前歌曲相同，且播放模式为随机
-                    // 这种情况发生在播放列表只有一首歌曲时
-                    if (message.PlayMode == PlayMode.Shuffle && 
-                        _playlistDataService.CurrentSong != null && 
-                        nextSong.Id == _playlistDataService.CurrentSong.Id)
+                    // 检测下一首歌曲是否与当前歌曲相同
+                    bool isSameSong = _playlistDataService.CurrentSong != null && nextSong.Id == _playlistDataService.CurrentSong.Id;
+                    
+                    // 检查是否为单曲循环模式或播放队列只有一首歌曲（下一首与当前相同）
+                    if (message.PlayMode == PlayMode.RepeatOne || isSameSong)
                     {
-                        // 如果是随机播放且下一首是同一首，停止播放
-                        System.Diagnostics.Debug.WriteLine("PlayerControlMessageHandler: OnSwitchToNextSong - 随机播放模式下只有一首歌曲，停止播放");
+                        // 单曲循环模式或播放队列只有一首歌曲时，强制重置播放状态
+                        System.Diagnostics.Debug.WriteLine("PlayerControlMessageHandler: OnSwitchToNextSong - 强制重置播放状态");
                         _playerService.StopPlayback();
-                        _playerStateService.Stop();
-                        return;
+                        _playerService.LoadSong(nextSong);
+                        _playerService.StartPlayback();
                     }
-                    
-                    // 设置当前歌曲会自动触发CurrentSongChangedMessage，由PlayerService处理LoadSong
-                    _playlistDataService.CurrentSong = nextSong;
-                    
-                  
-                    if (_playerStateService is PlayerStateService playerStateService)
+                    else
                     {
-                        playerStateService.SetPositionByUser(0);
+                        // 设置当前歌曲会自动触发CurrentSongChangedMessage，由PlayerService处理LoadSong
+                        _playlistDataService.CurrentSong = nextSong;
+                        
+                        if (_playerStateService is PlayerStateService playerStateService)
+                        {
+                            playerStateService.SetPositionByUser(0);
+                        }
+                        
+                        Task.Delay(500).ContinueWith(_ => { 
+                            try { _playerService.StartPlayback(); } 
+                            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"延迟开始播放失败: {ex.Message}"); } 
+                        }, TaskScheduler.Default);
                     }
-                    
-                   Task.Delay(500).ContinueWith(_ => {
-                        try { _playerService.StartPlayback(); } 
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"延迟开始播放失败: {ex.Message}"); }
-                    }, TaskScheduler.Default);
                 }
                 else
                 {

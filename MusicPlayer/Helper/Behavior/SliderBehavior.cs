@@ -133,9 +133,7 @@ namespace MusicPlayer.Helper
         private static void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (sender is Slider slider && GetIsDragging(slider))
-            {
-                System.Diagnostics.Debug.WriteLine($"Slider: 拖动值变化为 {e.NewValue}");
-                
+            { 
                 // 在拖动过程中，我们只需要更新ViewModel中的临时位置
                 var bindingExpression = slider.GetBindingExpression(Slider.ValueProperty);
                 if (bindingExpression != null)

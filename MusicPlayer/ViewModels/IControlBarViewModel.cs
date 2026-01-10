@@ -9,6 +9,7 @@ namespace MusicPlayer.ViewModels
     /// </summary>
     public interface IControlBarViewModel : IViewModelLifecycle
     {
-        // 控制栏特定的方法和属性可以在这里定义
+        // 播放列表视图模型
+        IPlaylistViewModel PlaylistViewModel { get; }
     }
 }

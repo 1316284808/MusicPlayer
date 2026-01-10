@@ -232,15 +232,15 @@ namespace MusicPlayer.Config
         private static IServiceCollection AddViewModels(this IServiceCollection services)
         { 
             // 所有ViewModel注册为单例模式，确保实例唯一性
-            // BackgroundViewModel已被完全移除
-            
             services.AddSingleton<IControlBarViewModel>(provider => {
                 var instance = new ControlBarViewModel(
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IPlayerStateService>(),
                     provider.GetRequiredService<NavigationService>(),
                     provider.GetRequiredService<IConfigurationService>(),
-                    provider.GetRequiredService<IPlaylistDataService>());
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaylistViewModel>(),
+                    provider.GetRequiredService<IPlaybackContextService>());
                 System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
@@ -701,59 +701,5 @@ namespace MusicPlayer.Config
         }
     }
     
-    /// <summary>
-    /// 播放上下文初始化服务
-    /// 负责在应用启动时初始化播放上下文提供者
-    /// </summary>
-    public class PlaybackContextInitializationService : IHostedService
-    {
-        private readonly IPlaybackContextService _playbackContextService;
-        private readonly IPlaybackContextProvider _defaultProvider;
-        private readonly FavoritesProvider _favoritesProvider;
-        private readonly ArtistProvider _artistProvider;
-        private readonly AlbumProvider _albumProvider;
-
-        public PlaybackContextInitializationService(
-            IPlaybackContextService playbackContextService,
-            IPlaybackContextProvider defaultProvider,
-            FavoritesProvider favoritesProvider,
-            ArtistProvider artistProvider,
-            AlbumProvider albumProvider)
-        {
-            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
-            _defaultProvider = defaultProvider ?? throw new ArgumentNullException(nameof(defaultProvider));
-            _favoritesProvider = favoritesProvider ?? throw new ArgumentNullException(nameof(favoritesProvider));
-            _artistProvider = artistProvider ?? throw new ArgumentNullException(nameof(artistProvider));
-            _albumProvider = albumProvider ?? throw new ArgumentNullException(nameof(albumProvider));
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 开始初始化播放上下文提供者");
-                
-                // 注册各种播放上下文提供者
-                _playbackContextService.RegisterProvider(PlaybackContextType.DefaultPlaylist, _defaultProvider);
-                _playbackContextService.RegisterProvider(PlaybackContextType.Favorites, _favoritesProvider);
-                _playbackContextService.RegisterProvider(PlaybackContextType.Artist, _artistProvider);
-                _playbackContextService.RegisterProvider(PlaybackContextType.Album, _albumProvider);
-                
-                System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 播放上下文提供者初始化完成");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"PlaybackContextInitializationService: 初始化失败: {ex.Message}");
-                throw;
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 停止播放上下文初始化服务");
-            return Task.CompletedTask;
-        }
-    }
+    
 }

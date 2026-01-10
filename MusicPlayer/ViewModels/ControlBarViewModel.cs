@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
@@ -23,11 +25,75 @@ namespace MusicPlayer.ViewModels
         private readonly IPlayerStateService _playerStateService;
         private readonly IConfigurationService _configurationService;
         private readonly IPlaylistDataService _playlistDataService;
+        private readonly IPlaylistViewModel _playlistViewModel;
+        private readonly IPlaybackContextService _playbackContextService;
         private bool _isUserDragging = false; // 标记用户是否正在拖拽进度条
         private double _dragPosition = 0.0; // 拖动过程中的临时位置
         private bool _isVolumeFlyoutOpen = false; // 音量弹出层打开状态
         private string _togglePlayerPageToolTip = "进入播放页"; // 控制按钮的提示文本
         private bool _isPlayerPage = false; // 当前是否在PlayerPage
+
+        // 播放列表视图模型
+        public IPlaylistViewModel PlaylistViewModel => _playlistViewModel;
+
+        // 基于当前播放上下文的播放队列
+        private ObservableCollection<Core.Models.Song> _currentContextPlaylist = new();
+        public ObservableCollection<Core.Models.Song> CurrentContextPlaylist
+        {
+            get => _currentContextPlaylist;
+            set
+            {
+                if (_currentContextPlaylist != value)
+                {
+                    _currentContextPlaylist = value;
+                    OnPropertyChanged();
+                    // 更新播放队列标题
+                    OnPropertyChanged(nameof(QueueTitle));
+                    OnPropertyChanged(nameof(SongCount));
+                }
+            }
+        }
+        /// <summary>
+        /// 播放队列计数
+        /// </summary>
+        public int SongCount
+        {
+            get => CurrentContextPlaylist.Count;
+        }
+        
+        /// <summary>
+        /// 播放队列标题，根据当前播放上下文动态生成
+        /// </summary>
+        public string QueueTitle
+        {
+            get
+            {
+                try
+                {
+                    // 获取当前播放上下文
+                    var context = _playbackContextService.CurrentPlaybackContext;
+                    
+                    switch (context.Type)
+                    {
+                        case Core.Enums.PlaybackContextType.DefaultPlaylist:
+                            return "正在播放[默认列表]";
+                        case Core.Enums.PlaybackContextType.Favorites:
+                            return "正在播放[收藏列表]";
+                        case Core.Enums.PlaybackContextType.Artist:
+                            return $"正在播放[歌手:{context.Identifier}]";
+                        case Core.Enums.PlaybackContextType.Album:
+                            return $"正在播放[专辑:{context.Identifier}]";
+                        default:
+                            return "正在播放[默认列表]";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 生成播放队列标题失败: {ex.Message}");
+                    return "正在播放[默认列表]";
+                }
+            }
+        }
 
         public bool IsUserDragging
         {
@@ -120,9 +186,7 @@ namespace MusicPlayer.ViewModels
                 // 如果用户正在拖动，更新临时位置而不是实际播放位置
                 if (_isUserDragging)
                 {
-                    _dragPosition = Math.Max(0, Math.Min(_playerStateService.MaxPosition, value));
-                    System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 更新拖动临时位置为 {_dragPosition}");
-
+                    _dragPosition = Math.Max(0, Math.Min(_playerStateService.MaxPosition, value)); 
                     // 只通知UI更新，不发送SeekMessage
                     OnPropertyChanged();
                 }
@@ -264,10 +328,45 @@ namespace MusicPlayer.ViewModels
             }
         }
 
+        // 播放队列弹出层打开状态
+        private bool _isQueueFlyoutOpen = false;
+        public bool IsQueueFlyoutOpen
+        {
+            get => _isQueueFlyoutOpen;
+            set
+            {
+                if (_isQueueFlyoutOpen != value)
+                {
+                    _isQueueFlyoutOpen = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         // 当前歌曲收藏状态
         public bool IsCurrentSongFavorited
         {
             get => _currentSong?.Heart ?? false;
+        }
+
+        // 当前播放列表项
+        private Core.Models.Song? _currentPlaylistItem;
+        public Core.Models.Song? CurrentPlaylistItem
+        {
+            get => _currentPlaylistItem;
+            set
+            {
+                if (_currentPlaylistItem != value)
+                {
+                    _currentPlaylistItem = value;
+                    OnPropertyChanged();
+                    // 当选中歌曲变化时，播放该歌曲
+                    if (_currentPlaylistItem != null)
+                    {
+                        ExecutePlaySelectedSong(_currentPlaylistItem);
+                    }
+                }
+            }
         }
 
         // 命令定义
@@ -281,11 +380,13 @@ namespace MusicPlayer.ViewModels
         public ICommand TogglePlayModeCommand { get; }
         public ICommand TogglePlayerPageCommand { get; }
         public ICommand ToggleFavoriteCommand { get; }
+        public ICommand ToggleQueueFlyoutCommand { get; }
+        public ICommand PlaySelectedSongCommand { get; }
 
 
         private readonly NavigationService _navigationService;
 
-        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService)
+        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService, IPlaylistViewModel playlistViewModel, IPlaybackContextService playbackContextService)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 创建新实例，ID: {GetHashCode()}");
@@ -296,6 +397,11 @@ namespace MusicPlayer.ViewModels
             _navigationService = navigationService;
             _configurationService = configurationService;
             _playlistDataService = playlistDataService;
+            _playlistViewModel = playlistViewModel;
+            _playbackContextService = playbackContextService;
+            
+            // 初始化当前上下文播放队列
+            UpdateCurrentContextPlaylist();
 
             // 初始化命令
             PlayPauseCommand = new RelayCommand(ExecutePlayPause);
@@ -308,6 +414,8 @@ namespace MusicPlayer.ViewModels
             TogglePlayModeCommand = new RelayCommand(ExecuteTogglePlayMode);
             TogglePlayerPageCommand = new RelayCommand(ExecuteTogglePlayerPage);
             ToggleFavoriteCommand = new RelayCommand(ExecuteToggleFavorite);
+            ToggleQueueFlyoutCommand = new RelayCommand(ExecuteToggleQueueFlyout);
+            PlaySelectedSongCommand = new RelayCommand<Core.Models.Song>(ExecutePlaySelectedSong);
 
             // 注册消息处理器 - 通过消息系统接收时间更新
             RegisterMessageHandlers();
@@ -670,6 +778,77 @@ namespace MusicPlayer.ViewModels
                 System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 切换收藏状态失败: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// 切换播放队列弹出层的显示状态
+        /// </summary>
+        private void ExecuteToggleQueueFlyout()
+        {
+            // 切换播放队列弹出层的显示状态
+            IsQueueFlyoutOpen = !IsQueueFlyoutOpen;
+            
+            // 每次打开时更新当前上下文播放队列
+            if (IsQueueFlyoutOpen)
+            {
+                UpdateCurrentContextPlaylist();
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 切换播放队列弹出层状态为: {IsQueueFlyoutOpen}");
+        }
+        
+        /// <summary>
+        /// 更新当前播放上下文的播放队列
+        /// </summary>
+        private void UpdateCurrentContextPlaylist()
+        {
+            try
+            {
+                // 获取当前播放上下文
+                var context = _playbackContextService.CurrentPlaybackContext;
+                System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 正在更新当前上下文播放队列，上下文类型: {context.Type}, 标识符: {context.Identifier}");
+                
+                // 获取当前播放列表数据
+                var allSongs = _playlistDataService.DataSource;
+                
+                // 根据上下文类型过滤歌曲
+                var filteredSongs = new List<Core.Models.Song>();
+                
+                switch (context.Type)
+                {
+                    case Core.Enums.PlaybackContextType.DefaultPlaylist:
+                        // 默认列表：所有未删除的歌曲
+                        filteredSongs = allSongs.Where(s => !s.IsDeleted).ToList();
+                        break;
+                    case Core.Enums.PlaybackContextType.Favorites:
+                        // 收藏列表：所有收藏且未删除的歌曲
+                        filteredSongs = allSongs.Where(s => s.Heart && !s.IsDeleted).ToList();
+                        break;
+                    case Core.Enums.PlaybackContextType.Artist:
+                        // 歌手列表：所有属于当前歌手且未删除的歌曲
+                        filteredSongs = allSongs.Where(s => s.Artist == context.Identifier && !s.IsDeleted).ToList();
+                        break;
+                    case Core.Enums.PlaybackContextType.Album:
+                        // 专辑列表：所有属于当前专辑且未删除的歌曲
+                        filteredSongs = allSongs.Where(s => s.Album == context.Identifier && !s.IsDeleted).ToList();
+                        break;
+                    default:
+                        // 默认情况：所有未删除的歌曲
+                        filteredSongs = allSongs.Where(s => !s.IsDeleted).ToList();
+                        break;
+                }
+                
+                // 更新播放队列
+                CurrentContextPlaylist = new ObservableCollection<Core.Models.Song>(filteredSongs);
+                System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 当前上下文播放队列已更新，共包含 {filteredSongs.Count} 首歌曲");
+                
+                // 清除临时数据缓存
+                _playlistDataService.ClearDataSource();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 更新当前上下文播放队列失败: {ex.Message}");
+            }
+        }
          
 
         /// <summary>
@@ -690,6 +869,20 @@ namespace MusicPlayer.ViewModels
         }
 
 
+
+        /// <summary>
+        /// 执行播放选中歌曲命令
+        /// </summary>
+        /// <param name="song">选中的歌曲对象</param>
+        private void ExecutePlaySelectedSong(Core.Models.Song? song)
+        {
+            if (song != null)
+            {
+                // 发送播放选中歌曲消息
+                _messagingService.Send(new Services.Messages.PlaySelectedSongMessage(song));
+                System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 播放选中歌曲 - {song.Title}");
+            }
+        }
 
         private static string FormatTime(TimeSpan time)
         {

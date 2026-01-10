@@ -52,15 +52,7 @@ namespace MusicPlayer.ViewModels
         private bool _isSearchExpanded = false;
         
         // 过滤模式
-        private enum FilterMode
-        {
-            All,
-            Favorites
-        }
-        
         private FilterMode _currentFilterMode = FilterMode.All;
-
-        
 
         /// <summary>
         /// 专辑加载请求事件

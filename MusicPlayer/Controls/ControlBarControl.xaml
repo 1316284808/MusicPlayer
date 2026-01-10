@@ -15,6 +15,7 @@
         <converters:VolumeToPercentageConverter x:Key="VolumeToPercentageConverter"/>
         <converters:BoolToFavoriteTextConverter x:Key="BoolToFavoriteTextConverter"/>
         <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
 
 
@@ -35,8 +36,8 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Width="auto" >
-                <ContentControl Margin="10,0,10,0"
+            <StackPanel Grid.Column="0" Width="auto"  >
+                <ContentControl Margin="10,0,10,0" 
                     Height="80"
                     ToolTip="{Binding TogglePlayerPageToolTip}"
                     Cursor="Hand">
@@ -98,8 +99,12 @@
                     </StackPanel>
                 </ContentControl>
             </StackPanel>
-         
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"     >
+            <Border Grid.Column="1">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>
+                </Border.Effect>
+
+                <StackPanel  Orientation="Horizontal" VerticalAlignment="Center"     >
                 <ui:Button Command="{Binding ToggleFavoriteCommand}" ToolTip="{Binding IsCurrentSongFavorited, Converter={StaticResource BoolToFavoriteTextConverter}}"  Width="auto" >
                     <Helper:CustomIcon Foreground="Red"   IconSize="18">
                         <Helper:CustomIcon.Style>
@@ -160,7 +165,10 @@
                         <RowDefinition Height="0"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <ui:Flyout Grid.Row="0"  Background="#e6e6e6"  Opacity="0.5" IsOpen="{Binding IsVolumeFlyoutOpen, Mode=TwoWay}"  Placement="Top"  >
+                        <ui:Flyout Grid.Row="0"  Background="#f0f0f0"
+        BorderBrush="#d0d0d0"
+        BorderThickness="1"
+        IsOpen="{Binding IsVolumeFlyoutOpen, Mode=TwoWay}"  Placement="Top"  >
                         <StackPanel Width="30" >
                             <!-- 音量滑块控制 - 竖向 -->
                             <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" 
@@ -216,13 +224,121 @@
 
                     <!-- 桌面歌词按钮 -->
                     <ui:Button Command="{Binding ShowLyricsCommand}" ToolTip="显示桌面歌词" >
-                        <Helper:CustomIcon  Kind="Stop"  />
+                            <Helper:CustomIcon  Kind="Lyrics"  />
                     </ui:Button>
                 </StackPanel>
-            </StackPanel>
+        </StackPanel>
+            </Border>
+            <StackPanel       Grid.Column="2"  VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="0"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-            <StackPanel Grid.Column="2"  VerticalAlignment="Center" HorizontalAlignment="Right"  Margin="0,0,0,10">
-                
+
+                    <Popup Grid.Row="0"  Margin="0,0,315,0" Opacity="0.5"  HorizontalAlignment="left"
+                               IsOpen="{Binding IsQueueFlyoutOpen, Mode=TwoWay}" 
+                             PlacementTarget="{Binding ElementName=MusicInfoButton}"
+                               Placement="Top"
+                           PopupAnimation="Slide" 
+                               HorizontalOffset="-270"   
+                        AllowsTransparency="True"
+                               StaysOpen="False" >
+                        <Border Background="White"  
+        BorderBrush="White" 
+        
+        CornerRadius="8" Padding="5"> 
+                            <StackPanel Width="300" Height="550">
+                                <!-- 播放队列标题 -->
+                                <StackPanel Margin="5"  VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding QueueTitle}" FontSize="14" 
+                    FontWeight="Bold"  HorizontalAlignment="Left"
+                    TextWrapping="Wrap"   />
+                                    <Separator Margin="2"/>
+                                </StackPanel>
+
+                                <!-- 播放队列列表 -->
+                                <ListBox ItemsSource="{Binding CurrentContextPlaylist}" 
+                                      Height="480" 
+                                      VerticalAlignment="Stretch" 
+                                      HorizontalContentAlignment="Stretch" 
+                                      Background="Transparent" 
+                                      BorderBrush="Transparent"
+                                      ScrollViewer.CanContentScroll="True"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      SelectionMode="Single"
+                                      SelectedItem="{Binding CurrentPlaylistItem, Mode=TwoWay}"
+>   
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="5,10"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#e6e6e6"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="False">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#e6e6e6"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,5">
+                                                <!-- 歌曲信息 -->
+                                                <StackPanel VerticalAlignment="Center" Width="280">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" 
+                                    TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Artist}" FontSize="11" Opacity="0.7" 
+                                    TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+
+                                <StackPanel Margin="5"  VerticalAlignment="Center">
+
+                                    <Separator Margin="2"/>
+                                    <ui:TextBlock Text="{Binding SongCount,StringFormat='共{0}首'}" 
+                       HorizontalAlignment="Right"    FontSize="14" />
+
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+                       
+                    </Popup>
+
+
+                    <ui:Button HorizontalAlignment="Right" ToolTip="播放队列" x:Name="MusicInfoButton"  Command="{Binding ToggleQueueFlyoutCommand}" 
+                       Grid.Row="1">
+                        <Helper:CustomIcon Kind="MusicInfo"  />
+                    </ui:Button>
+
+
+                </Grid>
             </StackPanel>
 
         </Grid>

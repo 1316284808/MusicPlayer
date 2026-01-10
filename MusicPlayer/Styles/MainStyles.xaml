@@ -9,10 +9,138 @@
         <Setter Property="Height" Value="35" />
         <Setter Property="Width" Value="40"/>
         <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="8"/> 
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0" />
     </Style>
- 
+    
+    <!-- 全局原生 ComboBox 样式：仅设置圆角为 8，其余保持默认 -->
+    <!-- 全局 ComboBox 样式：仅设置圆角为 8，其余保持默认 -->
+    <Style TargetType="ComboBox">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <!-- 主容器：只加 CornerRadius="8" -->
+                    <Border x:Name="MainBorder"
+                            
+                         BorderBrush="#40FFFFFF" 
+                         Background="#E6FFFFFF" 
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8">
+                      
+                        <Grid>
+                            <!-- 下拉箭头按钮：覆盖整个ComboBox -->
+                            <ToggleButton x:Name="ToggleButton"
+                                      Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"
+                                      Background="Transparent"
+                                      BorderBrush="Transparent"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      ClickMode="Press">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 内容区域 -->
+                                    <ContentPresenter x:Name="ContentPresenter"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Left"
+                                          Margin="6,0,23,0" />
+
+                                    <!-- 可编辑文本框（仅在 IsEditable=True 时显示） -->
+                                    <TextBox x:Name="PART_EditableTextBox"
+                                         Visibility="Collapsed"
+                                         Margin="6,0,23,0"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         FontFamily="{TemplateBinding FontFamily}"
+                                         FontSize="{TemplateBinding FontSize}"
+                                         FontStyle="{TemplateBinding FontStyle}"
+                                         FontWeight="{TemplateBinding FontWeight}" />
+
+                                    <!-- 箭头图标 -->
+                                    <Path x:Name="Arrow"
+                                          Grid.Column="1"
+                                          Data="M0,0 L4,4 L8,0 Z"
+                                          Fill="{TemplateBinding Foreground}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="2" />
+                                </Grid>
+                            </ToggleButton>
+
+                            <!-- 下拉弹出框 -->
+                            <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide">
+                                <Border x:Name="DropDownBorder"
+                                    BorderBrush="#40FFFFFF" 
+                                    Background="#E6FFFFFF" 
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ScrollViewer x:Name="DropDownScrollViewer"
+                                              SnapsToDevicePixels="True">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="ContentPresenter" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.WindowTextBrush}}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 必须提供 ToggleButton 模板（简化版） -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Border"
+                    Grid.ColumnSpan="2"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="0" />
+                <Path x:Name="Arrow"
+                  Grid.Column="1"
+                  Fill="Black"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Data="M0,0 L4,4 L8,0 Z" />
+            </Grid>
+        </ControlTemplate>
+
     <!-- CustomIcon全局样式 - 为所有CustomIcon添加鼠标悬停缩放动效 -->
     <Style TargetType="Helper:CustomIcon">
         <!-- 设置默认的缩放变换 -->

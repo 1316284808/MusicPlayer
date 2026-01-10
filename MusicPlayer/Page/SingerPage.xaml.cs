@@ -18,6 +18,7 @@ namespace MusicPlayer.Page
             InitializeComponent();
             DataContext = singerViewModel;
             this.SingerControl.DataContext = singerViewModel;
+            //singerViewModel.Initialize();
         }
     }
 }
