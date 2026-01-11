@@ -109,10 +109,10 @@ namespace MusicPlayer.Services.Handlers
                     var currentSong = _playerStateService.CurrentSong;
                     if (_playerService.CurrentSong != currentSong && currentSong != null)
                     {
-                        // 加载歌曲
+                        //加载歌曲
                         _playerService.LoadSong(currentSong);
                     }
-                    
+
                     // 执行播放
                     _playerService.StartPlayback();
                 }
@@ -228,13 +228,16 @@ namespace MusicPlayer.Services.Handlers
                     }
                     else
                     {
-                        // 设置当前歌曲会自动触发CurrentSongChangedMessage，由PlayerService处理LoadSong
+                        // 设置当前歌曲
                         _playlistDataService.CurrentSong = nextSong;
                         
                         if (_playerStateService is PlayerStateService playerStateService)
                         {
                             playerStateService.SetPositionByUser(0);
                         }
+                        
+                        // 手动调用LoadSong加载歌曲，初始化音频引擎
+                        _playerService.LoadSong(nextSong);
                         
                         Task.Delay(500).ContinueWith(_ => { 
                             try { _playerService.StartPlayback(); } 
@@ -265,7 +268,7 @@ namespace MusicPlayer.Services.Handlers
                 var previousSong = _playlistDataService.GetPreviousSong(message.PlayMode);
                 if (previousSong != null)
                 {
-                    // 设置当前歌曲会自动触发CurrentSongChangedMessage，由PlayerService处理LoadSong
+                    // 设置当前歌曲
                     _playlistDataService.CurrentSong = previousSong;
                  
                     
@@ -275,8 +278,11 @@ namespace MusicPlayer.Services.Handlers
                         playerStateService.SetPositionByUser(0);
                     }
                     
+                    // 手动调用LoadSong加载歌曲，初始化音频引擎
+                    _playerService.LoadSong(previousSong);
+                    
                    Task.Delay(500).ContinueWith(_ => {
-                        try { _playerService.StartPlayback(); }
+                        try { _playerService.StartPlayback(); } 
                         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"延迟开始播放失败: {ex.Message}"); }
                     }, TaskScheduler.Default);
                 }
@@ -324,6 +330,8 @@ namespace MusicPlayer.Services.Handlers
             {
                 LogSongSelection(song, methodName);
                 SetCurrentSong(song, methodName);
+                // 直接调用LoadSong加载歌曲，初始化音频引擎
+                _playerService.LoadSong(song);
                 ScheduleDelayedPlayback(methodName);
                 replyCallback?.Invoke(true);
             }

@@ -1,15 +1,16 @@
+using MusicPlayer.Core.Audio;
+using MusicPlayer.Core.Enums;
+using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Models;
+using MusicPlayer.Services.Messages;
+using NAudio.CoreAudioApi;
+using NAudio.Vorbis;
+using NAudio.Wave;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows.Threading;
-using NAudio.Wave;
-using NAudio.Vorbis;
-using MusicPlayer.Core.Models;
-using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Audio;
-using MusicPlayer.Services.Messages;
-using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Services
 {
@@ -47,6 +48,9 @@ namespace MusicPlayer.Services
         private float[] _spectrumDataBuffer = null; // 频谱数据缓冲区，避免重复分配
         private int _spectrumDataLength = 32; // 频谱数据长度，与UI显示一致播放
         private readonly object _spectrumLock = new object(); // 频谱数据线程锁
+        
+        // 跟踪当前加载的歌曲，避免重复加载
+        private Song? _currentlyLoadedSong;
       
 
         // 事件
@@ -84,8 +88,6 @@ namespace MusicPlayer.Services
             set => _messagingService.Send(new PlayModeChangedMessage(value));
         }
         public float[] SpectrumData => _playerStateService.SpectrumData;
-
-
 
         public PlayerService(
             IPlaylistDataService playlistDataService, 
@@ -131,8 +133,8 @@ namespace MusicPlayer.Services
 
             // 初始化 SMTC 服务
             _ = InitializeMediaTransportAsync();
-            
-           
+          
+          
             // PlaySelectedSongMessage  由 PlayerControlMessageHandler 统一处理，避免重复播放
             _messagingService.Register<VolumeChangedMessage>(this, OnVolumeChangedMessage);
             _messagingService.Register<MuteStateChangedMessage>(this, OnMuteStateChangedMessage);
@@ -218,27 +220,8 @@ namespace MusicPlayer.Services
             // 同步媒体信息到系统控制
             _ = _mediaTransportService.UpdateMediaInfoAsync(message.Value);
             
-            // 重要：当播放列表管理器切换歌曲时，实际加载并播放新歌曲
-            if (message.Value != null)
-            {
-                // 简化Dispatcher调用，确保在正确的线程上执行
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    // 加载歌曲
-                    LoadSong(message.Value);
-                    
-                    // 确保音频设备已正确初始化
-                    if (_waveOut != null && _audioFileReader != null)
-                    {
-                        // 开始播放
-                        StartPlayback();
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"音频设备初始化失败，无法开始播放: {message.Value.Title}");
-                    }
-                });
-            }
+            // 注意：不再直接调用LoadSong，而是由PlayerControlMessageHandler统一处理播放逻辑
+            // 这样可以避免重复加载同一首歌曲，解决音频引擎被重复初始化的问题
         }
 
         public void LoadSong(Song song)
@@ -271,17 +254,13 @@ namespace MusicPlayer.Services
                 var audioStreamWithEqualizer = _equalizerService.ApplyEqualizer(_spectrumAnalyzer);
 
                 // 创建输出设备
-                //System.Threading.Thread.Sleep(100);
+              
                 CreateAudioOutputDevice(audioStreamWithEqualizer);
-                //System.Threading.Thread.Sleep(100);
-                // 设置音量（直接使用PlayerStateService的当前值）
-                _audioFileReader.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
-
-                // 更新播放列表数据服务的当前歌曲状态
-                _playlistDataService.CurrentSong = song;
-                
-                // 只在用户真正切换歌曲时更新LastPlayedSongId，而不是应用启动加载时
-                // 检查是否是用户主动切换歌曲（不是应用启动时的自动加载）
+                // 更新播放列表数据服务的当前歌曲状态（仅当不同时才更新，避免循环调用）
+                if (_playlistDataService.CurrentSong != song)
+                {
+                    _playlistDataService.CurrentSong = song;
+                }
                 bool isUserAction = _playlistDataService.DataSource.Any();
                 if (isUserAction)
                 {
@@ -488,9 +467,14 @@ namespace MusicPlayer.Services
         {
             try
             {
-                _waveOut?.Dispose();
-                _waveOut = null;
-
+                // 安全地停止和释放旧音频设备
+               
+                    if (_waveOut != null)
+                    {
+                        _waveOut.Stop();
+                        _waveOut.Dispose();
+                        _waveOut = null;
+                    }
                 var audioEngine = _playerStateService.CurrentAudioEngine;
                 System.Diagnostics.Debug.WriteLine($"PlayerService: 使用音频引擎 {audioEngine} 初始化音频输出设备");
 
@@ -532,6 +516,7 @@ namespace MusicPlayer.Services
         /// </summary>
         private void InitializeWaveOutDevice(object audioStream)
         {
+          
             _waveOut = new WaveOutEvent();
             _waveOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
             
@@ -558,7 +543,8 @@ namespace MusicPlayer.Services
         /// </summary>
         private void InitializeDirectSoundDevice(object audioStream)
         {
-            var directSoundOut = new NAudio.Wave.DirectSoundOut();
+          
+            var directSoundOut = new NAudio.Wave.DirectSoundOut( );
             _waveOut = directSoundOut;
             _waveOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
             
@@ -580,32 +566,70 @@ namespace MusicPlayer.Services
             System.Diagnostics.Debug.WriteLine("DirectSound音频设备初始化成功");
         }
 
+
+
+
+
+      
+
+
         /// <summary>
-        /// 初始化WASAPI音频设备
+        /// 初始化WASAPI音频设备 - 修复版【解决拔耳机播放卡住问题】
         /// </summary>
         private void InitializeWasapiDevice(object audioStream)
         {
-            var wasapiOut = new NAudio.Wave.WasapiOut();
-            _waveOut = wasapiOut;
-            _waveOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
-            
-            // 检查音频流类型并初始化
-            if (audioStream is WaveStream waveStream)
+           
+
+            try
             {
-                _waveOut.Init(waveStream);
+                var enumerator = new MMDeviceEnumerator();
+                var mmDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                var wasapiOut = new WasapiOut(mmDevice, AudioClientShareMode.Shared, false, 200);
+
+                _waveOut = wasapiOut;
+                _waveOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
+
+                // ===== 核心修复：绑定播放停止事件，监听设备断开/播放异常 =====
+                _waveOut.PlaybackStopped += (sender, e) =>
+                {
+                    // 播放停止的原因是【设备异常/设备断开】，且当前有正在播放的音频流
+                    if (e.Exception != null && audioStream != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WASAPI播放中断：{e.Exception.Message}，原因：设备断开/异常，正在自动恢复播放...");
+                        // 关键：重新初始化WASAPI，自动获取新的默认设备（扬声器）
+
+                        InitializeWasapiDevice(audioStream);
+                        // 恢复播放
+                        _waveOut?.Play();
+                    }
+                };
+
+                // 检查音频流类型并初始化
+                if (audioStream is WaveStream waveStream)
+                {
+                    _waveOut.Init(waveStream);
+                }
+                else if (audioStream is ISampleProvider sampleProvider)
+                {
+                    _waveOut.Init(sampleProvider);
+                }
+                else
+                {
+                    // 默认使用频谱分析器
+                    _waveOut.Init(_spectrumAnalyzer);
+                }
+
+                System.Diagnostics.Debug.WriteLine("WASAPI音频设备初始化成功，已绑定异常恢复播放");
             }
-            else if (audioStream is ISampleProvider sampleProvider)
+            catch (Exception ex)
             {
-                _waveOut.Init(sampleProvider);
+                System.Diagnostics.Debug.WriteLine($"WASAPI初始化失败：{ex.Message}");
             }
-            else
-            {
-                // 默认使用频谱分析器
-                _waveOut.Init(_spectrumAnalyzer);
-            }
-            
-            System.Diagnostics.Debug.WriteLine("WASAPI音频设备初始化成功");
         }
+
+
+
+
 
         private AudioFileReader? CreateAudioFileReader(string filePath)
         {
@@ -829,13 +853,8 @@ namespace MusicPlayer.Services
                         
                         System.Diagnostics.Debug.WriteLine($"PlayerService: 重新加载歌曲 {CurrentSong.Title} 以应用新的音频引擎，播放进度将重置为0");
                         
-                        // 重新加载当前歌曲，这会触发CreateAudioOutputDevice并使用新的音频引擎
-                        // LoadSong方法内部会重置播放进度为0
                         LoadSong(CurrentSong);
                         
-                        // 不恢复播放位置，保持从0开始
-                        
-                        // 如果之前在播放，则恢复播放
                         if (wasPlaying)
                         {
                             StartPlayback();

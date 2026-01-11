@@ -444,9 +444,45 @@ namespace MusicPlayer.ViewModels
                 // 找到当前时间对应的歌词行
                 var currentLyric = Lyrics.LastOrDefault(l => l.Time <= TimeSpan.FromSeconds(currentTime));
                 
-                if (currentLyric != null && currentLyric != CurrentLyricLine)
+                if (currentLyric != null)
                 {
-                    CurrentLyricLine = currentLyric;
+                    // 更新当前歌词行
+                    if (currentLyric != CurrentLyricLine)
+                    {
+                        // 切换到新的歌词行时，重置高亮索引
+                        if (CurrentLyricLine != null)
+                        {
+                            CurrentLyricLine.CurrentHighlightedIndex = 0;
+                            CurrentLyricLine.TargetHighlightedIndex = 0;
+                        }
+                        CurrentLyricLine = currentLyric;
+                    }
+                    
+                    // 计算当前歌词行的总时长
+                    TimeSpan lineDuration = currentLyric.EndTime - currentLyric.Time;
+                    double lineDurationSeconds = lineDuration.TotalSeconds;
+                    
+                    // 如果时长小于0.5秒，不进行逐字高亮
+                    if (lineDurationSeconds < 0.5)
+                    {
+                        currentLyric.UpdateHighlightSmoothly(currentLyric.Text.Length);
+                        currentLyric.HighlightedText = currentLyric.Text;
+                        return;
+                    }
+                    
+                    // 计算当前已经播放的时间在该行中的比例
+                    TimeSpan elapsedInLine = TimeSpan.FromSeconds(currentTime) - currentLyric.Time;
+                    double elapsedSecondsInLine = elapsedInLine.TotalSeconds;
+                    double progress = Math.Min(1.0, elapsedSecondsInLine / lineDurationSeconds);
+                    
+                    // 计算应该高亮的字数
+                    int totalChars = currentLyric.Text.Length;
+                    int highlightedChars = (int)Math.Round(totalChars * progress);
+                    highlightedChars = Math.Max(0, Math.Min(totalChars, highlightedChars));
+                    
+                    // 使用平滑过渡方法更新高亮索引
+                    currentLyric.UpdateHighlightSmoothly(highlightedChars);
+                    currentLyric.HighlightedText = currentLyric.Text;
                 }
             }
         }
@@ -457,10 +493,22 @@ namespace MusicPlayer.ViewModels
         public void SetLyrics(ObservableCollection<Core.Models.LyricLine> lyrics)
         {
             Lyrics.Clear();
-            foreach (var lyric in lyrics)
+            
+            if (lyrics != null && lyrics.Count > 0)
             {
-                Lyrics.Add(lyric);
+                // 添加歌词并设置结束时间
+                for (int i = 0; i < lyrics.Count; i++)
+                {
+                    var lyric = lyrics[i];
+                    // 设置结束时间为下一行的开始时间，如果是最后一行则设置为10秒后
+                    TimeSpan endTime = i < lyrics.Count - 1 ? lyrics[i + 1].Time : lyric.Time.Add(TimeSpan.FromSeconds(10));
+                    lyric.EndTime = endTime;
+                    lyric.CurrentHighlightedIndex = 0;
+                    lyric.HighlightedText = lyric.Text;
+                    Lyrics.Add(lyric);
+                }
             }
+            
             CurrentLyricLine = null;
             
             // 通知歌词已更新，触发滚动重置

@@ -349,7 +349,7 @@ MusicPlayer/
 - [🎵 原音 HQ 播放器（Original Sound HQ Player）🎶](https://github.com/Johnwikix/original-sound-hq-player.git)
 - [音频可视化（SpectrumVisualization）](https://github.com/Johnwikix/SpectrumVisualization.git)
 - [懒加载的流式布局（VirtualizingWrapPanel）](https://github.com/sbaeumlisberger/VirtualizingWrapPanel.git)
-
+- [Lemon-App](https://github.com/TwilightLemon/Lemon-App.git)
  
 
 ## 📄 许可证

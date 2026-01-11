@@ -17,6 +17,9 @@
         <converters:WindowStateToCoverSizeConverter x:Key="WindowStateToCoverSizeConverter"/>
         <converters:WindowStateToSpectrumSizeConverter x:Key="WindowStateToSpectrumSizeConverter"/>
         <converters:WindowStateToSpectrumDisplaySizeConverter x:Key="WindowStateToSpectrumDisplaySizeConverter"/>
+        <!-- 逐字高亮转换器 -->
+        <converters:HighlightConverter x:Key="HighlightConverter"/>
+        <converters:InverseHighlightConverter x:Key="InverseHighlightConverter"/>
       
     </UserControl.Resources>
 
@@ -160,29 +163,63 @@
                             <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="ItemBorder" Margin="0,0,15,0" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
-                                        <TextBlock Text="{Binding Text}"   TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                          TextWrapping="Wrap" FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                   LineHeight="20" MaxWidth="550"   x:Name="LyricTextBlock">
-                                        </TextBlock>
+                                        <Border x:Name="ItemBorder"    Margin="0,0,15,0" Background="Transparent" CornerRadius="8"  Padding="{TemplateBinding Padding}">
+                                        <Grid>
+                                            <!-- 非选中项：只显示普通文本 -->
+                                            <TextBlock x:Name="NormalTextBlock" Text="{Binding Text}"  
+                                              TextWrapping="Wrap" FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                      TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                       LineHeight="20" MaxWidth="550" />
+                                            
+                                            <!-- 选中项：显示逐字高亮 -->
+                                            <TextBlock x:Name="HighlightedTextBlock" 
+                                              TextWrapping="Wrap" 
+                                              FontSize="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                              TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                              LineHeight="20" 
+                                              MaxWidth="550"  
+                                              Visibility="Collapsed">
+                                                <TextBlock.Inlines>
+                                                    <!-- 高亮部分 -->
+                                                    <Run x:Name="HighlightedRun" FontWeight="Bold" Foreground="#FF0078D7">
+                                                        <Run.Text>
+                                                            <MultiBinding Converter="{StaticResource HighlightConverter}">
+                                                                <Binding Path="Text" />
+                                                                <Binding Path="CurrentHighlightedIndex" />
+                                                            </MultiBinding>
+                                                        </Run.Text>
+                                                    </Run><!-- 未高亮部分 --><Run x:Name="UnhighlightedRun" FontWeight="Bold" Foreground="Black">
+                                                        <Run.Text>
+                                                            <MultiBinding Converter="{StaticResource InverseHighlightConverter}">
+                                                                <Binding Path="Text" />
+                                                                <Binding Path="CurrentHighlightedIndex" />
+                                                            </MultiBinding>
+                                                        </Run.Text>
+                                                    </Run>
+                                                </TextBlock.Inlines>
+                                            </TextBlock>
+                                        </Grid>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
+                                            <Setter TargetName="NormalTextBlock" Property="Opacity" Value="1"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
-                                             <Setter TargetName="LyricTextBlock" Property="Margin" Value="5"/>
-                                             <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#FF0078D7"/>
-                                            <Setter TargetName="LyricTextBlock" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                                            <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Bold"/>
-                                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
+                                             <Setter TargetName="ItemBorder" Property="Margin" Value="0,0,15,0"/>
+                                             <Setter TargetName="HighlightedTextBlock" Property="Visibility" Value="Visible"/>
+                                             <Setter TargetName="NormalTextBlock" Property="Visibility" Value="Collapsed"/>
+                                            <Setter TargetName="ItemBorder" Property="Opacity" Value="1"/>
                                             
                                         </Trigger>
                                             <Trigger Property="IsSelected" Value="False">
-                                                <Setter TargetName="LyricTextBlock" Property="Margin" Value="35,5"/>
-                                                <Setter TargetName="LyricTextBlock" Property="Foreground" Value="Black"/>
-                                                <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Normal"/>
-                                                <Setter TargetName="LyricTextBlock" Property="Opacity" Value="0.8"/>
+                                                <Setter TargetName="ItemBorder" Property="Margin" Value="0,0,15,0"/>
+                                                <Setter TargetName="NormalTextBlock" Property="Foreground" Value="Black" />
+                                                <Setter TargetName="NormalTextBlock" Property="Opacity" Value="0.8" />
+                                                <Setter TargetName="NormalTextBlock" Property="FontWeight" Value="Normal"/>
+                                                <Setter TargetName="NormalTextBlock" Property="FontSize" Value="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                                <Setter TargetName="HighlightedTextBlock" Property="Visibility" Value="Collapsed"/>
+                                                <Setter TargetName="NormalTextBlock" Property="Visibility" Value="Visible"/>
+                                                <Setter TargetName="ItemBorder" Property="Opacity" Value="0.8"/>
                                                 
                                             </Trigger>
                                         </ControlTemplate.Triggers>

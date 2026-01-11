@@ -23,6 +23,9 @@
         mc:Ignorable="d">
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <!-- 逐字高亮转换器 -->
+        <converters:HighlightConverter x:Key="HighlightConverter"/>
+        <converters:InverseHighlightConverter x:Key="InverseHighlightConverter"/>
     </Window.Resources>
     <!--防止鼠标事件穿透图层，给与一个半透明底色-->
     <Border x:Name="MainBorder"   CornerRadius="4"
@@ -34,18 +37,37 @@
             <ColumnDefinition Width="auto"/>
         </Grid.ColumnDefinitions>
 
-        <!-- 歌词显示区域 -->
-        <ui:TextBlock Grid.Column="0" x:Name="LyricsText" 
-               Text="{Binding CurrentLyrics}"
+        <!-- 歌词显示区域 - 逐字高亮 -->
+        <TextBlock Grid.Column="0" x:Name="LyricsText" 
                HorizontalAlignment="Center" 
                VerticalAlignment="Center"
                FontSize="28"  
-                Height="auto"
-                  TextWrapping="Wrap" 
+               Height="auto" 
+               TextWrapping="Wrap" 
                FontWeight="SemiBold"
-                   Foreground="#FF0078D7" 
                TextAlignment="Center"
-               Margin="5"/>
+               Margin="5">
+            <TextBlock.Inlines>
+                <!-- 高亮部分 -->
+                <Run x:Name="HighlightedRun" 
+                     Foreground="#FF0078D7"  >
+                    <Run.Text>
+                        <MultiBinding Converter="{StaticResource HighlightConverter}">
+                            <Binding Path="CurrentLyricLine.Text" FallbackValue="暂无歌词"/>
+                            <Binding Path="CurrentLyricLine.CurrentHighlightedIndex" FallbackValue="0"/>
+                        </MultiBinding>
+                    </Run.Text>
+                </Run><!-- 未高亮部分 --><Run x:Name="UnhighlightedRun" 
+                     Foreground="Black">
+                    <Run.Text>
+                        <MultiBinding Converter="{StaticResource InverseHighlightConverter}">
+                            <Binding Path="CurrentLyricLine.Text" FallbackValue="暂无歌词"/>
+                            <Binding Path="CurrentLyricLine.CurrentHighlightedIndex" FallbackValue="0"/>
+                        </MultiBinding>
+                    </Run.Text>
+                </Run>
+            </TextBlock.Inlines>
+        </TextBlock>
 
         <!-- 关闭按钮 -->
         <ui:Button Grid.Column="1" x:Name="CloseButton" Background="Transparent" BorderThickness="0" 
