@@ -149,13 +149,26 @@ namespace MusicPlayer.Services
             string lyricDirectory = _configurationService.CurrentConfiguration.LyricDirectory;
             string fileName = Path.GetFileNameWithoutExtension(filePath);
 
-            // 1. Check for embedded lyrics first (preferred)
+            if (!string.IsNullOrEmpty(lyricDirectory))
+            {
+                var lrcPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.lrc");
+                if (Paths.FileExists(lrcPathInSpecifiedDir))
+                {
+                    return ParseLrc(System.IO.File.ReadAllText(lrcPathInSpecifiedDir, System.Text.Encoding.UTF8));
+                }
+
+                var srtPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.srt");
+                if (Paths.FileExists(srtPathInSpecifiedDir))
+                {
+                    return ParseSrt(System.IO.File.ReadAllText(srtPathInSpecifiedDir, System.Text.Encoding.UTF8));
+                }
+            }
+
             try
             {
                 var tagFile = TagLib.File.Create(filePath);
                 if (!string.IsNullOrEmpty(tagFile.Tag.Lyrics))
                 {
-                    // Try to parse as LRC format first, then as plain text
                     var lrcLyrics = ParseLrc(tagFile.Tag.Lyrics);
                     if (lrcLyrics.Any())
                     {
@@ -165,31 +178,12 @@ namespace MusicPlayer.Services
             }
             catch (Exception) { }
 
-            // 2. Check for external .lrc file in specified lyric directory
-            if (!string.IsNullOrEmpty(lyricDirectory))
-            {
-                var lrcPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.lrc");
-                if (Paths.FileExists(lrcPathInSpecifiedDir))
-                {
-                    return ParseLrc(System.IO.File.ReadAllText(lrcPathInSpecifiedDir, System.Text.Encoding.UTF8));
-                }
-
-                // 3. Check for external .srt file in specified lyric directory
-                var srtPathInSpecifiedDir = Path.Combine(lyricDirectory, $"{fileName}.srt");
-                if (Paths.FileExists(srtPathInSpecifiedDir))
-                {
-                    return ParseSrt(System.IO.File.ReadAllText(srtPathInSpecifiedDir, System.Text.Encoding.UTF8));
-                }
-            }
-
-            // 4. Check for external .lrc file in song directory
             var lrcPath = Paths.GetLrcFilePath(filePath);
             if (Paths.FileExists(lrcPath))
             {
                 return ParseLrc(System.IO.File.ReadAllText(lrcPath, System.Text.Encoding.UTF8));
             }
 
-            // 5. Check for external .srt file in song directory
             var srtPath = Paths.GetSrtFilePath(filePath);
             if (Paths.FileExists(srtPath))
             {
@@ -198,7 +192,6 @@ namespace MusicPlayer.Services
 
             return new List<LyricLine>();
         }
-
         private List<LyricLine> ParseSrt(string srtContent)
         {
             var lyrics = new List<LyricLine>();
@@ -229,7 +222,20 @@ namespace MusicPlayer.Services
                         
                         if (!string.IsNullOrEmpty(text))
                         {
-                            lyrics.Add(new LyricLine { Time = startTime, Text = text });
+                            // Create new LyricLine object
+                            var lyricLine = new LyricLine { Time = startTime };
+                            
+                            // Determine if it's Chinese or English
+                            if (IsChineseText(text))
+                            {
+                                lyricLine.TextCN = text;
+                            }
+                            else
+                            {
+                                lyricLine.TextEN = text;
+                            }
+                            
+                            lyrics.Add(lyricLine);
                         }
                     }
                 }
@@ -287,12 +293,24 @@ namespace MusicPlayer.Services
                 var time = kvp.Key;
                 var texts = kvp.Value;
                 
-                // If multiple texts exist for the same timestamp, treat as bilingual
+                // Create new LyricLine object
+                var lyricLine = new LyricLine { Time = time };
+                
+                // Check if we have multiple lines for the same timestamp (bilingual)
                 if (texts.Count > 1)
                 {
-                    // Combine as bilingual lyrics (original + translation)
-                    var combinedText = string.Join("\n", texts);
-                    lyrics.Add(new LyricLine { Time = time, Text = combinedText });
+                    // Iterate through each text line and determine if it's Chinese or English
+                    foreach (var text in texts)
+                    {
+                        if (IsChineseText(text))
+                        {
+                            lyricLine.TextCN = text;
+                        }
+                        else
+                        {
+                            lyricLine.TextEN = text;
+                        }
+                    }
                 }
                 else
                 {
@@ -306,22 +324,59 @@ namespace MusicPlayer.Services
                         var parts = text.Split(new[] { separator }, 2);
                         if (parts.Length == 2)
                         {
-                            var combinedText = parts[0].Trim() + "\n" + parts[1].Trim();
-                            lyrics.Add(new LyricLine { Time = time, Text = combinedText });
+                            // Determine which part is Chinese and which is English
+                            if (IsChineseText(parts[0]))
+                            {
+                                lyricLine.TextCN = parts[0].Trim();
+                                lyricLine.TextEN = parts[1].Trim();
+                            }
+                            else
+                            {
+                                lyricLine.TextCN = parts[1].Trim();
+                                lyricLine.TextEN = parts[0].Trim();
+                            }
                         }
                         else
                         {
-                            lyrics.Add(new LyricLine { Time = time, Text = text });
+                            // Single language text
+                            if (IsChineseText(text))
+                            {
+                                lyricLine.TextCN = text;
+                            }
+                            else
+                            {
+                                lyricLine.TextEN = text;
+                            }
                         }
                     }
                     else
                     {
-                        lyrics.Add(new LyricLine { Time = time, Text = text });
+                        // Single language text
+                        if (IsChineseText(text))
+                        {
+                            lyricLine.TextCN = text;
+                        }
+                        else
+                        {
+                            lyricLine.TextEN = text;
+                        }
                     }
                 }
+                
+                // Add the lyric line to the list
+                lyrics.Add(lyricLine);
             }
             
             return lyrics;
+        }
+        
+        /// <summary>
+        /// Check if a text contains Chinese characters
+        /// </summary>
+        private bool IsChineseText(string text)
+        {
+            // Regular expression to check for Chinese characters
+            return System.Text.RegularExpressions.Regex.IsMatch(text, "[\u4e00-\u9fa5]");
         }
         public void Dispose()
         {

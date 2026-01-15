@@ -4,22 +4,14 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services.Messages;
 
 namespace MusicPlayer.ViewModels
 {
-    /// <summary>
-    /// 消息类型枚举
-    /// </summary>
-    public enum MessageType
-    {
-        Information,
-        Warning,
-        Error
-    }
-
+    
     /// <summary>
     /// 播放列表设置控件视图模型
     /// 负责播放列表设置相关操作，如清空播放列表
@@ -53,11 +45,19 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 缓存路径
         /// </summary>
-        public string AlbumArtCachePath => Paths.AlbumArtCacheDirectory;
+        public string AlbumArtCachePath {
+            get {
+                if (!IsCoverCacheEnabled) { return ""; }
+                return   Paths.AlbumArtCacheDirectory; 
+            } 
+        }
         /// <summary>
         /// 是否可以清空播放列表
         /// </summary>
         public bool CanClearPlaylist => !IsClearingPlaylist;
+
+
+        public string IsCoverCacheEnabledText => IsCoverCacheEnabled ? "开启" : "禁用";
 
         /// <summary>
         /// 是否启用封面缓存
@@ -70,7 +70,9 @@ namespace MusicPlayer.ViewModels
                 if (_isCoverCacheEnabled != value)
                 {
                     _isCoverCacheEnabled = value;
+                     OnPropertyChanged(nameof(AlbumArtCachePath));
                     OnPropertyChanged(nameof(IsCoverCacheEnabled));
+                    OnPropertyChanged(nameof(IsCoverCacheEnabledText));
                     // 更新配置并保存
                     _configurationService.CurrentConfiguration.IsCoverCacheEnabled = value;
                     _configurationService.SaveCurrentConfiguration();

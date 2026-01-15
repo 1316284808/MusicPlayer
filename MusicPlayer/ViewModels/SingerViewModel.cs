@@ -121,6 +121,10 @@ namespace MusicPlayer.ViewModels
 
             PlaySingerCommand = new RelayCommand<string>(ExecutePlaySinger);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
+            
+            // 注册消息处理器
+            RegisterMessageHandlers();
+            
             LoadSingers();
         }
         
@@ -144,7 +148,7 @@ namespace MusicPlayer.ViewModels
             var playlist = _playlistDataService.DataSource;
             System.Diagnostics.Debug.WriteLine($"SingerViewModel: 获取到播放列表，歌曲数量: {playlist?.Count}");
 
-            var singerGroups = playlist
+            var singerGroups = (playlist ?? Enumerable.Empty<Core.Models.Song>())
                 .Where(song => !string.IsNullOrEmpty(song.Artist))
                 .GroupBy(song => song.Artist!)
                 .Select(group =>
@@ -196,6 +200,66 @@ namespace MusicPlayer.ViewModels
             LoadSingers();
         }
 
+        // 当前播放状态
+        private bool _isPlaying = false;
+        
+        /// <summary>
+        /// 注册消息处理器
+        /// </summary>
+        private void RegisterMessageHandlers()
+        {
+            // 监听当前歌曲变化消息
+            _messagingService.Register<CurrentSongChangedMessage>(this, OnCurrentSongChanged);
+            
+            // 监听播放状态变化消息
+            _messagingService.Register<PlaybackStateChangedMessage>(this, OnPlaybackStateChanged);
+        }
+        
+        /// <summary>
+        /// 处理当前歌曲变化消息
+        /// </summary>
+        private void OnCurrentSongChanged(object recipient, CurrentSongChangedMessage message)
+        {
+            UpdateSingerPlayingState(message.Value, _isPlaying);
+        }
+        
+        /// <summary>
+        /// 处理播放状态变化消息
+        /// </summary>
+        private void OnPlaybackStateChanged(object recipient, PlaybackStateChangedMessage message)
+        {
+            _isPlaying = message.Value;
+            UpdateSingerPlayingState(_playlistDataService.CurrentSong, _isPlaying);
+        }
+        
+        /// <summary>
+        /// 更新歌手播放状态
+        /// </summary>
+        private void UpdateSingerPlayingState(Core.Models.Song? currentSong, bool isPlaying)
+        {
+            // 先重置所有歌手的播放状态
+            foreach (var singer in _singers)
+            {
+                singer.IsPlaying = false;
+            }
+            
+            // 如果有当前播放歌曲，且歌手不为空，则更新对应歌手的播放状态
+            if (currentSong != null && !string.IsNullOrEmpty(currentSong.Artist))
+            {
+                var singer = _singers.FirstOrDefault(s => 
+                    string.Equals(s.Name, currentSong.Artist, StringComparison.OrdinalIgnoreCase));
+                
+                if (singer != null)
+                {
+                    // 从PlayerStateService获取当前播放上下文
+                    var context = _playbackContextService.CurrentPlaybackContext;
+                    singer.IsPlaying = isPlaying && 
+                                      context.Type == Core.Enums.PlaybackContextType.Artist && 
+                                      string.Equals(context.Identifier, singer.Name, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+        }
+        
         /// <summary>
         /// 执行播放选中歌手的歌曲
         /// </summary>
@@ -222,6 +286,9 @@ namespace MusicPlayer.ViewModels
 
                 // 发送播放消息
                 _messagingService.Send(new PlaySelectedSongMessage(firstSong));
+                
+                // 更新歌手播放状态 - 发送播放消息后，播放状态会变为true
+                UpdateSingerPlayingState(firstSong, true);
             }
         }
         

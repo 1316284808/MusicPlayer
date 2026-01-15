@@ -84,6 +84,7 @@ namespace MusicPlayer.Core.Models
         /// 专辑封面
         /// 优先从磁盘缓存加载，缓存不存在则从文件提取并保存到缓存
         /// </summary>
+        [LiteDB.BsonIgnore]
         public BitmapImage? AlbumArt
         {
             get
@@ -118,6 +119,7 @@ namespace MusicPlayer.Core.Models
         /// 原图专辑封面（用于旋转封面等需要高清显示的场合）
         /// 即取即用即走即清策略，不使用缓存
         /// </summary>
+        [LiteDB.BsonIgnore]
         public BitmapImage? OriginalAlbumArt
         {
             get

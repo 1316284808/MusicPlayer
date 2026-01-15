@@ -574,7 +574,7 @@ namespace MusicPlayer.Services
 
 
         /// <summary>
-        /// 初始化WASAPI音频设备 - 修复版【解决拔耳机播放卡住问题】
+        /// 初始化WASAPI音频设备
         /// </summary>
         private void InitializeWasapiDevice(object audioStream)
         {

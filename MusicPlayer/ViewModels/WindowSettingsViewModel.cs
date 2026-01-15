@@ -20,9 +20,12 @@ namespace MusicPlayer.ViewModels
         private readonly IConfigurationService _configurationService;
         private bool _disposed = false;
 
+        public string IsSpectrumEnabledText => IsSpectrumEnabled ? "开启" : "禁用";
+
         /// <summary>
         /// 是否启用频谱显示
         /// </summary>
+
         public bool IsSpectrumEnabled
         {
             get => _isSpectrumEnabled;
@@ -31,8 +34,8 @@ namespace MusicPlayer.ViewModels
                 if (_isSpectrumEnabled != value)
                 {
                     _isSpectrumEnabled = value;
-                    OnPropertyChanged();
-                    
+                    OnPropertyChanged(nameof(IsSpectrumEnabled));
+                    OnPropertyChanged(nameof(IsSpectrumEnabledText)); 
                     // 保存设置到配置
                     SaveSpectrumSetting(value);
                     
@@ -41,6 +44,8 @@ namespace MusicPlayer.ViewModels
                 }
             }
         }
+
+        public string IsTrayEnabledText => IsTrayEnabled ? "开启" : "禁用";
 
         /// <summary>
         /// 是否启用托盘功能
@@ -53,8 +58,8 @@ namespace MusicPlayer.ViewModels
                 if (_isTrayEnabled != value)
                 {
                     _isTrayEnabled = value;
-                    OnPropertyChanged();
-                    
+                    OnPropertyChanged(nameof(IsTrayEnabled));
+                    OnPropertyChanged(nameof(IsTrayEnabledText)); 
                     // 保存设置到配置
                     SaveTraySetting(value);
                 }

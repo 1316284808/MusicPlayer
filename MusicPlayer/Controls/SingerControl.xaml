@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="MusicPlayer.Controls.SingerControl"
+<UserControl x:Class="MusicPlayer.Controls.SingerControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -141,11 +141,10 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
             <ListBox.ItemTemplate >
                 <DataTemplate >
                     <Border Background="#E6FFFFFF"
-                           CornerRadius="8"
+                            CornerRadius="60,8,8,60"
                            Margin="10"
                            Width="280"
-                           Height="120"
-                               
+                           Height="120" 
                            Cursor="Hand">
                         
                         <!-- 歌手卡片内容 -->
@@ -159,7 +158,7 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                             <Border Grid.Column="0"
                                    Width="120"
                                    Height="120"
-                                   CornerRadius="8"
+                                   CornerRadius="60"
                                    Background="#E0E0E0" 
                                    HorizontalAlignment="Center" >
                                 <Border.Effect>
@@ -174,7 +173,7 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                                       Stretch="UniformToFill">
                                     <!-- 如果没有封面图片，显示默认封面 -->
                                     <Image.Clip>
-                                        <RectangleGeometry   RadiusX="8"   RadiusY="8" Rect="0,0,120,120" />
+                                        <RectangleGeometry   RadiusX="60"   RadiusY="60" Rect="0,0,120,120" />
                                     </Image.Clip>
                                 </Image>
                             </Border>
@@ -208,22 +207,22 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
 
 
 
-                                <ui:Button  Grid.Column="0" Background="#E6FFFFFF"
-                                            HorizontalAlignment="Right"   VerticalAlignment="Top" 
+                                <ui:Button  Grid.Column="0" Background="#80FFFFFF"
+                                            HorizontalAlignment="Center"   VerticalAlignment="Center" 
                                             CornerRadius="15"
                                              Command="{Binding DataContext.PlaySingerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                              CommandParameter="{Binding Name}" 
                                             >
-                                    <Helper:CustomIcon Kind="Play">
+                                    <Helper:CustomIcon>
                                         <Helper:CustomIcon.Style>
                                             <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
                                                 <!-- 默认显示播放图标 -->
                                                 <Setter Property="Kind" Value="Play"/>
                                                 <Style.Triggers>
                                                     <!-- 播放时显示暂停图标 -->
-                                                    <!--<DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
                                                         <Setter Property="Kind" Value="Pause"/>
-                                                    </DataTrigger>-->
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Helper:CustomIcon.Style>

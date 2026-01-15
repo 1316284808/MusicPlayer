@@ -65,6 +65,9 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public AudioEngine[] AudioEngineOptions => Enum.GetValues(typeof(AudioEngine)).Cast<AudioEngine>().ToArray();
 
+
+        public string IsEqualizerEnabledText => IsEqualizerEnabled ? "开启" : "禁用";
+
         /// <summary>
         /// 是否启用均衡器
         /// </summary>
@@ -73,14 +76,12 @@ namespace MusicPlayer.ViewModels
             get => _isEqualizerEnabled;
             set
             {
-                System.Diagnostics.Debug.WriteLine($"SoundSettingsViewModel.IsEqualizerEnabled: Setter被调用，当前值={_isEqualizerEnabled}, 新值={value}");
                 if (_isEqualizerEnabled != value)
                 {
                     _isEqualizerEnabled = value;
-                    OnPropertyChanged();
-                    System.Diagnostics.Debug.WriteLine($"SoundSettingsViewModel.IsEqualizerEnabled: 值已更新为{_isEqualizerEnabled}");
+                    OnPropertyChanged(nameof(IsEqualizerEnabled));
+                    OnPropertyChanged(nameof(IsEqualizerEnabledText));
 
-                    // 更新均衡器服务
                     _equalizerService.IsEnabled = value;
 
                     // 保存设置

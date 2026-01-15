@@ -70,6 +70,7 @@ namespace MusicPlayer.Core.Enums
         NewFolder,//新建路径
         FolderOpen,//打开文件夹
         MusicInfo,//播放队列
+        LocaleLanguage,//语言
 
     }
 }

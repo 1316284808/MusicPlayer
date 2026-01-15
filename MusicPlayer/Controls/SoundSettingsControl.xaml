@@ -113,7 +113,9 @@
                         <Helper:CustomIcon Kind="Reset"  />
                     </ui:Button>
                     <Separator Margin="2" />
-                    <ui:ToggleSwitch x:Name="EqualizerEnabledCheckBox" Content="启用"   Background="Black"
+                    <ui:ToggleSwitch x:Name="EqualizerEnabledCheckBox" 
+                                     Content="{Binding IsEqualizerEnabledText, Mode=OneWay}"  
+                                     Background="Black"
                                      VerticalAlignment="Center" Margin="0,0,10,0"
                               IsChecked="{Binding IsEqualizerEnabled, Mode=TwoWay}" />
 

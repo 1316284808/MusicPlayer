@@ -237,7 +237,7 @@
                     </Grid.RowDefinitions>
 
 
-                    <Popup Grid.Row="0"  Margin="0,0,315,0" Opacity="0.5"  HorizontalAlignment="left"
+                    <Popup Grid.Row="0"  Margin="0,0,315,0"   HorizontalAlignment="left"
                                IsOpen="{Binding IsQueueFlyoutOpen, Mode=TwoWay}" 
                              PlacementTarget="{Binding ElementName=MusicInfoButton}"
                                Placement="Top"
@@ -245,7 +245,7 @@
                                HorizontalOffset="-270"   
                         AllowsTransparency="True"
                                StaysOpen="False" >
-                        <Border Background="White"  
+                        <Border Background="#80FFFFFF"  
         BorderBrush="White" 
         
         CornerRadius="8" Padding="5"> 
@@ -290,13 +290,13 @@
 
                                             <Style.Triggers>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#e6e6e6"/>
+                                                    <Setter Property="Background" Value="#fbfafa"/>
                                                 </Trigger>
                                                 <Trigger Property="IsSelected" Value="False">
                                                     <Setter Property="Background" Value="Transparent"/>
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#e6e6e6"/>
+                                                    <Setter Property="Background" Value="#f3f3f3"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>

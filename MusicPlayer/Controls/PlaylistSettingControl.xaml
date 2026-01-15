@@ -50,7 +50,7 @@
                     <ui:ToggleSwitch x:Name="CoverCacheToggleSwitch" 
                      Background="Black"  
                      HorizontalAlignment="Center" VerticalAlignment="Center" 
-                     Content="启用"
+                     Content="{Binding IsCoverCacheEnabledText,Mode=OneWay}"
                      IsChecked="{Binding IsCoverCacheEnabled, Mode=TwoWay}"/>
                 </StackPanel>
             </Grid>

@@ -14,5 +14,10 @@ namespace MusicPlayer.ViewModels
         /// 当前显示的歌词
         /// </summary>
         string CurrentLyrics { get; }
+
+        /// <summary>
+        /// 当前显示的歌词行对象
+        /// </summary>
+        LyricLine CurrentLyricLine { get; }
     }
 }

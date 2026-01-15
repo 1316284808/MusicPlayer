@@ -547,7 +547,7 @@ namespace MusicPlayer.Services
         /// <summary>
         /// 更新歌词文本对齐方式配置
         /// </summary>
-        public void UpdateLyricTextAlignment(System.Windows.TextAlignment textAlignment)
+        public void UpdateLyricTextAlignment(System.Windows.HorizontalAlignment textAlignment)
         {
             if (CurrentConfiguration.LyricTextAlignment != textAlignment)
             {
@@ -555,6 +555,20 @@ namespace MusicPlayer.Services
                 CurrentConfiguration.LastSaved = DateTime.Now;
                 _isModified = true;
                 System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateLyricTextAlignment: 已更新歌词文本对齐方式为{textAlignment}");
+            }
+        }
+
+        /// <summary>
+        /// 更新歌词翻译启用状态配置
+        /// </summary>
+        public void UpdateLyricTranslationEnabled(bool isEnabled)
+        {
+            if (CurrentConfiguration.IsLyricTranslationEnabled != isEnabled)
+            {
+                CurrentConfiguration.IsLyricTranslationEnabled = isEnabled;
+                CurrentConfiguration.LastSaved = DateTime.Now;
+                _isModified = true;
+                System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateLyricTranslationEnabled: 已更新歌词翻译启用状态为{isEnabled}");
             }
         }
 

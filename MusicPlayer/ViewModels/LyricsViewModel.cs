@@ -25,8 +25,7 @@ namespace MusicPlayer.ViewModels
         private string _currentLyrics = "暂无歌词";
         private List<LyricLine> _lyricsLines = new List<LyricLine>();
         private bool _isMouseOver = false;
-        private Core.Models.LyricLine? _currentLyricLine;
-        
+
         /// <summary>
         /// 是否鼠标悬浮
         /// </summary>
@@ -58,11 +57,13 @@ namespace MusicPlayer.ViewModels
                 }
             }
         }
-        
+
+        private LyricLine _currentLyricLine;
+
         /// <summary>
-        /// 当前歌词行
+        /// 当前显示的歌词行对象
         /// </summary>
-        public Core.Models.LyricLine? CurrentLyricLine
+        public LyricLine CurrentLyricLine
         {
             get => _currentLyricLine;
             private set
@@ -71,10 +72,34 @@ namespace MusicPlayer.ViewModels
                 {
                     _currentLyricLine = value;
                     OnPropertyChanged(nameof(CurrentLyricLine));
+                    
+                    // 更新CurrentLyrics显示
+                    if (value != null)
+                    {
+                        // 组合中英文歌词，用换行符分隔
+                        string combinedText = string.Empty;
+                        if (!string.IsNullOrEmpty(value.TextCN))
+                        {
+                            combinedText = value.TextCN;
+                        }
+                        if (!string.IsNullOrEmpty(value.TextEN))
+                        {
+                            if (!string.IsNullOrEmpty(combinedText))
+                            {
+                                combinedText += "\n";
+                            }
+                            combinedText += value.TextEN;
+                        }
+                        CurrentLyrics = combinedText;
+                    }
+                    else
+                    {
+                        CurrentLyrics = "暂无歌词";
+                    }
                 }
             }
         }
-        
+
         /// <summary>
         /// 关闭歌词窗口命令
         /// </summary>
@@ -90,11 +115,11 @@ namespace MusicPlayer.ViewModels
             _playerStateService = playerStateService ?? throw new ArgumentNullException(nameof(playerStateService));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _playlistService = playlistService ?? throw new ArgumentNullException(nameof(playlistService));
-            
+
             // 注册消息处理器
             RegisterMessageHandlers();
         }
-        
+
         /// <summary>
         /// 注册消息处理器
         /// </summary>
@@ -105,13 +130,13 @@ namespace MusicPlayer.ViewModels
             {
                 OnLyricsUpdated(message.Value);
             });
-            
+
             // 播放进度变化消息
             _messagingService.Register<PlaybackProgressChangedMessage>(this, (recipient, message) =>
             {
                 UpdateLyricsByTime(message.Value);
             });
-            
+
             // 当前歌曲变化消息 - 清理旧歌词数据
             _messagingService.Register<CurrentSongChangedMessage>(this, (recipient, message) =>
             {
@@ -130,7 +155,7 @@ namespace MusicPlayer.ViewModels
                 // 清理旧歌词数据，释放内存
                 _lyricsLines.Clear();
                 _lyricsLines.TrimExcess(); // 释放多余容量
-                
+
                 if (song == null)
                 {
                     CurrentLyrics = "暂无歌曲";
@@ -139,7 +164,7 @@ namespace MusicPlayer.ViewModels
                 {
                     CurrentLyrics = song.Title ?? "正在加载...";
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"OnCurrentSongChanged: 已清理旧歌词数据，新歌曲: {song?.Title ?? "无"}");
             }
             catch (Exception ex)
@@ -149,7 +174,7 @@ namespace MusicPlayer.ViewModels
                 _lyricsLines.Clear();
             }
         }
-        
+
         /// <summary>
         /// 处理歌词更新消息
         /// </summary>
@@ -159,28 +184,39 @@ namespace MusicPlayer.ViewModels
             try
             {
                 _lyricsLines.Clear();
-                
+
                 if (lyrics != null && lyrics.Count > 0)
                 {
-                    // 添加歌词并设置结束时间
-                    for (int i = 0; i < lyrics.Count; i++)
+                    foreach (var lyric in lyrics)
                     {
-                        var lyric = lyrics[i];
-                        // 设置结束时间为下一行的开始时间，如果是最后一行则设置为10秒后
-                        TimeSpan endTime = i < lyrics.Count - 1 ? lyrics[i + 1].Time : lyric.Time.Add(TimeSpan.FromSeconds(10));
-                        lyric.EndTime = endTime;
-                        lyric.CurrentHighlightedIndex = 0;
-                        lyric.HighlightedText = lyric.Text;
                         _lyricsLines.Add(lyric);
                     }
-                    
+
                     // 显示第一句歌词
-                    CurrentLyrics = _lyricsLines[0].Text;
-                    System.Diagnostics.Debug.WriteLine($"OnLyricsUpdated: 收到 {_lyricsLines.Count} 行歌词，第一句: '{_lyricsLines[0].Text}'");
+                    CurrentLyricLine = _lyricsLines[0];
+                    _lyricsLines[0].Progress = 0;
+                    
+                    // 构建调试信息
+                    string firstLineDebug = string.Empty;
+                    if (!string.IsNullOrEmpty(_lyricsLines[0].TextCN))
+                    {
+                        firstLineDebug += _lyricsLines[0].TextCN;
+                    }
+                    if (!string.IsNullOrEmpty(_lyricsLines[0].TextEN))
+                    {
+                        if (!string.IsNullOrEmpty(firstLineDebug))
+                        {
+                            firstLineDebug += "\n";
+                        }
+                        firstLineDebug += _lyricsLines[0].TextEN;
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"OnLyricsUpdated: 收到 {_lyricsLines.Count} 行歌词，第一句: '{firstLineDebug}'");
                 }
                 else
                 {
                     CurrentLyrics = "暂无歌词";
+                    CurrentLyricLine = null;
                     System.Diagnostics.Debug.WriteLine("OnLyricsUpdated: 没有歌词数据");
                 }
             }
@@ -188,11 +224,12 @@ namespace MusicPlayer.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"处理歌词更新失败: {ex.Message}");
                 CurrentLyrics = "加载歌词失败";
+                CurrentLyricLine = null;
                 _lyricsLines.Clear();
             }
         }
 
-     
+
 
         /// <summary>
         /// 根据播放时间更新歌词
@@ -204,72 +241,115 @@ namespace MusicPlayer.ViewModels
             {
                 if (_lyricsLines.Count == 0)
                 {
+                    //System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 没有歌词行，位置={position}");
                     return;
                 }
 
                 // 将秒转换为TimeSpan
                 var timeSpan = TimeSpan.FromSeconds(position);
-                
+
                 // 找到当前时间应该显示的歌词
                 var currentLine = _lyricsLines.LastOrDefault(line => line.Time <= timeSpan);
-                
+
                 if (currentLine != null)
                 {
                     // 更新当前歌词
-                    if (currentLine.Text != CurrentLyrics)
+                    if (currentLine != CurrentLyricLine)
                     {
-                        // 切换到新的歌词行时，重置高亮索引
-                        foreach (var line in _lyricsLines)
+                        CurrentLyricLine = currentLine;
+                        
+                        // 构建调试信息
+                        string debugText = string.Empty;
+                        if (!string.IsNullOrEmpty(currentLine.TextCN))
                         {
-                            if (line != currentLine)
-                            {
-                                line.CurrentHighlightedIndex = 0;
-                                line.TargetHighlightedIndex = 0;
-                            }
+                            debugText += currentLine.TextCN;
                         }
-                        CurrentLyrics = currentLine.Text;
-                        System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 更新歌词 '{currentLine.Text}' 位置={position} 歌词时间={currentLine.Time.TotalSeconds}");
-                    }
+                        if (!string.IsNullOrEmpty(currentLine.TextEN))
+                        {
+                            if (!string.IsNullOrEmpty(debugText))
+                            {
+                                debugText += "\n";
+                            }
+                            debugText += currentLine.TextEN;
+                        }
+                         }
+
+                    // 计算逐字进度
+                    int currentIndex = _lyricsLines.IndexOf(currentLine);
+                    TimeSpan lineDuration;
                     
-                    // 设置当前歌词行，用于逐字高亮
-                    CurrentLyricLine = currentLine;
-                    
-                    // 计算当前歌词行的总时长
-                    TimeSpan lineDuration = currentLine.EndTime - currentLine.Time;
-                    double lineDurationSeconds = lineDuration.TotalSeconds;
-                    
-                    // 如果时长小于0.5秒，不进行逐字高亮
-                    if (lineDurationSeconds < 0.5)
+                    // 如果是最后一句歌词，进度固定为1
+                    if (currentIndex == _lyricsLines.Count - 1)
                     {
-                        currentLine.UpdateHighlightSmoothly(currentLine.Text.Length);
-                        currentLine.HighlightedText = currentLine.Text;
-                        return;
+                        lineDuration = TimeSpan.FromSeconds(5); // 最后一句持续5秒
                     }
-                    
-                    // 计算当前已经播放的时间在该行中的比例
+                    else
+                    {
+                        // 计算当前歌词行的播放时长（下一句时间 - 当前句时间）
+                        var nextLine = _lyricsLines[currentIndex + 1];
+                        lineDuration = nextLine.Time - currentLine.Time;
+                    }
+
+                    // 计算当前进度在当前歌词行内的比例
                     TimeSpan elapsedInLine = timeSpan - currentLine.Time;
-                    double elapsedSecondsInLine = elapsedInLine.TotalSeconds;
-                    double progress = Math.Min(1.0, elapsedSecondsInLine / lineDurationSeconds);
+                    double progress = elapsedInLine.TotalSeconds / lineDuration.TotalSeconds;
                     
-                    // 计算应该高亮的字数
-                    int totalChars = currentLine.Text.Length;
-                    int highlightedChars = (int)Math.Round(totalChars * progress);
-                    highlightedChars = Math.Max(0, Math.Min(totalChars, highlightedChars));
+                    // 确保进度在0-1之间
+                    progress = Math.Clamp(progress, 0.0, 1.0);
                     
-                    // 使用平滑过渡方法更新高亮索引
-                    currentLine.UpdateHighlightSmoothly(highlightedChars);
-                    currentLine.HighlightedText = currentLine.Text;
+                    // 更新当前歌词行的进度
+                    if (Math.Abs(currentLine.Progress - progress) > 0.01) // 避免频繁更新
+                    {
+                        currentLine.Progress = progress;
+                        
+                        // 构建调试信息
+                        string debugText = string.Empty;
+                        if (!string.IsNullOrEmpty(currentLine.TextCN))
+                        {
+                            debugText += currentLine.TextCN;
+                        }
+                        if (!string.IsNullOrEmpty(currentLine.TextEN))
+                        {
+                            if (!string.IsNullOrEmpty(debugText))
+                            {
+                                debugText += "\n";
+                            }
+                            debugText += currentLine.TextEN;
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 歌词进度更新为 {progress:F2}，当前行: '{debugText}'");
+                    }
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 没有找到匹配的歌词行，位置={position}");
                     // 如果没有找到匹配的歌词，显示第一句
-                    if (_lyricsLines.Count > 0 && CurrentLyrics != _lyricsLines[0].Text)
+                    if (_lyricsLines.Count > 0)
                     {
-                        CurrentLyrics = _lyricsLines[0].Text;
-                        System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 显示第一句歌词 '{_lyricsLines[0].Text}'");
+                        if (_lyricsLines[0] != CurrentLyricLine)
+                        {
+                            CurrentLyricLine = _lyricsLines[0];
+                            
+                            // 构建调试信息
+                            string debugText = string.Empty;
+                            if (!string.IsNullOrEmpty(_lyricsLines[0].TextCN))
+                            {
+                                debugText += _lyricsLines[0].TextCN;
+                            }
+                            if (!string.IsNullOrEmpty(_lyricsLines[0].TextEN))
+                            {
+                                if (!string.IsNullOrEmpty(debugText))
+                                {
+                                    debugText += "\n";
+                                }
+                                debugText += _lyricsLines[0].TextEN;
+                            }
+                            
+                            System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 显示第一句歌词 '{debugText}'");
+                        }
+                        // 第一句歌词开始前，进度为0
+                        _lyricsLines[0].Progress = 0;
                     }
-                    CurrentLyricLine = null;
                 }
             }
             catch (Exception ex)
@@ -288,7 +368,7 @@ namespace MusicPlayer.ViewModels
             // 获取当前播放状态
             LoadCurrentState();
         }
-        
+
         /// <summary>
         /// 加载当前播放状态
         /// </summary>
@@ -305,7 +385,7 @@ namespace MusicPlayer.ViewModels
                     if (lyrics != null && lyrics.Count > 0)
                     {
                         OnLyricsUpdated(new ObservableCollection<LyricLine>(lyrics));
-                        
+
                         // 获取当前播放位置
                         var currentPosition = _playerStateService.CurrentPosition;
                         if (currentPosition > 0)

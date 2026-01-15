@@ -12,6 +12,14 @@
     <StartupObject></StartupObject>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Controls\WordByWordLyricControl.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Controls\WordByWordLyricControl.xaml" />
+  </ItemGroup>
+
 
 
 

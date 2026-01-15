@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +16,7 @@ namespace MusicPlayer.Core.Models
         private System.Windows.Media.Imaging.BitmapImage? _coverImage;
         private bool _coverImageLoaded = false;
         private string? _firstSongFilePath; // 用于懒加载时获取歌曲文件
+        private bool _isPlaying = false;
 
         public string Name
         {
@@ -69,6 +70,19 @@ namespace MusicPlayer.Core.Models
                 {
                     _firstSongFilePath = value;
                     OnPropertyChanged(nameof(FirstSongFilePath));
+                }
+            }
+        }
+
+        public bool IsPlaying
+        {
+            get => _isPlaying;
+            set
+            {
+                if (_isPlaying != value)
+                {
+                    _isPlaying = value;
+                    OnPropertyChanged(nameof(IsPlaying));
                 }
             }
         }

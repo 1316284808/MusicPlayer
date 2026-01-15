@@ -144,8 +144,7 @@
                             <Setter Property="Padding" Value="5,10"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/> 
                             <!-- 使用附加属性处理容器生命周期事件 -->
                             <Setter Property="Helper:PlaylistItemBehavior.IsEnabled" Value="True"/>
                             <Setter Property="Helper:PlaylistItemBehavior.ItemsControl" 
@@ -168,15 +167,15 @@
                                 </Setter.Value>
                             </Setter>
 
-                            <Style.Triggers>
+                            <Style.Triggers> 
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#E6FFFFFF"/>
+                                    <Setter Property="Background" Value="#80FFFFFF"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="False">
                                     <Setter Property="Background" Value="Transparent"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#E6FFFFFF"/> 
+                                    <Setter Property="Background" Value="#4DFFFFFF"/> 
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
