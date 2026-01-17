@@ -51,19 +51,34 @@ namespace MusicPlayer.Services
         public TResponse? Send<TRequest, TResponse>(TRequest message) 
             where TRequest : RequestMessage<TResponse>
         {
-            // 确保消息在UI线程上发送
-            if (Application.Current?.Dispatcher?.CheckAccess() == false)
+            try
             {
-                return Application.Current.Dispatcher.Invoke(() => 
+                // 确保消息在UI线程上发送
+                if (Application.Current?.Dispatcher?.CheckAccess() == false)
+                {
+                    return Application.Current.Dispatcher.Invoke(() => 
+                    {
+                        _messenger.Send(message);
+                        return message.Response;
+                    });
+                }
+                else
                 {
                     _messenger.Send(message);
                     return message.Response;
-                });
+                }
             }
-            else
+            catch (InvalidOperationException ex)
             {
-                _messenger.Send(message);
-                return message.Response;
+                // 捕获没有收到响应的异常，返回默认值
+                System.Diagnostics.Debug.WriteLine($"MessagingService: 发送请求消息时没有收到响应: {ex.Message}");
+                return default;
+            }
+            catch (Exception ex)
+            {
+                // 捕获其他异常，返回默认值
+                System.Diagnostics.Debug.WriteLine($"MessagingService: 发送请求消息时发生异常: {ex.Message}");
+                return default;
             }
         }
 

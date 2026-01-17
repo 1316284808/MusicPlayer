@@ -19,9 +19,7 @@
     </UserControl.Resources>
 
     <Grid Helper:PlaylistInitializationBehavior.IsEnabled="True"
-          Helper:PlaylistInitializationBehavior.PlaylistViewModel="{Binding}"
-          Helper:PlaylistAlbumArtBehavior.IsEnabled="True"
-          Helper:PlaylistAlbumArtBehavior.PlaylistViewModel="{Binding}">
+          Helper:PlaylistInitializationBehavior.PlaylistViewModel="{Binding}">
         <Grid.RowDefinitions>
             <RowDefinition Height="AUTO"/>
             <RowDefinition Height="AUTO"/>
@@ -95,7 +93,7 @@
 
         <!-- 播放列表内容区域 -->
         <Border x:Name="ContentBorder" Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 
-             
+              
                 Margin="0,0,10,0"
                 HorizontalAlignment="Stretch" >
             <Border.Effect>
@@ -117,11 +115,13 @@
                            VirtualizingStackPanel.IsVirtualizing="True"
                            VirtualizingStackPanel.VirtualizationMode="Recycling"
                            VirtualizingStackPanel.ScrollUnit="Pixel"
-                           VirtualizingStackPanel.CacheLength="0,0"
+                           VirtualizingStackPanel.CacheLength="5,5"
                            VirtualizingStackPanel.CacheLengthUnit="Item"
                            Helper:PlaylistScrollBehavior.IsEnabled="True" 
                            SelectionMode="Single"
-                           Helper:PlaylistInteractionBehavior.IsEnabled="True"
+                           Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
+                           Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
+                             Helper:PlaylistInteractionBehavior.IsEnabled="True"
                            Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
                     <ui:ListView.ContextMenu>
                         <ContextMenu>
@@ -144,11 +144,7 @@
                             <Setter Property="Padding" Value="5,10"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/> 
-                            <!-- 使用附加属性处理容器生命周期事件 -->
-                            <Setter Property="Helper:PlaylistItemBehavior.IsEnabled" Value="True"/>
-                            <Setter Property="Helper:PlaylistItemBehavior.ItemsControl" 
-                                    Value="{Binding RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
 
                             <Setter Property="Template">
                                 <Setter.Value>
@@ -156,13 +152,6 @@
                                         <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                                             <ContentPresenter/>
                                         </Border>
-
-                                        <ControlTemplate.Triggers>
-                                            <!-- 容器可见性变化时触发相应的处理 -->
-                                            <Trigger Property="IsVisible" Value="False">
-                                                <Setter TargetName="ItemBorder" Property="Opacity" Value="0"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -175,7 +164,7 @@
                                     <Setter Property="Background" Value="Transparent"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#4DFFFFFF"/> 
+                                    <Setter Property="Background" Value="#4DFFFFFF" />
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

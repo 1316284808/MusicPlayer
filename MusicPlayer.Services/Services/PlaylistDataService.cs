@@ -302,7 +302,7 @@ namespace MusicPlayer.Services
                 // 延迟加载专辑封面
                 foreach (var song in updatedPlaylist.Where(s => songsToAdd.Any(a => a.FilePath == s.FilePath)))
                 {
-                    song.DelayAlbumArtLoading = true;
+
                 }
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 添加完成，实际添加 {addedCount} 首歌曲，总计 {updatedPlaylist.Count} 首");
 

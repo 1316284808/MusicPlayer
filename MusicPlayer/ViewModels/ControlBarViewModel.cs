@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
+using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Page;
@@ -615,7 +616,7 @@ namespace MusicPlayer.ViewModels
                 CurrentSongArtist = CurrentSong.Artist ?? string.Empty;
 
                 // 确保封面已加载
-                CurrentSong.EnsureAlbumArtLoaded();
+                CurrentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(CurrentSong.FilePath);
 
                 // 延迟更新封面，确保加载完成
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>

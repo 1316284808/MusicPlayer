@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using MusicPlayer.Services;
 using MusicPlayer.Config;
@@ -19,11 +20,25 @@ namespace MusicPlayer;
         internal AppStartup Startup { get; private set; } = new();
         private IViewModelLifecycleManager? _lifecycleManager;
         private TaskbarIcon? _notifyIcon;
+        // 用于检测单实例的互斥体
+        private Mutex? _mutex;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
             try
             {
+                // 创建全局唯一的互斥体，用于检测是否已有实例运行
+                _mutex = new Mutex(true, "Global\\MusicPlayerMutex", out bool isNewInstance);
+                
+                if (!isNewInstance)
+                {
+                    // 已有实例运行，显示错误信息或直接退出
+                    MessageBox.Show("应用程序已在运行中！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _mutex.Dispose();
+                    Shutdown();
+                    return;
+                }
+
                 base.OnStartup(e);
                 
                 // 配置和启动依赖注入服务
@@ -208,6 +223,9 @@ namespace MusicPlayer;
 
                 // 停止服务
                 await Startup.StopAsync();
+
+                // 释放互斥体资源
+                _mutex?.Dispose();
 
                 System.Diagnostics.Debug.WriteLine("Application shutdown completed successfully");
             }

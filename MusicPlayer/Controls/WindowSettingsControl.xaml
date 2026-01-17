@@ -29,12 +29,12 @@
                         <TextBlock Text="主题切换"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
-                       
-                    <TextBlock Text="可以切换四种不同的主题：None、Acrylic、Mica、Tabbed  " FontSize="12"   FontWeight="Normal"  Margin="20,5,0,0"/>
+
+                    <TextBlock Text="可以切换四种不同的主题：None、Acrylic、Mica、Mica Alt  " FontSize="12"   FontWeight="Normal"  Margin="20,5,0,0"/>
                     </StackPanel>
 
                     <!-- 右侧：开关控件 -->
-                    <ComboBox   FontWeight="Normal" Grid.Column="1"  Width="120" Height="40"  HorizontalAlignment="Center" VerticalAlignment="Center" 
+                    <ComboBox   FontWeight="Normal" Grid.Column="1" Width="AUTO"  MinWidth="120" Height="40"  HorizontalAlignment="Center" VerticalAlignment="Center" 
                                 ItemsSource="{Binding ThemeOptions}"  
                                 SelectedItem="{Binding CurrentTheme, Mode=TwoWay}"/> 
                 </Grid>

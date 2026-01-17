@@ -1,4 +1,4 @@
-<UserControl x:Class="MusicPlayer.Controls.SingerControl"
+<UserControl x:Class="MusicPlayer.Controls.AlbumControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -22,7 +22,7 @@
 
         <!-- 标题栏 -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">   
-            <TextBlock Text="歌手列表" FontSize="24" FontWeight="Bold" Margin="10" /> 
+            <TextBlock Text="专辑列表" FontSize="24" FontWeight="Bold" Margin="10" /> 
         </StackPanel>
         <StackPanel Grid.Row="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Orientation="Horizontal"> 
             <ui:Button   Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
@@ -40,7 +40,7 @@
                                 <Style.Triggers>
                                     <Trigger Property="IsFocused" Value="False">
                                         <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Text" Value="{Binding SearchText, TargetNullValue='搜索歌手...'}"/>
+                                        <Setter Property="Text" Value="{Binding SearchText, TargetNullValue='搜索专辑...'}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -52,8 +52,8 @@
 
             <StackPanel   Orientation="Horizontal" MinWidth="80" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <ui:TextBlock Text="共" FontSize="14" VerticalAlignment="Center"  Opacity="0.7"/>
-                <ui:TextBlock Text="{Binding SingerCount}" FontSize="14" VerticalAlignment="Center" Margin="2,0"/>
-                <ui:TextBlock Text="位" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
+                <ui:TextBlock Text="{Binding AlbumCount}" FontSize="14" VerticalAlignment="Center" Margin="2,0"/>
+                <ui:TextBlock Text="张" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
             </StackPanel>
 
 
@@ -119,16 +119,16 @@
             </ListBox>
             </Border>
             
-            <!-- 歌手列表 - 先使用基础ListBox进行测试 -->
-              
+            <!-- 专辑列表 -->
+               
         <ListBox  Grid.Column="1"
-                 x:Name="SingerListBox" HorizontalContentAlignment="Left"
-                 ItemsSource="{Binding FilteredSingers}"
+                 x:Name="AlbumListBox" HorizontalContentAlignment="Left"
+                 ItemsSource="{Binding FilteredAlbums}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                 ScrollViewer.CanContentScroll="False"  
-                  Helper:SingerAlbumArtBehavior.IsEnabled="True"
-Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
+                 ScrollViewer.CanContentScroll="False"
+                  Helper:AlbumAlbumArtBehavior.IsEnabled="True"
+Helper:AlbumAlbumArtBehavior.ViewModel="{Binding }"
                  >
            
             <ListBox.ItemsPanel>
@@ -141,25 +141,25 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
             <ListBox.ItemTemplate >
                 <DataTemplate >
                     <Border Background="#E6FFFFFF"
-                            CornerRadius="60"
+                            CornerRadius="8"
                            Margin="10"
                            Width="280"
                            Height="120" 
                            Cursor="Hand">
                         
-                        <!-- 歌手卡片内容 -->
+                        <!-- 专辑卡片内容 -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"/>
                                 <ColumnDefinition Width="*"/> 
                                 </Grid.ColumnDefinitions>
                            
-                            <!-- 歌手封面 - 使用该歌手的一首歌曲的专辑封面 -->
+                            <!-- 专辑封面 -->
                             <Border Grid.Column="0" Margin="0,0,2,0"
                                    Width="120"
                                    Height="120"
-                                   CornerRadius="60"
-                                   Background="Black" 
+                                   CornerRadius="8"
+                                   Background="#80FFFFFF" 
                                    HorizontalAlignment="Center" >
                                 <Border.Effect>
                                     <DropShadowEffect Color="Black"
@@ -169,18 +169,18 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                                 </Border.Effect>
                                 
                                 <!-- 专辑封面图片 -->
-                                <Image Source="{Binding CoverImage}" Margin="10"
+                                <Image Source="{Binding CoverImage}"  
                                       Stretch="UniformToFill">
                                     <!-- 如果没有封面图片，显示默认封面 -->
                                     <Image.Clip>
-                                        <RectangleGeometry   RadiusX="50"   RadiusY="50" Rect="0,0,100,100" />
+                                        <RectangleGeometry   RadiusX="8"   RadiusY="8" Rect="0,0,120,120" />
                                     </Image.Clip>
                                 </Image>
                             </Border>
                                 
                             
                             <StackPanel Grid.Column="1"  HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10"> 
-                            <!-- 歌手名称 -->
+                            <!-- 专辑名称 -->
                                 <TextBlock  
                                     Text="{Binding Name}"
                                     FontSize="14"
@@ -210,7 +210,7 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                                 <ui:Button  Grid.Column="0" Background="#80FFFFFF"
                                             HorizontalAlignment="Center"   VerticalAlignment="Center" 
                                             CornerRadius="15"
-                                             Command="{Binding DataContext.PlaySingerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                             Command="{Binding DataContext.PlayAlbumCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                              CommandParameter="{Binding Name}" 
                                             >
                                     <Helper:CustomIcon>
@@ -229,7 +229,7 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                                     </Helper:CustomIcon>
                                 </ui:Button>
                                  
-                               
+                                
                             </Grid>
                         
                         <!-- 鼠标悬停效果 -->
@@ -241,7 +241,7 @@ Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter Property="Background" Value="#E8E8E8" />
                                             <Setter Property="BorderBrush" Value="#CCCCCC" />
-                                            <Setter Property="BorderThickness" Value=" 1,0" />
+                                            <Setter Property="BorderThickness" Value=" 1 " />
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>

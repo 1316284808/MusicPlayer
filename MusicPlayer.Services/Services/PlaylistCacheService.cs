@@ -115,7 +115,7 @@ public class PlaylistCacheService : IPlaylistCacheService
             // 封面将在需要时通过可视范围检测服务懒加载，而不是一次性全部加载
             foreach (var song in songs)
             {
-                song.DelayAlbumArtLoading = true;
+
             }
             
             // 将加载的数据存入缓存
@@ -166,23 +166,9 @@ public class PlaylistCacheService : IPlaylistCacheService
             
             // 计算缓存大小
             long totalMemoryMB = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
-            long albumArtSize = 0;
-            int albumArtCount = 0;
-            
-            foreach (var song in songs)
-            {
-                if (song.AlbumArtData != null)
-                {
-                    albumArtSize += song.AlbumArtData.Length;
-                    albumArtCount++;
-                }
-            }
-            
-            long albumArtSizeMB = albumArtSize / (1024 * 1024);
             
             System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 更新缓存，歌曲数量: {songs.Count}");
             System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 内存占用: {totalMemoryMB} MB");
-            System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 专辑封面数据: {albumArtCount} 个文件，占用 {albumArtSizeMB} MB");
         }
     }
 

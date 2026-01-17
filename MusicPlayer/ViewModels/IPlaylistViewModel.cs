@@ -11,11 +11,15 @@ namespace MusicPlayer.ViewModels
     public interface IPlaylistViewModel : IViewModelLifecycle
     {
         
-
         /// <summary>
         /// 当前播放歌曲
         /// </summary>
         Core.Models.Song? CurrentSong { get; }
+
+        /// <summary>
+        /// 过滤后的播放列表
+        /// </summary>
+        ObservableCollection<Core.Models.Song> FilteredPlaylist { get; }
 
         /// <summary>
         /// 专辑加载请求事件

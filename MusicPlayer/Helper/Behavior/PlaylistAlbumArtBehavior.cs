@@ -1,4 +1,6 @@
-﻿using MusicPlayer.ViewModels;
+using MusicPlayer.Core.Data;
+using MusicPlayer.Core.Models;
+using MusicPlayer.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,27 +112,22 @@ namespace MusicPlayer.Helper
                 var song = e.Song;
                 System.Diagnostics.Debug.WriteLine($"PlaylistAlbumArtBehavior: 收到专辑封面加载请求，歌曲: {song.Title}");
 
-                // 这里应该实际处理专辑封面加载逻辑
-                // 例如：调用专辑封面加载服务或更新UI
-                // 而不是重新触发事件
-
                 // 检查专辑封面是否已加载
                 if (song.AlbumArt != null)
                 {
                     // 专辑封面已存在，不需要处理
                     System.Diagnostics.Debug.WriteLine($"PlaylistAlbumArtBehavior: 专辑封面已加载");
                 }
-                else if (song.AlbumArtData == null || song.AlbumArtData.Length == 0)
-                {
-                    // 有专辑封面数据但未加载，强制加载
-                    System.Diagnostics.Debug.WriteLine($"PlaylistAlbumArtBehavior: 有专辑封面数据，开始加载");
-                    song.EnsureAlbumArtLoaded();
-                }
                 else
                 {
-                    // 需要加载专辑封面的逻辑
-                    System.Diagnostics.Debug.WriteLine($"PlaylistAlbumArtBehavior: 需要加载歌曲 {song.Title} 的专辑封面");
-                    // 这里可以调用专辑封面加载服务
+                    // 专辑封面未加载，强制加载
+                    System.Diagnostics.Debug.WriteLine($"PlaylistAlbumArtBehavior: 开始加载歌曲 {song.Title} 的专辑封面");
+                    // 使用AlbumArtLoader直接加载封面
+                    var bitmap = AlbumArtLoader.LoadAlbumArt(song.FilePath);
+                    if (bitmap != null)
+                    {
+                        song.AlbumArt = bitmap;
+                    }
                 }
             }
             catch (Exception ex)

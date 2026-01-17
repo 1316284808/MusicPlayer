@@ -71,7 +71,7 @@ namespace MusicPlayer.Services
                         Duration = TimeSpan.Zero,
                         FileSize = new FileInfo(filePath).Length,
                         AddedTime = DateTime.Now,
-                        DelayAlbumArtLoading = true
+
                     };
                 }
                 catch (Exception ex)
@@ -88,7 +88,7 @@ namespace MusicPlayer.Services
                         Duration = TimeSpan.Zero,
                         FileSize = new FileInfo(filePath).Length,
                         AddedTime = DateTime.Now,
-                        DelayAlbumArtLoading = true
+
                     };
                 }
 
@@ -102,7 +102,7 @@ namespace MusicPlayer.Services
                     Duration = tagFile?.Properties?.Duration ?? TimeSpan.Zero,
                     FileSize = new FileInfo(filePath).Length,
                     AddedTime = DateTime.Now,
-                    DelayAlbumArtLoading = true // 设置延迟加载标志，封面将在需要时才加载
+
                 };
                 
                 // 注释：专辑封面数据将在需要时通过懒加载机制加载，而不是在导入时全部加载

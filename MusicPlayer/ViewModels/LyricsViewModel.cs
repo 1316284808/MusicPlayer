@@ -316,14 +316,11 @@ namespace MusicPlayer.ViewModels
                             }
                             debugText += currentLine.TextEN;
                         }
-                        
-                        System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 歌词进度更新为 {progress:F2}，当前行: '{debugText}'");
-                    }
+                       }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 没有找到匹配的歌词行，位置={position}");
-                    // 如果没有找到匹配的歌词，显示第一句
+                     // 如果没有找到匹配的歌词，显示第一句
                     if (_lyricsLines.Count > 0)
                     {
                         if (_lyricsLines[0] != CurrentLyricLine)
@@ -345,8 +342,7 @@ namespace MusicPlayer.ViewModels
                                 debugText += _lyricsLines[0].TextEN;
                             }
                             
-                            System.Diagnostics.Debug.WriteLine($"UpdateLyricsByTime: 显示第一句歌词 '{debugText}'");
-                        }
+                               }
                         // 第一句歌词开始前，进度为0
                         _lyricsLines[0].Progress = 0;
                     }

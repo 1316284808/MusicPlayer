@@ -97,7 +97,6 @@ namespace MusicPlayer.Services
                 if (Math.Abs(_volume - value) > 0.001f)
                 {
                     _volume = Math.Clamp(value, 0.0f, 1.0f);
-                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: Volume被设置为 {_volume}");
                    OnPropertyChanged();
                     
                     // 非恢复状态时才发送消息和保存配置

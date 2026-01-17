@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Models;
 using MusicPlayer.ViewModels;
 
@@ -337,7 +337,10 @@ namespace MusicPlayer.Helper
         }
 
         /// <summary>
-       
+        /// 
+        ///
+        /// 
+        /// </summary>
 
         // 节流计时器，用于限制滚动事件处理频率
         private static System.Windows.Threading.DispatcherTimer? _scrollThrottleTimer;
@@ -635,67 +638,21 @@ namespace MusicPlayer.Helper
                 return;
             }
 
-            // 优先从缓存加载封面
-            var bitmapFromCache = TryLoadAlbumArtFromCache(singer.FirstSongFilePath);
-            if (bitmapFromCache != null)
-            {
-                // 确保在UI线程上更新封面
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => {
-                    // 先设置为null，再设置为新图片，强制UI更新
-                    singer.CoverImage = null;
-                    singer.CoverImage = bitmapFromCache;
-                });
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 从缓存加载歌手 {singer.Name} 的封面完成");
-                return;
-            }
-
-            // 从文件中提取专辑封面
-            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 开始异步加载歌手 {singer.Name} 的封面，文件路径: {singer.FirstSongFilePath}");
             
+              
             try
             {
-                byte[]? albumArtData = null;
-                
-                // 在后台线程提取封面数据
-                await Task.Run(() => {
-                    try
-                    {
-                        var tagFile = TagLib.File.Create(singer.FirstSongFilePath);
-                        if (tagFile?.Tag?.Pictures?.Length > 0)
-                        {
-                            var picture = tagFile.Tag.Pictures[0];
-                            albumArtData = picture.Data.Data;
-                            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 成功从文件提取封面数据，大小: {albumArtData.Length} 字节");
-                            
-                            // 保存到缓存
-                            SaveAlbumArtToCache(singer.FirstSongFilePath, albumArtData);
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 文件中没有找到封面信息");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 从文件提取封面数据失败: {ex.Message}");
-                    }
-                });
-
-                // 如果成功提取到封面数据，加载为图像
-                if (albumArtData != null && albumArtData.Length > 0)
+                // 使用AlbumArtLoader异步加载封面，自动处理缓存和文件提取
+                var bitmap = await AlbumArtLoader.LoadAlbumArtAsync(singer.FirstSongFilePath);
+                if (bitmap != null)
                 {
-                    var bitmap = LoadBitmapFromBytes(albumArtData);
-                    if (bitmap != null)
-                    {
-                        // 确保在UI线程上更新封面
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => {
-                            // 先设置为null，再设置为新图片，强制UI更新
-                            singer.CoverImage = null;
-                            singer.CoverImage = bitmap;
-                        });
-                        System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 的封面加载完成");
-                        return;
-                    }
+                    // 确保在UI线程上更新封面
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => {
+                        // 先设置为null，再设置为新图片，强制UI更新
+                        singer.CoverImage = null;
+                        singer.CoverImage = bitmap;
+                    });
+                     return;
                 }
 
                 // 如果加载失败，设置默认封面
@@ -717,16 +674,8 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 在后台线程创建BitmapImage
-                System.Windows.Media.Imaging.BitmapImage bitmap = await Task.Run(() => {
-                    var defaultBitmap = new System.Windows.Media.Imaging.BitmapImage();
-                    defaultBitmap.BeginInit();//C:\Users\fly\code\githubCode\MusicPlayer\MusicPlayer\resources\MusicPlayer.png
-                    defaultBitmap.UriSource =  new System.Uri(Path.Combine(Paths.ExecutableDirectory, "resources", "MusicPlayer.png"), System.UriKind.Relative);
-                    defaultBitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    defaultBitmap.EndInit();
-                    defaultBitmap.Freeze(); // 冻结图像以确保线程安全
-                    return defaultBitmap;
-                });
+                // 调用AlbumArtLoader获取默认封面
+                var bitmap = await MusicPlayer.Core.Data.AlbumArtLoader.GetDefaultAlbumArtAsync();
                 
                 // 确保在UI线程上更新封面
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => {
@@ -749,12 +698,8 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new System.Uri("/MusicPlayer;component/Image/默认列表.png", System.UriKind.Relative);
-                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-                bitmap.Freeze(); // 冻结图像以确保线程安全
+                // 调用AlbumArtLoader获取默认封面
+                var bitmap = MusicPlayer.Core.Data.AlbumArtLoader.GetDefaultAlbumArt();
                 
                 // 确保在UI线程上更新封面
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
@@ -769,269 +714,5 @@ namespace MusicPlayer.Helper
                 System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 设置默认封面失败: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// 从字节数组加载BitmapImage，并缩放到最大120*120尺寸，参考Song模型的实现
-        /// </summary>
-        private static System.Windows.Media.Imaging.BitmapImage? LoadBitmapFromBytes(byte[] imageBytes)
-        {
-            if (imageBytes == null || imageBytes.Length == 0)
-            {
-                return null;
-            }
-
-            // 验证图像数据完整性
-            if (imageBytes.Length < 100) // 太小的数据可能不是有效的图像
-            {
-                return null;
-            }
-
-            // 检查图像文件头以验证格式
-            if (!IsValidImageData(imageBytes))
-            {
-                return null;
-            }
-
-            // 尝试多种图像加载方法
-            System.Windows.Media.Imaging.BitmapImage? loadedImage = null;
-
-            // 方法1: 标准加载
-            loadedImage = TryLoadImage(imageBytes, System.Windows.Media.Imaging.BitmapCreateOptions.None);
-
-            // 如果加载成功，缩放图片到最大120*120尺寸
-            if (loadedImage != null)
-            {
-                return ResizeImage(loadedImage, 120, 120);
-            }
-
-            return loadedImage;
-        }
-        
-        /// <summary>
-        /// 将图片缩放到指定的最大宽度和高度，保持原始宽高比
-        /// </summary>
-        /// <param name="sourceImage">源图片</param>
-        /// <param name="maxWidth">最大宽度</param>
-        /// <param name="maxHeight">最大高度</param>
-        /// <returns>缩放后的图片</returns>
-        private static System.Windows.Media.Imaging.BitmapImage ResizeImage(System.Windows.Media.Imaging.BitmapImage sourceImage, int maxWidth, int maxHeight)
-        {
-            try
-            {
-                // 计算缩放比例
-                double widthRatio = (double)maxWidth / sourceImage.Width;
-                double heightRatio = (double)maxHeight / sourceImage.Height;
-                double scaleRatio = Math.Min(widthRatio, heightRatio);
-                
-                // 如果图片已经小于等于目标尺寸，直接返回原图片
-                if (scaleRatio >= 1)
-                {
-                    return sourceImage;
-                }
-                
-                // 计算新尺寸
-                int newWidth = (int)(sourceImage.Width * scaleRatio);
-                int newHeight = (int)(sourceImage.Height * scaleRatio);
-                
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 缩放图片从 {sourceImage.Width}x{sourceImage.Height} 到 {newWidth}x{newHeight}");
-                
-                // 创建缩放变换
-                var scaleTransform = new System.Windows.Media.ScaleTransform(scaleRatio, scaleRatio);
-                
-                // 创建DrawingVisual并绘制缩放后的图像
-                var drawingVisual = new System.Windows.Media.DrawingVisual();
-                using (var drawingContext = drawingVisual.RenderOpen())
-                {
-                    drawingContext.DrawImage(
-                        sourceImage, 
-                        new System.Windows.Rect(0, 0, newWidth, newHeight)
-                    );
-                }
-                
-                // 渲染到RenderTargetBitmap
-                var renderTargetBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
-                    newWidth, 
-                    newHeight, 
-                    96, // DPI
-                    96, // DPI
-                    System.Windows.Media.PixelFormats.Default
-                );
-                renderTargetBitmap.Render(drawingVisual);
-                
-                // 编码为BitmapImage
-                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
-                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(renderTargetBitmap));
-                
-                using (var memoryStream = new System.IO.MemoryStream())
-                {
-                    encoder.Save(memoryStream);
-                    memoryStream.Position = 0;
-                    
-                    var resizedImage = new System.Windows.Media.Imaging.BitmapImage();
-                    resizedImage.BeginInit();
-                    resizedImage.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    resizedImage.StreamSource = memoryStream;
-                    resizedImage.EndInit();
-                    resizedImage.Freeze(); // 冻结图像以确保线程安全
-                    
-                    return resizedImage;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 缩放图片失败: {ex.Message}");
-                // 缩放失败时返回原图片
-                return sourceImage;
-            }
-        }
-
-        /// <summary>
-        /// 验证图像数据是否有效
-        /// </summary>
-        private static bool IsValidImageData(byte[] imageBytes)
-        {
-            if (imageBytes == null || imageBytes.Length < 4)
-                return false;
-
-            // 检查常见图像格式的文件头
-            // JPEG: FF D8 FF
-            if (imageBytes[0] == 0xFF && imageBytes[1] == 0xD8 && imageBytes[2] == 0xFF)
-                return true;
-
-            // PNG: 89 50 4E 47
-            if (imageBytes[0] == 0x89 && imageBytes[1] == 0x50 && imageBytes[2] == 0x4E && imageBytes[3] == 0x47)
-                return true;
-
-            // BMP: 42 4D
-            if (imageBytes[0] == 0x42 && imageBytes[1] == 0x4D)
-                return true;
-
-            // GIF: 47 49 46 38
-            if (imageBytes[0] == 0x47 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46 && imageBytes[3] == 0x38)
-                return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// 尝试加载图像数据
-        /// </summary>
-        private static System.Windows.Media.Imaging.BitmapImage? TryLoadImage(byte[] imageBytes, System.Windows.Media.Imaging.BitmapCreateOptions createOptions)
-        {
-            try
-            {
-                using (var ms = new System.IO.MemoryStream(imageBytes))
-                {
-                    var bitmap = new System.Windows.Media.Imaging.BitmapImage();
-
-                    try
-                    {
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                        // 添加IgnoreColorProfile选项避免颜色上下文错误
-                        bitmap.CreateOptions = createOptions | System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreColorProfile;
-                        bitmap.StreamSource = ms;
-                        bitmap.EndInit();
-                        bitmap.Freeze(); // 冻结图像以确保线程安全
-                    }
-                    catch (Exception)
-                    {
-                    }
-
-                    // 验证结果
-                    if (bitmap.Width > 0 && bitmap.Height > 0)
-                    {
-                        return bitmap;
-                    }
-                }
-
-                return null;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// 生成文件路径的哈希值，用于缓存文件名
-        /// </summary>
-        /// <param name="filePath">文件路径</param>
-        /// <returns>文件路径的SHA1哈希值</returns>
-        private static string GenerateFileHash(string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath))
-                return string.Empty;
-
-            using (var sha1 = SHA1.Create())
-            {
-                var bytes = Encoding.UTF8.GetBytes(filePath);
-                var hash = sha1.ComputeHash(bytes);
-                return BitConverter.ToString(hash).Replace("-", "").ToLower();
-            }
-        }
-
-        /// <summary>
-        /// 获取封面缓存文件路径
-        /// </summary>
-        /// <param name="filePath">音频文件路径</param>
-        /// <returns>封面缓存文件的完整路径</returns>
-        private static string GetAlbumArtCachePath(string filePath)
-        {
-            var hash = GenerateFileHash(filePath);
-            return Path.Combine(Paths.AlbumArtCacheDirectory, $"{hash}.png");
-        }
-
-        /// <summary>
-        /// 从缓存加载封面
-        /// </summary>
-        /// <param name="filePath">音频文件路径</param>
-        /// <returns>加载的BitmapImage，如果缓存不存在则返回null</returns>
-        private static System.Windows.Media.Imaging.BitmapImage? TryLoadAlbumArtFromCache(string filePath)
-        {
-            var cachePath = GetAlbumArtCachePath(filePath);
-            if (System.IO.File.Exists(cachePath))
-            {
-                try
-                {
-                    var imageBytes = System.IO.File.ReadAllBytes(cachePath);
-                    if (imageBytes != null && imageBytes.Length > 0)
-                    {
-                        return LoadBitmapFromBytes(imageBytes);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 从缓存加载封面失败: {ex.Message}");
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 将封面保存到缓存
-        /// </summary>
-        /// <param name="filePath">音频文件路径</param>
-        /// <param name="imageBytes">封面图像字节数据</param>
-        private static void SaveAlbumArtToCache(string filePath, byte[] imageBytes)
-        {
-            // 根据Song类的静态配置决定是否保存缓存
-            if (imageBytes == null || imageBytes.Length == 0 || !MusicPlayer.Core.Models.Song.IsCoverCacheEnabled)
-                return;
-
-            try
-            {
-                // 确保缓存目录存在
-                Paths.EnsureDirectoryExists(Paths.AlbumArtCacheDirectory);
-                
-                var cachePath = GetAlbumArtCachePath(filePath);
-                System.IO.File.WriteAllBytes(cachePath, imageBytes);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 保存封面到缓存失败: {ex.Message}");
-            }
-        }
-
     }
 }

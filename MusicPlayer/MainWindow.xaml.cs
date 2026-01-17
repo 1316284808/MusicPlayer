@@ -418,7 +418,7 @@ namespace MusicPlayer;
                 case MusicPlayer.Core.Enums.Theme.Mica:
                     this.WindowBackdropType = Wpf.Ui.Controls.WindowBackdropType.Mica;
                     break;
-                case MusicPlayer.Core.Enums.Theme.Tabbed:
+                case MusicPlayer.Core.Enums.Theme.MicaAlt:
                     this.WindowBackdropType = Wpf.Ui.Controls.WindowBackdropType.Tabbed;
                     break;
                 default:

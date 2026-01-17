@@ -41,6 +41,9 @@ namespace MusicPlayer.Navigation
         {
             if (_mainFrame != null)
             {
+                // 清理当前页面的ViewModel资源
+                CleanupCurrentPageViewModel();
+                
                 // 根据URI类型创建对应的Page实例
                 if (pageUri.Contains("HomePage.xaml"))
                 {
@@ -68,7 +71,8 @@ namespace MusicPlayer.Navigation
                 }
                 else if (pageUri.Contains("AlbumPage.xaml"))
                 {
-                    var albumPage = new AlbumPage();
+                    var albumViewModel = _serviceProvider.GetRequiredService<IAlbumViewModel>();
+                    var albumPage = new AlbumPage(albumViewModel);
                     _mainFrame.Navigate(albumPage);
                 }
                 else
@@ -131,13 +135,13 @@ namespace MusicPlayer.Navigation
         /// <summary>
         /// 返回上一页
         /// </summary>
-        public void GoBack()
-        {
-            if (_mainFrame != null && _mainFrame.CanGoBack)
-            {
-                _mainFrame.GoBack();
-            }
-        }
+        //public void GoBack()
+        //{
+        //    if (_mainFrame != null && _mainFrame.CanGoBack)
+        //    {
+        //        _mainFrame.GoBack();
+        //    }
+        //}
 
         /// <summary>
         /// 前进到下一页
@@ -146,7 +150,71 @@ namespace MusicPlayer.Navigation
         {
             if (_mainFrame != null && _mainFrame.CanGoForward)
             {
+                // 清理当前页面的ViewModel资源
+                CleanupCurrentPageViewModel();
                 _mainFrame.GoForward();
+            }
+        }
+        
+        /// <summary>
+        /// 返回上一页
+        /// </summary>
+        public void GoBack()
+        {
+            if (_mainFrame != null && _mainFrame.CanGoBack)
+            {
+                // 清理当前页面的ViewModel资源
+                CleanupCurrentPageViewModel();
+                _mainFrame.GoBack();
+            }
+        }
+        
+        /// <summary>
+        /// 清理当前页面的ViewModel资源
+        /// </summary>
+        private void CleanupCurrentPageViewModel()
+        {
+            if (_mainFrame == null || _mainFrame.Content == null)
+                return;
+            
+            try
+            {
+                // 获取当前页面的DataContext
+                var page = _mainFrame.Content as System.Windows.Controls.Page;
+                if (page != null)
+                {
+                    // 检查是否是SingerPage
+                    if (page is SingerPage singerPage && singerPage.DataContext is ISingerViewModel singerViewModel)
+                    {
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 清理SingerViewModel资源");
+                        singerViewModel.Cleanup();
+                        return;
+                    }
+                    
+                    // 检查是否是AlbumPage
+                    if (page is AlbumPage albumPage && albumPage.DataContext is IAlbumViewModel albumViewModel)
+                    {
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 清理AlbumViewModel资源");
+                        albumViewModel.Cleanup();
+                        return;
+                    }
+                    
+                    // 检查是否是HomePage（包含PlaylistControl）
+                    if (page is HomePage homePage)
+                    {
+                        // 获取MainViewModel，它包含PlaylistViewModel
+                        if (homePage.DataContext is IMainViewModel mainViewModel)
+                        {
+                            System.Diagnostics.Debug.WriteLine("NavigationService: 清理PlaylistViewModel资源");
+                            mainViewModel.PlaylistViewModel.Cleanup();
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 清理当前页面ViewModel资源失败: {ex.Message}");
             }
         }
     }

@@ -138,6 +138,26 @@ namespace MusicPlayer.ViewModels
         }
 
         /// <summary>
+        /// 清理视图模型资源
+        /// </summary>
+        public override void Cleanup()
+        {
+            System.Diagnostics.Debug.WriteLine("SingerViewModel: Cleanup 方法被调用");
+            
+            // 清理所有歌手的封面资源
+            foreach (var singer in _singers)
+            {
+                singer.CoverImage = null;
+            }
+            
+            // 清理过滤后的歌手列表的封面资源
+            foreach (var singer in _filteredSingers)
+            {
+                singer.CoverImage = null;
+            }
+        }
+
+        /// <summary>
         /// 加载歌手列表
         /// </summary>
         public void LoadSingers()

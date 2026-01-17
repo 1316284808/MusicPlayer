@@ -233,7 +233,7 @@ namespace MusicPlayer.Services
                 // 释放当前歌曲的高清封面资源，避免内存泄漏
                 if (_playlistDataService.CurrentSong != null && _playlistDataService.CurrentSong != song)
                 {
-                    _playlistDataService.CurrentSong.ReleaseOriginalAlbumArt();
+                    _playlistDataService.CurrentSong.OriginalAlbumArt = null;
                     System.Diagnostics.Debug.WriteLine($"释放旧歌曲 {_playlistDataService.CurrentSong.Title} 的高清封面资源");
                 }
 
@@ -253,14 +253,14 @@ namespace MusicPlayer.Services
                 // 应用均衡器效果
                 var audioStreamWithEqualizer = _equalizerService.ApplyEqualizer(_spectrumAnalyzer);
 
-                // 创建输出设备
-              
-                CreateAudioOutputDevice(audioStreamWithEqualizer);
+                   CreateAudioOutputDevice(audioStreamWithEqualizer);
                 // 更新播放列表数据服务的当前歌曲状态（仅当不同时才更新，避免循环调用）
                 if (_playlistDataService.CurrentSong != song)
                 {
                     _playlistDataService.CurrentSong = song;
-                }
+                } 
+                // 设置音量（直接使用PlayerStateService的当前值）
+                _audioFileReader.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
                 bool isUserAction = _playlistDataService.DataSource.Any();
                 if (isUserAction)
                 {

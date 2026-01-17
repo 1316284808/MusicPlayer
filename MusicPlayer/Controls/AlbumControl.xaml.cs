@@ -8,11 +8,11 @@ using System.Windows.Controls;
 namespace MusicPlayer.Controls
 {
     /// <summary>
-    /// SingerControl.xaml 的交互逻辑
+    /// AlbumControl.xaml 的交互逻辑
     /// </summary>
-    public partial class SingerControl : UserControl
-    { 
-        public SingerControl()
+    public partial class AlbumControl : UserControl
+    {
+        public AlbumControl()
         {
             InitializeComponent();
             WeakReferenceMessenger.Default.Register<SearchBoxFocusRequestMessage>(this, (recipient, message) =>

@@ -12,6 +12,6 @@ namespace MusicPlayer.Core.Enums
         None,//默认
         Acrylic,//亚克力
         Mica,//云母（浓）
-        Tabbed//云母（淡）
+        MicaAlt//云母（淡）
     }
 }

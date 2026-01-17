@@ -84,7 +84,7 @@ namespace MusicPlayer.Services
                             var song = _playlistService.ExtractSongInfo(file);
                             if (song != null)
                             {
-                                song.DelayAlbumArtLoading = true;
+
                                 songs.Add(song);
                                 processedCount++;
                             }

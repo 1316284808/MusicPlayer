@@ -107,7 +107,7 @@ namespace MusicPlayer.Services
         private void OnConfigurationChanged(PlayerConfiguration configuration)
         {
             // 更新Song类的封面缓存设置
-            MusicPlayer.Core.Models.Song.IsCoverCacheEnabled = configuration.IsCoverCacheEnabled;
+            // 封面缓存设置已移至行为类，不再需要在此设置
             System.Diagnostics.Debug.WriteLine($"ConfigurationService: 配置变化，更新封面缓存设置为: {configuration.IsCoverCacheEnabled}");
         }
 

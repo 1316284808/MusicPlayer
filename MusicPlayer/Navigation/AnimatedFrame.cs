@@ -76,7 +76,7 @@ namespace MusicPlayer.Navigation
             {
                 From = 0,
                 To = 1,
-                Duration = TimeSpan.FromMilliseconds(200),
+                Duration = TimeSpan.FromMilliseconds(300),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
             };
             Storyboard.SetTarget(fadeInAnimation, this);
@@ -89,7 +89,7 @@ namespace MusicPlayer.Navigation
             {
                 From = 1,
                 To = 0,
-                Duration = TimeSpan.FromMilliseconds(200),
+                Duration = TimeSpan.FromMilliseconds(300),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
             };
             Storyboard.SetTarget(fadeOutAnimation, this);

@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
+using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages;
@@ -25,6 +26,10 @@ namespace MusicPlayer.ViewModels
         private Core.Models.Song? _currentSong;
         private bool _isPlaying;
         private bool _isWindowMaximized = false;
+        
+        // 自动隐藏相关属性
+        private double _lyricSettingsOpacity = 1.0; // 控制歌词设置面板的透明度
+        private System.Timers.Timer _hideSettingsTimer; // 隐藏设置面板的计时器
 
         private ObservableCollection<Core.Models.LyricLine> _lyrics = new();
         private Core.Models.LyricLine? _currentLyricLine;
@@ -101,7 +106,7 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public double SelectedLyricFontSize
         {
-            get => LyricFontSize + 4;
+            get => LyricFontSize + 8;
         }
 
         public string LyricTranslationText => IsLyricTranslationEnabled ? "开启" : "禁用";
@@ -158,8 +163,9 @@ namespace MusicPlayer.ViewModels
                 CurrentSongAlbum = _currentSong.Album ?? string.Empty;
 
                 // 确保专辑封面已加载
-                _currentSong.EnsureAlbumArtLoaded();
-                _currentSong.EnsureOriginalAlbumArtLoaded();
+                // 使用AlbumArtLoader直接加载封面
+                _currentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
+                _currentSong.OriginalAlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
 
                 // 更新封面
                 CurrentSongAlbumArt = _currentSong.AlbumArt;
@@ -280,6 +286,22 @@ namespace MusicPlayer.ViewModels
                 }
             }
         }
+        
+        /// <summary>
+        /// 歌词设置面板的透明度
+        /// </summary>
+        public double LyricSettingsOpacity
+        {
+            get => _lyricSettingsOpacity;
+            set
+            {
+                if (Math.Abs(_lyricSettingsOpacity - value) > 0.01)
+                {
+                    _lyricSettingsOpacity = value;
+                    OnPropertyChanged(nameof(LyricSettingsOpacity));
+                }
+            }
+        }
 
         public ObservableCollection<Core.Models.LyricLine> Lyrics
         {
@@ -353,6 +375,8 @@ namespace MusicPlayer.ViewModels
         public ICommand ToggleLyricAlignmentCommand { get; }
         public ICommand IncreaseLyricFontSizeCommand { get; }
         public ICommand DecreaseLyricFontSizeCommand { get; }
+        public ICommand MouseEnterCommand { get; }
+        public ICommand MouseLeaveCommand { get; }
 
 
 
@@ -374,6 +398,14 @@ namespace MusicPlayer.ViewModels
             ToggleLyricAlignmentCommand = new RelayCommand(ToggleLyricAlignment);
             IncreaseLyricFontSizeCommand = new RelayCommand(IncreaseLyricFontSize);
             DecreaseLyricFontSizeCommand = new RelayCommand(DecreaseLyricFontSize);
+            MouseEnterCommand = new RelayCommand(ExecuteMouseEnter);
+            MouseLeaveCommand = new RelayCommand(ExecuteMouseLeave);
+
+            // 初始化计时器
+            _hideSettingsTimer = new System.Timers.Timer(3000); // 3秒
+            _hideSettingsTimer.Elapsed += HideSettingsTimer_Elapsed;
+            _hideSettingsTimer.AutoReset = false;
+            _hideSettingsTimer.Start(); // 初始启动计时器
 
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
@@ -588,6 +620,38 @@ namespace MusicPlayer.ViewModels
         {
             Lyrics.Clear();
             CurrentLyricLine = null;
+        }
+        
+        /// <summary>
+        /// 计时器事件处理 - 隐藏歌词设置面板
+        /// </summary>
+        private void HideSettingsTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            // 确保在UI线程上执行
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                LyricSettingsOpacity = 0.0;
+            });
+        }
+        
+        /// <summary>
+        /// 执行鼠标进入操作
+        /// </summary>
+        private void ExecuteMouseEnter()
+        {
+            // 当鼠标进入时，停止计时器并显示设置面板
+            _hideSettingsTimer.Stop();
+            LyricSettingsOpacity = 1.0;
+        }
+        
+        /// <summary>
+        /// 执行鼠标离开操作
+        /// </summary>
+        private void ExecuteMouseLeave()
+        {
+            // 当鼠标离开时，启动计时器，3秒后隐藏设置面板
+            _hideSettingsTimer.Stop();
+            _hideSettingsTimer.Start();
         }
 
 

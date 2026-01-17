@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Enums;
@@ -72,7 +73,8 @@ namespace MusicPlayer.ViewModels
                     // 确保在设置歌曲时，专辑封面已加载（懒加载）
                     if (_currentSong != null)
                     {
-                        _currentSong.EnsureAlbumArtLoaded();
+                        // 使用AlbumArtLoader直接加载封面
+                        _currentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
                     }
                 }
             }
@@ -714,10 +716,10 @@ namespace MusicPlayer.ViewModels
         public void RequestAlbumLoad(Song song)
         {
             // 确保取消延迟加载设置
-            song.DelayAlbumArtLoading = false;
+
             
             // 如果还没有加载封面，触发事件
-            if (song.AlbumArt == null && (song.AlbumArtData == null || song.AlbumArtData.Length == 0))
+            if (song.AlbumArt == null)
             {
                 System.Diagnostics.Debug.WriteLine($"RequestAlbumLoad: 触发加载歌曲 {song.Title} 的封面");
                 AlbumLoadRequested?.Invoke(this, new AlbumLoadRequestEventArgs(song));
@@ -737,8 +739,19 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Cleanup()
         {
+            System.Diagnostics.Debug.WriteLine("PlaylistViewModel: Cleanup 方法被调用");
+            
             // 注销消息处理器
             _messagingService.Unregister(this);
+            
+            // 清理所有歌曲的封面资源
+            if (_playlistDataService.DataSource != null)
+            {
+                foreach (var song in _playlistDataService.DataSource)
+                {
+                    song.AlbumArt = null;
+                }
+            }
         }
 
         /// <summary>
