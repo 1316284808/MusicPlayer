@@ -52,6 +52,11 @@
     <ProjectReference Include="..\MusicPlayer.Core\MusicPlayer.Core.csproj" />
     <ProjectReference Include="..\MusicPlayer.Services\MusicPlayer.Services.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="VirtualizingWrapPanel">
+      <HintPath>..\VirtualizingWrapPanel\bin\Debug\net8.0-windows\VirtualizingWrapPanel.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="resources\MusicPlayer.ico">

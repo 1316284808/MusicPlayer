@@ -23,10 +23,10 @@ namespace MusicPlayer.ViewModels
 
         private ObservableCollection<SingerInfo> _singers = new();
         private ObservableCollection<SingerInfo> _filteredSingers = new();
-        private string _currentIndex = "ALL";
+        private string _currentIndex = "ALL";//"ALL",
         private string _searchText = string.Empty;
         private bool _isSearchExpanded = false;
-        private readonly List<string> _indexList = new() { "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+        private readonly List<string> _indexList = new() {  "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
 
      
 
@@ -127,14 +127,14 @@ namespace MusicPlayer.ViewModels
             
             LoadSingers();
         }
-        
+
         /// <summary>
         /// 初始化视图模型
         /// </summary>
         public override void Initialize()
         {
             System.Diagnostics.Debug.WriteLine("SingerViewModel: Initialize 方法被调用");
-            LoadSingers();
+            LoadSingers(); // 重新分组数据
         }
 
         /// <summary>
@@ -144,17 +144,24 @@ namespace MusicPlayer.ViewModels
         {
             System.Diagnostics.Debug.WriteLine("SingerViewModel: Cleanup 方法被调用");
             
-            // 清理所有歌手的封面资源
-            foreach (var singer in _singers)
-            {
-                singer.CoverImage = null;
-            }
+            // 解除消息注册，防止内存泄漏
+            _messagingService.Unregister(this);
             
-            // 清理过滤后的歌手列表的封面资源
-            foreach (var singer in _filteredSingers)
-            {
-                singer.CoverImage = null;
-            }
+            //// 清理所有歌手的封面资源
+            //foreach (var singer in _singers)
+            //{
+            //    singer.CoverImage = null;
+            //}
+            
+            //// 清理过滤后的歌手列表的封面资源
+            //foreach (var singer in _filteredSingers)
+            //{
+            //    singer.CoverImage = null;
+            //}
+            
+            // 清空集合，释放内存
+            _singers.Clear();
+            _filteredSingers.Clear();
         }
 
         /// <summary>
@@ -205,11 +212,7 @@ namespace MusicPlayer.ViewModels
             OnPropertyChanged(nameof(FilteredSingers)); // 通知FilteredSingers集合已更新
             System.Diagnostics.Debug.WriteLine($"SingerViewModel: 歌手列表加载完成，歌手数量: {_singers.Count}");
 
-            // 通知SingerAlbumArtBehavior重新加载封面
-            //System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            //{
-            //    System.Diagnostics.Debug.WriteLine("SingerViewModel: 通知SingerAlbumArtBehavior数据已更新");
-            //}));
+            
         }
 
         /// <summary>

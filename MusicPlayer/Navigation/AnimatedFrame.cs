@@ -106,8 +106,7 @@ namespace MusicPlayer.Navigation
                 this.Opacity = 0;
                 
                 // 使用延迟确保内容已加载
-                this.Dispatcher.BeginInvoke(new Action(() =>
-                {
+                this.Dispatcher.BeginInvoke(new Action(() => {
                     _fadeInStoryboard.Begin();
                     
                     // 发送导航完成消息，通知其他组件更新状态

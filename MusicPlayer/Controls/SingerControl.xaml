@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:MusicPlayer.Controls"
              xmlns:Helper="clr-namespace:MusicPlayer.Helper"
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
+             xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
              mc:Ignorable="d"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              d:DesignHeight="450" d:DesignWidth="800">
@@ -124,18 +125,25 @@
         <ListBox  Grid.Column="1"
                  x:Name="SingerListBox" HorizontalContentAlignment="Left"
                  ItemsSource="{Binding FilteredSingers}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                 ScrollViewer.CanContentScroll="False"  
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                   ScrollViewer.CanContentScroll="True"
+                   VirtualizingPanel.IsVirtualizing="True"
+                   VirtualizingPanel.VirtualizationMode="Recycling"
                   Helper:SingerAlbumArtBehavior.IsEnabled="True"
-Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
+                    Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                  >
            
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <!-- 先使用标准WrapPanel进行测试 -->
-                    <WrapPanel Orientation="Horizontal"    HorizontalAlignment="Left" VerticalAlignment="Top" />
-                </ItemsPanelTemplate>
+                        <!--<WrapPanel Orientation="Horizontal"    HorizontalAlignment="Left" VerticalAlignment="Top" />-->
+                        <vwp:VirtualizingWrapPanel  ItemSize="300, 140" 
+Orientation="Horizontal" 
+SpacingMode="Uniform" 
+IsGridLayoutEnabled="True" />
+
+                    </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
 
             <ListBox.ItemTemplate >
