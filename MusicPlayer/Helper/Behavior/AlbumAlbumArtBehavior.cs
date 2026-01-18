@@ -1,13 +1,14 @@
+using MusicPlayer.Core.Data;
+using MusicPlayer.Core.Models;
+using MusicPlayer.ViewModels;
 using System;
 using System.Collections.Specialized;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using MusicPlayer.Core.Data;
-using MusicPlayer.Core.Models;
-using MusicPlayer.ViewModels;
 
 namespace MusicPlayer.Helper
 {
@@ -104,7 +105,8 @@ namespace MusicPlayer.Helper
                     // 监听FilteredAlbums集合的变化（索引切换时会更新）
                     if (viewModel.FilteredAlbums is INotifyCollectionChanged filteredCollection)
                     {
-                        filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
+                        // 创建唯一的事件处理器
+                        NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
                             // 延迟一小段时间，确保UI更新完成后再加载封面
                             System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
                                 // 只加载可视区域的封面
@@ -113,6 +115,17 @@ namespace MusicPlayer.Helper
                                 await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
                             }), System.Windows.Threading.DispatcherPriority.Background);
                         };
+                        
+                        // 移除旧的事件处理器（如果存在）
+                        if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var oldHandler))
+                        {
+                            filteredCollection.CollectionChanged -= oldHandler;
+                            _collectionChangedHandlers.Remove(scrollViewer);
+                        }
+                        
+                        // 添加新的事件处理器
+                        filteredCollection.CollectionChanged += handler;
+                        _collectionChangedHandlers[scrollViewer] = handler;
                     }
                     
                     // 初始加载时也加载一次封面
@@ -137,7 +150,37 @@ namespace MusicPlayer.Helper
         {
             try
             {
+                // 移除滚动事件处理器
                 scrollViewer.ScrollChanged -= OnScrollChanged;
+                
+                // 移除CollectionChanged事件处理器
+                if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var collectionHandler))
+                {
+                    // 尝试从ViewModel中获取FilteredAlbums集合
+                    var viewModel = GetViewModel(scrollViewer);
+                    if (viewModel == null)
+                    {
+                        var listBox = FindVisualParent<System.Windows.Controls.ListBox>(scrollViewer);
+                        if (listBox?.DataContext is IAlbumViewModel dataContextViewModel)
+                        {
+                            viewModel = dataContextViewModel;
+                        }
+                    }
+                    
+                    if (viewModel?.FilteredAlbums is INotifyCollectionChanged filteredCollection)
+                    {
+                        filteredCollection.CollectionChanged -= collectionHandler;
+                    }
+                    
+                    _collectionChangedHandlers.Remove(scrollViewer);
+                }
+                
+                // 清理静态字段引用
+                if (_pendingScrollViewer == scrollViewer)
+                {
+                    _pendingScrollViewer = null;
+                    _pendingViewModel = null;
+                }
              }
             catch (Exception ex)
             {
@@ -172,11 +215,37 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 移除ScrollViewer事件
+                // 移除ScrollViewer相关事件
                 var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
                 if (scrollViewer != null)
                 {
+                    // 移除滚动事件处理器
                     scrollViewer.ScrollChanged -= OnScrollChanged;
+                    
+                    // 移除CollectionChanged事件处理器
+                    if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var collectionHandler))
+                    {
+                        // 尝试从ViewModel中获取FilteredAlbums集合
+                        var viewModel = GetViewModel(listBox);
+                        if (viewModel == null && listBox.DataContext is IAlbumViewModel dataContextViewModel)
+                        {
+                            viewModel = dataContextViewModel;
+                        }
+                        
+                        if (viewModel?.FilteredAlbums is INotifyCollectionChanged filteredCollection)
+                        {
+                            filteredCollection.CollectionChanged -= collectionHandler;
+                        }
+                        
+                        _collectionChangedHandlers.Remove(scrollViewer);
+                    }
+                    
+                    // 清理静态字段引用
+                    if (_pendingScrollViewer == scrollViewer)
+                    {
+                        _pendingScrollViewer = null;
+                        _pendingViewModel = null;
+                    }
                 }
                 
                 // 移除ListBox事件
@@ -257,14 +326,26 @@ namespace MusicPlayer.Helper
                 // 监听FilteredAlbums集合的变化（索引切换时会更新）
                 if (viewModel.FilteredAlbums is INotifyCollectionChanged filteredCollection)
                 {
-                    filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
+                    // 创建唯一的事件处理器
+                    NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
                         // 延迟一小段时间，确保UI更新完成后再加载封面
-                            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
-                                var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                                var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                                await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
-                            }), System.Windows.Threading.DispatcherPriority.Background);
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
+                            var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                            var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                            await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
+                        }), System.Windows.Threading.DispatcherPriority.Background);
                     };
+                    
+                    // 移除旧的事件处理器（如果存在）
+                    if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var oldHandler))
+                    {
+                        filteredCollection.CollectionChanged -= oldHandler;
+                        _collectionChangedHandlers.Remove(scrollViewer);
+                    }
+                    
+                    // 添加新的事件处理器
+                    filteredCollection.CollectionChanged += handler;
+                    _collectionChangedHandlers[scrollViewer] = handler;
                 }
                 
                 // 初始加载时也加载一次封面
@@ -286,6 +367,10 @@ namespace MusicPlayer.Helper
         private static IAlbumViewModel? _pendingViewModel;
         private static Rect _pendingViewport;
         private static System.Windows.Point _pendingScrollOffset;
+        
+        // 用于跟踪每个UI元素的事件处理器，以便正确移除
+        private static readonly Dictionary<object, NotifyCollectionChangedEventHandler> _collectionChangedHandlers = new();
+        private static readonly Dictionary<object, EventHandler> _throttleTimerHandlers = new();
         
         private static void OnScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -377,7 +462,7 @@ namespace MusicPlayer.Helper
                 
                 // 扩大可视区域检测范围，实现预加载
                 // 在当前可视区域上下各增加1.5倍视口高度的预加载区域
-                double preloadFactor = 1.5;
+                double preloadFactor = 1;
                 var extendedViewport = new Rect(
                     viewport.X,
                     viewport.Y - viewport.Height * preloadFactor,
@@ -408,8 +493,8 @@ namespace MusicPlayer.Helper
                     }
                 }
                 
-                // 使用并行加载，提高预加载速度，限制并行度为5
-                var parallelOptions = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 5 };
+                // 使用并行加载，提高预加载速度，限制并行度为1
+                var parallelOptions = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 1 };
                 await System.Threading.Tasks.Parallel.ForEachAsync(albumsToLoad, parallelOptions, async (album, cancellationToken) =>
                 {
                     try
@@ -432,14 +517,12 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 扩大可视区域检测范围，避免滚动时频繁加载/清理
-                // 只清理距离可视区域较远的项
-                double cleanupFactor = 2.0;
+                // 使用原始视口大小作为清理区域，与SingerAlbumArtBehavior保持一致
                 var extendedViewport = new Rect(
-                    viewport.X - viewport.Width * cleanupFactor,
-                    viewport.Y - viewport.Height * cleanupFactor,
-                    viewport.Width * (1 + 2 * cleanupFactor),
-                    viewport.Height * (1 + 2 * cleanupFactor)
+                    viewport.X,
+                    viewport.Y,
+                    viewport.Width,
+                    viewport.Height  
                 );
                 
                 // 遍历过滤后的专辑项
@@ -475,6 +558,7 @@ namespace MusicPlayer.Helper
         {
             try
             {
+                if (album.HasCoverImage) return;
                 if (string.IsNullOrEmpty(album.FirstSongFilePath))
                     return;
                 
@@ -501,14 +585,19 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 清理封面，释放内存
+                // 确保在UI线程上更新封面
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    album.CoverImage = null;
+                    // 释放BitmapImage资源
+                    if (album.CoverImage != null)
+                    {
+                        // 先设置为null，触发UI更新
+                        album.CoverImage = null;
+                    }
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"AlbumAlbumArtBehavior: 清理专辑封面失败: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"AlbumAlbumArtBehavior: 清理专辑 {album.Name} 的封面失败: {ex.Message}");
             }
         }
 

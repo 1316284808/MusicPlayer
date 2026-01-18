@@ -63,17 +63,19 @@ namespace MusicPlayer.Navigation
                     var playerPage = new PlayerPage(mainViewModel);
                     _mainFrame.Navigate(playerPage);
                 }
-                else if (pageUri.Contains("SingerPage.xaml"))
-                {
-                    var singerViewModel = _serviceProvider.GetRequiredService<ISingerViewModel>();
-                    var singerPage = new SingerPage(singerViewModel);
-                    _mainFrame.Navigate(singerPage);
-                }
                 else if (pageUri.Contains("AlbumPage.xaml"))
                 {
                     var albumViewModel = _serviceProvider.GetRequiredService<IAlbumViewModel>();
                     var albumPage = new AlbumPage(albumViewModel);
+                    albumViewModel.Initialize(); // 确保每次进入页面都重新加载数据
                     _mainFrame.Navigate(albumPage);
+                }
+                else if (pageUri.Contains("SingerPage.xaml"))
+                {
+                    var singerViewModel = _serviceProvider.GetRequiredService<ISingerViewModel>();
+                    var singerPage = new SingerPage(singerViewModel);
+                    singerViewModel.Initialize(); // 确保每次进入页面都重新加载数据
+                    _mainFrame.Navigate(singerPage);
                 }
                 else
                 {

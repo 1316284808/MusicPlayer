@@ -21,10 +21,10 @@ namespace MusicPlayer.ViewModels
 
         private ObservableCollection<AlbumInfo> _albums = new();
         private ObservableCollection<AlbumInfo> _filteredAlbums = new();
-        private string _currentIndex = "ALL";
+        private string _currentIndex = "ALL";//ALL
         private string _searchText = string.Empty;
         private bool _isSearchExpanded = false;
-        private readonly List<string> _indexList = new() { "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+        private readonly List<string> _indexList = new() { "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"  };
 
         /// <summary>
         /// 专辑列表
@@ -249,29 +249,21 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 初始化视图模型
         /// </summary>
-        public void Initialize()
+        public override void Initialize()
         {
-            // 可以在这里添加初始化逻辑
+            System.Diagnostics.Debug.WriteLine("AlbumViewModel: Initialize 方法被调用");
+            LoadAlbums(); // 重新分组数据
         }
 
         /// <summary>
         /// 清理视图模型
         /// </summary>
-        public void Cleanup()
+        public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("AlbumViewModel: Cleanup 方法被调用");
-            
-            // 清理所有专辑的封面资源
-            foreach (var album in _albums)
-            {
-                album.CoverImage = null;
-            }
-            
-            // 清理过滤后的专辑列表的封面资源
-            foreach (var album in _filteredAlbums)
-            {
-                album.CoverImage = null;
-            }
+            _messagingService.Unregister(this);
+            _albums.Clear();
+            _filteredAlbums.Clear();
         }
     }
 }
