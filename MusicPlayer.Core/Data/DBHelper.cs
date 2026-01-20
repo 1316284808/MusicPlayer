@@ -1,5 +1,6 @@
-using System;
 using LiteDB;
+using MusicPlayer.Core.Models;
+using System;
 
 namespace MusicPlayer.Core.Data
 {
@@ -13,11 +14,13 @@ namespace MusicPlayer.Core.Data
 
         protected DBHelper(string databasePath)
         {
+           
             // 使用共享模式连接，允许多个读取者和一个写入者
             var connectionString = new ConnectionString(databasePath)
             {
                 Connection = ConnectionType.Shared
             };
+            
             _database = new LiteDatabase(connectionString);
         }
 
@@ -34,9 +37,14 @@ namespace MusicPlayer.Core.Data
         /// </summary>
         protected ILiteCollection<T> GetCollection<T>(string collectionName = null)
         {
+          
             return _database.GetCollection<T>(collectionName);
         }
 
+        protected bool DeleteTable(string name) {
+            bool isDropped = _database.DropCollection(name);
+            return isDropped;
+        }
         /// <summary>
         /// 检查集合是否存在
         /// </summary>

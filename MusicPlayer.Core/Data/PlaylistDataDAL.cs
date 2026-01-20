@@ -27,23 +27,34 @@ namespace MusicPlayer.Core.Data
             
             var collection = GetCollection<Song>("Songs");
             int processedCount = 0;
-            
+
             try
             {
                 foreach (var song in songs)
                 {
-                    // 使用Upsert方法，如果记录存在则更新，不存在则插入
-                    collection.Upsert(song);
-                    processedCount++;
+                    try
+                    {
+                        collection.Upsert(song);
+                        processedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        processedCount--;
+                        System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 插入或更新歌曲失败: {song.Title}, 错误信息: {ex.Message}");
+                    }
                 }
                 
-                return processedCount;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 批量插入或更新歌曲失败: {ex.Message}");
                 throw;
             }
+            finally
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: {processedCount}");
+               }
+            return processedCount;
         }
 
         /// <summary>
@@ -71,7 +82,9 @@ namespace MusicPlayer.Core.Data
             try
             {
                 var collection = GetCollection<Song>("Songs");
+
                 collection.DeleteAll();
+                bool isDropped = DeleteTable("Songs");
             }
             catch (Exception ex)
             {

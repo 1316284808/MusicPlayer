@@ -15,7 +15,9 @@ namespace MusicPlayer.Page
         {
             InitializeComponent();
             DataContext = mainViewModel;
-            this.PlaylistControl.DataContext = mainViewModel.PlaylistViewModel;
+            var playlistViewModel = mainViewModel.PlaylistViewModel;
+            this.PlaylistControl.DataContext = playlistViewModel;
+            playlistViewModel.Initialize();
             Unloaded += (s, e) =>
             {
                 Dispose();

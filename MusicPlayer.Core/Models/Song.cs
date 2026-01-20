@@ -14,6 +14,7 @@ namespace MusicPlayer.Core.Models
     /// 使用MVVM工具包实现属性变更通知，支持数据绑定
     /// 已优化：实现专辑封面懒加载机制
     /// </summary>
+   
     public partial class Song : ObservableObject
     {
         /// <summary>歌曲ID（数据库主键）</summary>
@@ -68,14 +69,14 @@ namespace MusicPlayer.Core.Models
         /// <summary>
         /// 专辑封面图像（可选）
         /// </summary>
-        [LiteDB.BsonIgnore]
+        [property: LiteDB.BsonIgnore]
         [ObservableProperty]
         private BitmapImage? _albumArt;
         
         /// <summary>
         /// 原图专辑封面（用于旋转封面等需要高清显示的场合）
         /// </summary>
-        [LiteDB.BsonIgnore]
+        [property: LiteDB.BsonIgnore]
         [ObservableProperty]
         private BitmapImage? _originalAlbumArt;
         /// <summary>

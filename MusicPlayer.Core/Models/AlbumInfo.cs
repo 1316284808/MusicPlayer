@@ -1,11 +1,11 @@
 using System;
-
+using System.ComponentModel;
 namespace MusicPlayer.Core.Models
 {
     /// <summary>
     /// 专辑信息模型
     /// </summary>
-    public class AlbumInfo : System.ComponentModel.INotifyPropertyChanged
+    public class AlbumInfo : INotifyPropertyChanged
     {
         private string _name = string.Empty;
         private int _songCount;

@@ -731,7 +731,7 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Initialize()
         {
-          
+            //InitializePlaylistData();
         }
 
         /// <summary>
@@ -740,18 +740,7 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("PlaylistViewModel: Cleanup 方法被调用");
-            
-            // 注销消息处理器
-            _messagingService.Unregister(this);
-            
-            // 清理所有歌曲的封面资源
-            if (_playlistDataService.DataSource != null)
-            {
-                foreach (var song in _playlistDataService.DataSource)
-                {
-                    song.AlbumArt = null;
-                }
-            }
+             
         }
 
         /// <summary>

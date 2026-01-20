@@ -223,11 +223,13 @@ public class PlaylistCacheService : IPlaylistCacheService
             
             if (addedCount > 0)
             {
-                currentPlaylist.AddRange(songsToAdd);
-                UpdatePlaylist(currentPlaylist);
+                //currentPlaylist.AddRange(songsToAdd);
+                //UpdatePlaylist(currentPlaylist);
                 
                 // 异步保存新添加的歌曲到数据库
                 _ = Task.Run(async () => await SaveNewSongsToDatabaseAsync(songsToAdd));
+                currentPlaylist.AddRange(songsToAdd);
+                UpdatePlaylist(currentPlaylist);
             }
             
             System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 添加了 {addedCount} 首新歌曲到缓存");

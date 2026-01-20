@@ -12,9 +12,7 @@ namespace MusicPlayer.Core.Data
     /// 负责配置数据的持久化存储
     /// </summary>
     public class ConfigurationDAL : DBHelper
-    {
-        private const string ConfigurationId = "1";
-        
+    { 
         public ConfigurationDAL(string databasePath) : base(databasePath)
         {
 

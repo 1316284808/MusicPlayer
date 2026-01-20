@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Compile Remove="Interface\MessengerService.cs" />
+    <Compile Remove="Models\Class1.cs" />
   </ItemGroup>
 
   <ItemGroup>
