@@ -31,6 +31,9 @@ namespace MusicPlayer.Navigation
         {
             this.Loaded += AnimatedFrame_Loaded;
             this.Navigated += AnimatedFrame_Navigated;
+            // 禁用导航历史栈
+            this.NavigationUIVisibility = NavigationUIVisibility.Hidden;
+            this.NavigationService.RemoveBackEntry();
             
             // 尝试获取服务提供者和消息服务
             try
@@ -54,10 +57,10 @@ namespace MusicPlayer.Navigation
         {
             // 初始化动画资源
             CreateAnimations();
-            
+
             // 初始状态为透明
             this.Opacity = 0;
-            
+
             // 延迟执行初始淡入动画
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -78,11 +81,12 @@ namespace MusicPlayer.Navigation
                 To = 1,
                 Duration = TimeSpan.FromMilliseconds(300),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+         
             };
             Storyboard.SetTarget(fadeInAnimation, this);
             Storyboard.SetTargetProperty(fadeInAnimation, new PropertyPath("Opacity"));
             _fadeInStoryboard.Children.Add(fadeInAnimation);
-
+          
             // 淡出动画
             _fadeOutStoryboard = new Storyboard();
             var fadeOutAnimation = new DoubleAnimation
@@ -91,20 +95,28 @@ namespace MusicPlayer.Navigation
                 To = 0,
                 Duration = TimeSpan.FromMilliseconds(300),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+           
             };
             Storyboard.SetTarget(fadeOutAnimation, this);
             Storyboard.SetTargetProperty(fadeOutAnimation, new PropertyPath("Opacity"));
             _fadeOutStoryboard.Children.Add(fadeOutAnimation);
+           
         }
 
         private void AnimatedFrame_Navigated(object sender, NavigationEventArgs e)
         {
+            // 导航完成后立即清理历史记录，禁用导航历史栈
+            while (this.NavigationService.CanGoBack)
+            {
+                this.NavigationService.RemoveBackEntry();
+            }
+            
             // 导航完成后执行淡入动画
             if (_fadeInStoryboard != null)
             {
                 // 先设置为透明，然后执行淡入动画
                 this.Opacity = 0;
-                
+
                 // 使用延迟确保内容已加载
                 this.Dispatcher.BeginInvoke(new Action(() => {
                     _fadeInStoryboard.Begin();
@@ -115,9 +127,9 @@ namespace MusicPlayer.Navigation
                         Type? pageType = null;
                         
                         // 根据页面内容类型判断是哪个页面
-                        if (e.Content is HomePage)
+                        if (e.Content is PlaylistPage)
                         {
-                            pageType = typeof(HomePage);
+                            pageType = typeof(PlaylistPage);
                         }
                         else if (e.Content is SettingsPage)
                         {

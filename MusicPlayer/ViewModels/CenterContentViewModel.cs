@@ -654,10 +654,29 @@ namespace MusicPlayer.ViewModels
             _hideSettingsTimer.Start();
         }
 
-
-
-
-
-
+        /// <summary>
+        /// 清理ViewModel资源
+        /// </summary>
+        public override void Cleanup()
+        {
+            // 取消注册所有消息处理器
+            //_messagingService.Unregister(this);
+            
+            //// 停止并释放计时器
+            //if (_hideSettingsTimer != null)
+            //{
+            //    _hideSettingsTimer.Stop();
+            //    _hideSettingsTimer.Elapsed -= HideSettingsTimer_Elapsed;
+            //    _hideSettingsTimer.Dispose();
+            //    _hideSettingsTimer = null;
+            //}
+            
+            //// 清理歌词数据
+            //ClearLyrics();
+            
+            //// 清理播放列表集合
+            //PlayedLyrics.Clear();
+            //UnplayedLyrics.Clear();
+        }
     }
 }

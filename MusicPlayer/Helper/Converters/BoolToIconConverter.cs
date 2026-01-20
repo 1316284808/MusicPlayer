@@ -14,7 +14,7 @@ namespace MusicPlayer.Converters
         {
             if (value is bool isFavorited)
             {
-                return isFavorited ? IconKind.InHeart : IconKind.Heart;
+                return isFavorited ? IconKind.Heart : IconKind.HeartFill;
             }
             return IconKind.Heart;
         }
@@ -33,7 +33,7 @@ namespace MusicPlayer.Converters
         {
             if (values.Length > 0 && values[0] is bool isFavorited)
             {
-                return isFavorited ? IconKind.InHeart : IconKind.Heart;
+                return isFavorited ? IconKind.HeartFill : IconKind.Heart;
             }
             return IconKind.Heart;
         }

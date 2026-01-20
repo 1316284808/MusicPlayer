@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -5,9 +6,21 @@ using MusicPlayer.Core.Interface;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages;
 using MusicPlayer.Page;
+using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.ViewModels
 {
+    /// <summary>
+    /// 导航项类
+    /// </summary>
+    public class NavigationItem
+    {
+        public PageEnums Page { get; set; }
+        public string Name { get; set; }
+        public string IconKind { get; set; }
+        public string SelectedIconKind { get; set; }
+    }
+
     /// <summary>
     /// 设置栏视图模型
     /// </summary>
@@ -19,45 +32,47 @@ namespace MusicPlayer.ViewModels
         private int _currentFilterMode = 0; // 0=全部，1=收藏
         private bool _areAllButtonsVisible = true; // 控制所有按钮的可见性
         private double _buttonsOpacity = 1.0; // 控制所有按钮的透明度
-        private bool _isDefaultListSelected = true; // 默认列表是否选中
-        private bool _isFavoriteListSelected = false; // 收藏列表是否选中
-        private bool _isSettingsSelected = false; // 设置是否选中
         private System.Timers.Timer _hideButtonsTimer; // 隐藏按钮的计时器
         
-        // 直接控制每个导航项的图标状态
-        private bool _defaultListIconState = true;  // true表示开，false表示关
-        private bool _favoriteListIconState = false;
-        private bool _settingsIconState = false;
-        private bool _singerIconState = false; // 歌手页面图标状态
-        private bool _albumIconState = false; // 专辑页面图标状态
+        // 导航项集合
+        private ObservableCollection<NavigationItem> _navigationItems;
+        private NavigationItem _selectedNavigationItem;
 
         /// <summary>
-        /// 构造函数
+        /// 导航项集合
         /// </summary>
-        /// <param name="messagingService">消息服务</param>
-        public SettingsBarViewModel(IMessagingService messagingService)
+        public ObservableCollection<NavigationItem> NavigationItems
         {
-            // 初始化命令
-            ToggleButtonsVisibilityCommand = new RelayCommand(ExecuteToggleButtonsVisibility);
-            NavigateToDefaultListCommand = new RelayCommand(ExecuteNavigateToDefaultList);
-            NavigateToFavoriteListCommand = new RelayCommand(ExecuteNavigateToFavoriteList);
-            NavigateToSingerPageCommand = new RelayCommand(ExecuteNavigateToSingerPage);
-            NavigateToAlbumPageCommand = new RelayCommand(ExecuteNavigateToAlbumPage);
-            NavigateToSettingsCommand = new RelayCommand(ExecuteNavigateToSettings);
-            MouseEnterCommand = new RelayCommand(ExecuteMouseEnter);
-            MouseLeaveCommand = new RelayCommand(ExecuteMouseLeave);
-            _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
-            
-            // 初始化计时器
-            _hideButtonsTimer = new System.Timers.Timer(3000); // 3秒
-            _hideButtonsTimer.Elapsed += HideButtonsTimer_Elapsed;
-            _hideButtonsTimer.AutoReset = false;
+            get => _navigationItems;
+            set
+            {
+                if (_navigationItems != value)
+                {
+                    _navigationItems = value;
+                    OnPropertyChanged(nameof(NavigationItems));
+                }
+            }
+        }
 
-            // 设置默认选中的导航项
-            UpdateIconsByIndex(0); // 默认选中第一个导航项
-            
-            // 订阅导航完成消息
-            _messagingService.Register<NavigationCompletedMessage>(this, OnNavigationCompleted);
+        /// <summary>
+        /// 选中的导航项
+        /// </summary>
+        public NavigationItem SelectedNavigationItem
+        {
+            get => _selectedNavigationItem;
+            set
+            {
+                if (_selectedNavigationItem != value)
+                {
+                    _selectedNavigationItem = value;
+                    OnPropertyChanged(nameof(SelectedNavigationItem));
+                    // 当选中项变化时，执行导航
+                    if (_selectedNavigationItem != null)
+                    {
+                        ExecuteNavigate(_selectedNavigationItem);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -91,134 +106,6 @@ namespace MusicPlayer.ViewModels
                 }
             }
         }
-        
-        /// <summary>
-        /// 默认列表是否选中
-        /// </summary>
-        public bool IsDefaultListSelected
-        {
-            get => _isDefaultListSelected;
-            set
-            {
-                if (_isDefaultListSelected != value)
-                {
-                    _isDefaultListSelected = value;
-                    OnPropertyChanged(nameof(IsDefaultListSelected));
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 收藏列表是否选中
-        /// </summary>
-        public bool IsFavoriteListSelected
-        {
-            get => _isFavoriteListSelected;
-            set
-            {
-                if (_isFavoriteListSelected != value)
-                {
-                    _isFavoriteListSelected = value;
-                    OnPropertyChanged(nameof(IsFavoriteListSelected));
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 设置是否选中
-        /// </summary>
-        public bool IsSettingsSelected
-        {
-            get => _isSettingsSelected;
-            set
-            {
-                if (_isSettingsSelected != value)
-                {
-                    _isSettingsSelected = value;
-                    OnPropertyChanged(nameof(IsSettingsSelected));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 默认列表图标状态
-        /// </summary>
-        public bool DefaultListIconState
-        {
-            get => _defaultListIconState;
-            set
-            {
-                if (_defaultListIconState != value)
-                {
-                    _defaultListIconState = value;
-                    OnPropertyChanged(nameof(DefaultListIconState));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 收藏列表图标状态
-        /// </summary>
-        public bool FavoriteListIconState
-        {
-            get => _favoriteListIconState;
-            set
-            {
-                if (_favoriteListIconState != value)
-                {
-                    _favoriteListIconState = value;
-                    OnPropertyChanged(nameof(FavoriteListIconState));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 设置图标状态
-        /// </summary>
-        public bool SettingsIconState
-        {
-            get => _settingsIconState;
-            set
-            {
-                if (_settingsIconState != value)
-                {
-                    _settingsIconState = value;
-                    OnPropertyChanged(nameof(SettingsIconState));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 歌手页面图标状态
-        /// </summary>
-        public bool SingerIconState
-        {
-            get => _singerIconState;
-            set
-            {
-                if (_singerIconState != value)
-                {
-                    _singerIconState = value;
-                    OnPropertyChanged(nameof(SingerIconState));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 专辑页面图标状态
-        /// </summary>
-        public bool AlbumIconState
-        {
-            get => _albumIconState;
-            set
-            {
-                if (_albumIconState != value)
-                {
-                    _albumIconState = value;
-                    OnPropertyChanged(nameof(AlbumIconState));
-                }
-            }
-        }
 
         /// <summary>
         /// 收纳按钮
@@ -226,29 +113,9 @@ namespace MusicPlayer.ViewModels
         public ICommand ToggleButtonsVisibilityCommand { get; }
         
         /// <summary>
-        /// 导航到默认列表命令
+        /// 导航命令
         /// </summary>
-        public ICommand NavigateToDefaultListCommand { get; }
-        
-        /// <summary>
-        /// 导航到收藏列表命令
-        /// </summary>
-        public ICommand NavigateToFavoriteListCommand { get; }
-        
-        /// <summary>
-        /// 导航到歌手页面命令
-        /// </summary>
-        public ICommand NavigateToSingerPageCommand { get; }
-        
-        /// <summary>
-        /// 导航到专辑页面命令
-        /// </summary>
-        public ICommand NavigateToAlbumPageCommand { get; }
-        
-        /// <summary>
-        /// 导航到设置页面命令
-        /// </summary>
-        public ICommand NavigateToSettingsCommand { get; }
+        public ICommand NavigateCommand { get; }
         
         /// <summary>
         /// 鼠标进入命令
@@ -332,115 +199,44 @@ namespace MusicPlayer.ViewModels
         }
         
         /// <summary>
-        /// 执行导航到默认列表操作
+        /// 执行导航操作
         /// </summary>
-        private void ExecuteNavigateToDefaultList()
+        /// <param name="navigationItem">导航项</param>
+        private void ExecuteNavigate(NavigationItem navigationItem)
         {
-            // 更新图标状态
-            UpdateIconsByIndex(0);
+            if (navigationItem == null) return;
             
-        
-            // 更新过滤模式
-            CurrentFilterMode = 0;
-            
-            // 导航到主页
-            _messagingService?.Send<NavigateToHomeMessage, bool>(new NavigateToHomeMessage());
-            
-            // 发送显示所有歌曲的消息
-            _messagingService?.Send<ShowAllSongsMessage, bool>(new ShowAllSongsMessage());
-            
-            System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到默认列表");
-        }
-        
-        /// <summary>
-        /// 执行导航到收藏列表操作
-        /// </summary>
-        private void ExecuteNavigateToFavoriteList()
-        {
-            // 更新图标状态
-            UpdateIconsByIndex(1);
-            
-         
-            
-            // 更新过滤模式
-            CurrentFilterMode = 1;
-            
-            // 导航到主页
-            _messagingService?.Send<NavigateToHomeMessage, bool>(new NavigateToHomeMessage());
-            
-            // 发送过滤收藏歌曲的消息
-            _messagingService?.Send<FilterFavoriteSongsMessage, bool>(new FilterFavoriteSongsMessage());
-            
-            System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到收藏列表");
-        }
-        
-        /// <summary>
-        /// 执行导航到歌手页面操作
-        /// </summary>
-        private void ExecuteNavigateToSingerPage()
-        {
-            // 更新图标状态
-            UpdateIconsByIndex(2);
-            
-            _messagingService?.Send<NavigateToSingerPageMessage, bool>(new NavigateToSingerPageMessage());
-        }
-        
-        /// <summary>
-        /// 执行导航到专辑页面操作
-        /// </summary>
-        private void ExecuteNavigateToAlbumPage()
-        {
-            // 更新图标状态
-            UpdateIconsByIndex(3);
-            
-            _messagingService?.Send<NavigateToAlbumPageMessage, bool>(new NavigateToAlbumPageMessage());
-        }
-        
-        /// <summary>
-        /// 执行导航到设置页面操作
-        /// </summary>
-        private void ExecuteNavigateToSettings()
-        {
-            // 更新图标状态
-            UpdateIconsByIndex(4);
-            
-            _messagingService?.Send<NavigateToSettingsMessage, bool>(new NavigateToSettingsMessage());
-        }
-        
-        /// <summary>
-        /// 根据选中项的下标更新所有导航项的图标状态
-        /// </summary>
-        private void UpdateIconsByIndex(int selectedIndex)
-        { 
-            // 先重置所有图标状态
-            DefaultListIconState = false;
-            FavoriteListIconState = false;
-            SingerIconState = false;
-            AlbumIconState = false;
-            SettingsIconState = false;
-            
-            // 根据选中的索引设置对应的图标状态为true
-            switch (selectedIndex)
+            // 根据导航项类型执行不同的导航逻辑
+            switch (navigationItem.Page)
             {
-                case 0: // 默认列表
-                    DefaultListIconState = true;
+                case PageEnums.PlaylistPage:
+                    // 导航到主页
+                    _messagingService?.Send<NavigateToHomeMessage, bool>(new NavigateToHomeMessage());
+                    
+                    // 默认列表
+                    CurrentFilterMode = 0;
+                    _messagingService?.Send<ShowAllSongsMessage, bool>(new ShowAllSongsMessage());
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到默认列表");
                     break;
-                case 1: // 收藏列表
-                    FavoriteListIconState = true;
+                case PageEnums.HeartPage:
+                    // 导航到歌单页面
+                    _messagingService?.Send<NavigateToHeartMessage, bool>(new NavigateToHeartMessage());
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到歌单页面");
                     break;
-                case 2: // 歌手列表
-                    SingerIconState = true;
+                case PageEnums.SingerPage:
+                    _messagingService?.Send<NavigateToSingerPageMessage, bool>(new NavigateToSingerPageMessage());
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到歌手页面");
                     break;
-                case 3: // 专辑列表
-                    AlbumIconState = true;
+                case PageEnums.AlbumPage:
+                    _messagingService?.Send<NavigateToAlbumPageMessage, bool>(new NavigateToAlbumPageMessage());
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到专辑页面");
                     break;
-                case 4: // 设置
-                    SettingsIconState = true;
+                case PageEnums.SettingsPage:
+                    _messagingService?.Send<NavigateToSettingsMessage, bool>(new NavigateToSettingsMessage());
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 导航到设置页面");
                     break;
             }
         }
-
-       
         
         /// <summary>
         /// 执行鼠标进入操作
@@ -450,7 +246,6 @@ namespace MusicPlayer.ViewModels
             // 当鼠标进入时，停止计时器并显示所有按钮
             _hideButtonsTimer.Stop();
             AreAllButtonsVisible = true;
-           
         }
         
         /// <summary>
@@ -463,8 +258,7 @@ namespace MusicPlayer.ViewModels
             {
                 _hideButtonsTimer.Stop();
                 _hideButtonsTimer.Start();
-               
-            } 
+            }
         }
         
         /// <summary>
@@ -499,49 +293,51 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         private void OnNavigationCompleted(object recipient, NavigationCompletedMessage message)
         {
-            var pageType = message.Value;
-            System.Diagnostics.Debug.WriteLine($"SettingsBarViewModel: 收到导航完成消息，页面类型: {pageType?.Name}");
+            // 可以在这里添加导航完成后的处理逻辑
+            System.Diagnostics.Debug.WriteLine($"SettingsBarViewModel: 导航完成，目标页面: {message.Value}");
+        }
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="messagingService">消息服务</param>
+        public SettingsBarViewModel(IMessagingService messagingService)
+        {
+            // 初始化计时器
+            _hideButtonsTimer = new System.Timers.Timer(3000); // 3秒
+            _hideButtonsTimer.Elapsed += HideButtonsTimer_Elapsed;
+            _hideButtonsTimer.AutoReset = false;
+
+            // 初始化导航项
+            InitializeNavigationItems();
             
-            // 根据页面类型更新图标状态
-            if (pageType == typeof(HomePage))
+            // 初始化命令
+            ToggleButtonsVisibilityCommand = new RelayCommand(ExecuteToggleButtonsVisibility);
+            NavigateCommand = new RelayCommand<NavigationItem>(ExecuteNavigate);
+            MouseEnterCommand = new RelayCommand(ExecuteMouseEnter);
+            MouseLeaveCommand = new RelayCommand(ExecuteMouseLeave);
+            _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
+            
+            // 设置默认选中的导航项
+            SelectedNavigationItem = NavigationItems[0];
+            
+            // 订阅导航完成消息
+            _messagingService.Register<NavigationCompletedMessage>(this, OnNavigationCompleted);
+        }
+
+        /// <summary>
+        /// 初始化导航项
+        /// </summary>
+        private void InitializeNavigationItems()
+        {
+            NavigationItems = new ObservableCollection<NavigationItem>
             {
-                // 根据当前过滤模式判断是默认列表还是收藏列表
-                if (CurrentFilterMode == 0)
-                {
-                    // 默认列表
-                    UpdateIconsByIndex(0);
-                }
-                else
-                {
-                    // 收藏列表
-                    UpdateIconsByIndex(1);
-                }
-            }
-            else if (pageType == typeof(SingerPage))
-            {
-                // 歌手页面
-                UpdateIconsByIndex(2);
-            }
-            else if (pageType == typeof(AlbumPage))
-            {
-                // 专辑页面
-                UpdateIconsByIndex(3);
-            }
-            else if (pageType == typeof(SettingsPage))
-            {
-                // 设置页面
-                UpdateIconsByIndex(4);
-            }
-            else if (pageType == typeof(PlayerPage))
-            {
-                // 播放页面，不更新图标状态，因为播放页面不在导航栏中
-                // 这里可以选择将所有图标状态设置为false
-                DefaultListIconState = false;
-                FavoriteListIconState = false;
-                SingerIconState = false;
-                AlbumIconState = false;
-                SettingsIconState = false;
-            }
+                new NavigationItem { Page = PageEnums.PlaylistPage, Name = "默认列表", IconKind = "List", SelectedIconKind = "InList" },
+                new NavigationItem { Page = PageEnums.HeartPage, Name = "歌单列表", IconKind = "HeartFill", SelectedIconKind = "Heart" },
+                new NavigationItem { Page = PageEnums.SingerPage, Name = "歌手列表", IconKind = "Person", SelectedIconKind = "InPerson" },
+                new NavigationItem { Page = PageEnums.AlbumPage, Name = "专辑列表", IconKind = "Album", SelectedIconKind = "InAlbum" },
+                new NavigationItem { Page = PageEnums.SettingsPage, Name = "设置", IconKind = "Settings", SelectedIconKind = "InSettings" }
+            };
         }
     }
 }

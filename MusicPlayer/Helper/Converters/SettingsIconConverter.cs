@@ -27,7 +27,7 @@ namespace MusicPlayer.Converters
                 case "DefaultList":
                     return isSelected ? IconKind.InList : IconKind.List;
                 case "FavoriteList":
-                    return isSelected ? IconKind.InHeart : IconKind.Heart;
+                    return isSelected ? IconKind.HeartFill : IconKind.Heart;
                 case "Settings":
                     return isSelected ? IconKind.InSettings : IconKind.Settings;
                 default:

@@ -1,16 +1,17 @@
-using System;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
-using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Enums;
+using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Models;
+using MusicPlayer.Navigation;
 using MusicPlayer.Page;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages;
-using MusicPlayer.Navigation;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace MusicPlayer.ViewModels
 {
@@ -730,8 +731,8 @@ namespace MusicPlayer.ViewModels
                     }
                     else
                     {
-                        // 如果没有上一页可返回，则导航到HomePage
-                        _navigationService.NavigateToHome();
+                        // 如果没有上一页可返回，则导航到PlaylistPage
+                        _navigationService.NavigateToPlaylist();
                     }
                 }
                 else
@@ -865,8 +866,10 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Cleanup()
         {
-            // 注销消息处理器
-            _messagingService.Unregister(this);
+            // 取消注册所有消息处理器
+            //_messagingService.Unregister(this);
+
+ 
         }
 
 

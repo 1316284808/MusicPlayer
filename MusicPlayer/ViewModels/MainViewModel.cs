@@ -102,6 +102,33 @@ namespace MusicPlayer.ViewModels
         {
             Cleanup();
         }
+
+        /// <summary>
+        /// 清理ViewModel资源
+        /// </summary>
+        public override void Cleanup()
+        {
+            // 清理子ViewModel
+            if (ControlBarViewModel is ObservableObject controlBarViewModel)
+            {
+                controlBarViewModel.Cleanup();
+            }
+            
+            if (TitleBarViewModel is ObservableObject titleBarViewModel)
+            {
+                titleBarViewModel.Cleanup();
+            }
+            
+            if (PlaylistViewModel is ObservableObject playlistViewModel)
+            {
+                playlistViewModel.Cleanup();
+            }
+            
+            if (CenterContentViewModel is ObservableObject centerContentViewModel)
+            {
+                centerContentViewModel.Cleanup();
+            }
+        }
     }
 
      

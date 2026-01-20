@@ -1,29 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
 using MusicPlayer.ViewModels;
 
 namespace MusicPlayer.Page
 {
     /// <summary>
-    /// AlbumPage.xaml 的交互逻辑
+    /// HeartPage.xaml 的交互逻辑
     /// </summary>
-    public partial class AlbumPage : System.Windows.Controls.Page, IDisposable
+    public partial class HeartPage : System.Windows.Controls.Page, IDisposable
     {
         private bool _disposed = false;
-        
-        public AlbumPage()
+        public HeartPage(IHeartViewModel viewModel)
         {
             InitializeComponent();
+            this.DataContext = viewModel;
         }
-        
-        public AlbumPage(IAlbumViewModel albumViewModel)
+        public HeartPage()
         {
             InitializeComponent();
-            DataContext = albumViewModel;
-            this.AlbumControl.DataContext = albumViewModel;
-            Unloaded += (s, e) =>
-            {
-                Dispose();
-            };
         }
         public void Dispose()
         {
@@ -31,10 +37,9 @@ namespace MusicPlayer.Page
             {
                 return;
             }
-          
+
             this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
             this.Content = null;     // 清空页面内容，释放UI资源
-            AlbumControl.Dispose();
             _disposed = true;
         }
     }

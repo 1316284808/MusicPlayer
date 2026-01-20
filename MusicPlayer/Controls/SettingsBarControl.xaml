@@ -23,15 +23,10 @@
                Helper:StackPanelMouseBehavior.MouseEnterCommand="{Binding MouseEnterCommand}"
                 Helper:StackPanelMouseBehavior.MouseLeaveCommand="{Binding MouseLeaveCommand}">
         <!-- 收纳按钮 -->
-      
-            
-       
-        
         <ui:Button Padding="0" 
                    HorizontalAlignment="Left"   
                    Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
                    HorizontalContentAlignment="Left"
-               
                    Command="{Binding ToggleButtonsVisibilityCommand}">
             <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"   >
                 <Helper:CustomIcon.Style>
@@ -45,146 +40,79 @@
                     </Style>
                 </Helper:CustomIcon.Style>
             </Helper:CustomIcon>
-            
         </ui:Button>
-        
-     
-                <!-- 默认列表按钮 -->
-                <ui:Button Padding="0" ToolTip="默认列表" 
-                            HorizontalAlignment="Left"   
-                          Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-                          HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
-                        
-                         Command="{Binding NavigateToDefaultListCommand}">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+
+        <!-- 导航列表 -->
+        <ListBox Margin="5"
+            ItemsSource="{Binding NavigationItems}"
+            SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}"
+            Background="Transparent"
+            BorderThickness="0"
+            Padding="0"
+            HorizontalContentAlignment="Stretch">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <!-- 优化虚拟化性能的设置 -->
+                        <Setter Property="Padding" Value="0,10"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="ItemBorder" CornerRadius="8"  Height="40" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#4DFFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#80FFFFFF" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                <DataTemplate> 
+                    <StackPanel 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Center"
+                        Cursor="Hand" 
+                        ToolTip="{Binding Name}">
                         <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
                             <Helper:CustomIcon.Style>
-                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
-                            <Setter Property="Kind" Value="List"/>  <!-- 关状态图标 -->
+                                <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
+                                    <Setter Property="Kind" Value="{Binding IconKind}"/>
                                     <Style.Triggers>
-                                <DataTrigger Binding="{Binding DefaultListIconState}"  Value="True" >
-                                            <Setter Property="Kind" Value="InList"/>  <!-- 开状态图标 -->
+                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                            <Setter Property="Kind" Value="{Binding SelectedIconKind}"/>
                                         </DataTrigger>
+                                      
                                     </Style.Triggers>
                                 </Style>
                             </Helper:CustomIcon.Style>
                         </Helper:CustomIcon>
-                <Separator Margin="2" />
-                <ui:TextBlock Margin="2" Text="默认列表"  FontWeight="SemiBold" Visibility="{Binding AreOtherButtonsVisible, 
-                      Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    </StackPanel>
-                </ui:Button>
-                
-                <!-- 收藏列表按钮 -->
-        <ui:Button Padding="0" ToolTip="收藏列表"  HorizontalAlignment="Left"   
-                          Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-                      
-                         HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Cursor=""
-                          Command="{Binding NavigateToFavoriteListCommand}">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Helper:CustomIcon Margin="5,2" HorizontalAlignment="Left"  >
-                            <Helper:CustomIcon.Style>
-                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
-                            <Setter Property="Kind" Value="InHeart"/>  <!-- 关状态图标 -->
-                                    <Style.Triggers>
-                                <DataTrigger Binding="{Binding FavoriteListIconState}"  Value="True">
-                                    <Setter Property="Kind" Value="InHeart" />   <!-- 开状态图标 -->
-                                    <Setter Property="Foreground" Value="red" /> 
-                                </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Helper:CustomIcon.Style>
-                        </Helper:CustomIcon>
-                <Separator Margin="2" />
-                <ui:TextBlock Margin="2" Text="收藏列表"   FontWeight="SemiBold"    Visibility="{Binding AreOtherButtonsVisible, 
-                             Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    </StackPanel>
-                </ui:Button>
-
-        <ui:Button Padding="0" ToolTip="歌手列表"  HorizontalAlignment="Left"   
-          
-             Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-                   HorizontalContentAlignment="Left"
-                   Command="{Binding NavigateToSingerPageCommand}">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
-                    <Helper:CustomIcon.Style>
-                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
-                            <Setter Property="Kind" Value="Person"/>
-                            <!-- 关状态图标 -->
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SingerIconState}"  Value="True" >
-                                    <Setter Property="Kind" Value="InPerson"/>
-                                    <!-- 开状态图标 -->
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Helper:CustomIcon.Style>
-                </Helper:CustomIcon>
-                <Separator Margin="2" />
-                <ui:TextBlock   Margin="2" Text="歌手列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
-           Converter={StaticResource BooleanToVisibilityConverter}}" />
-            </StackPanel>
-        </ui:Button>
-
-        <ui:Button Padding="0" ToolTip="专辑列表"  HorizontalAlignment="Left"   
-  
-     Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-           HorizontalContentAlignment="Left"
-           Command="{Binding NavigateToAlbumPageCommand}">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
-                    <Helper:CustomIcon.Style>
-                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
-                            <Setter Property="Kind" Value="Album"/>
-                            <!-- 关状态图标 -->
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding AlbumIconState}"  Value="True" >
-                                    <Setter Property="Kind" Value="InAlbum"/>
-                                    <!-- 开状态图标 -->
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Helper:CustomIcon.Style>
-                </Helper:CustomIcon>
-                <Separator Margin="2" />
-                <ui:TextBlock   Margin="2" Text="专辑列表"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
-   Converter={StaticResource BooleanToVisibilityConverter}}" />
-            </StackPanel>
-        </ui:Button>
-
-
-
-
-
-
-
-        <!-- 设置按钮 -->
-        <ui:Button Padding="0" ToolTip="设置"  HorizontalAlignment="Left"   
-                 
-                    Width="{Binding AreOtherButtonsVisible, Converter={x:Static converters:BoolToWidthConverter.Instance}}"
-                          HorizontalContentAlignment="Left"
-                          Command="{Binding NavigateToSettingsCommand}">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2"  >
-                    <Helper:CustomIcon.Style>
-                        <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon}}">
-                            <Setter Property="Kind" Value="Settings"/>
-                            <!-- 关状态图标 -->
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding SettingsIconState}"  Value="True" >
-                                    <Setter Property="Kind" Value="InSettings"/>
-                                    <!-- 开状态图标 -->
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Helper:CustomIcon.Style>
-                </Helper:CustomIcon>
-                <Separator Margin="2" />
-                <ui:TextBlock   Margin="2" Text="设置"   FontWeight="SemiBold"  Visibility="{Binding AreOtherButtonsVisible, 
-                  Converter={StaticResource BooleanToVisibilityConverter}}" />
-            </StackPanel>
-        </ui:Button>
+                        <Separator Margin="2" />
+                        <ui:TextBlock 
+                            Margin="2" 
+                            Text="{Binding Name}"  
+                            FontWeight="SemiBold" 
+                            Visibility="{Binding DataContext.AreOtherButtonsVisible, RelativeSource={RelativeSource AncestorType=UserControl}, 
+                            Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel> 
+                    </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
       
     </StackPanel>
     </Border>

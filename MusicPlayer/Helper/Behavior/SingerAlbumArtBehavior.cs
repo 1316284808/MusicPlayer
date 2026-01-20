@@ -103,30 +103,32 @@ namespace MusicPlayer.Helper
                     scrollViewer.ScrollChanged += OnScrollChanged;
                     
                     // 监听FilteredSingers集合的变化（索引切换时会更新）
-                    if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
+                if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
+                {
+                    // 获取或创建该UI元素的状态
+                    var state = GetOrCreateElementState(scrollViewer);
+                    
+                    // 创建唯一的事件处理器
+                    NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
+                        // 延迟一小段时间，确保UI更新完成后再加载封面
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
+                            // 异步加载可视区域及预加载区域的封面
+                            var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                            var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                            await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
+                        }), System.Windows.Threading.DispatcherPriority.Background);
+                    };
+                    
+                    // 移除旧的事件处理器（如果存在）
+                    if (state.CollectionChangedHandler != null)
                     {
-                        // 创建唯一的事件处理器
-                        NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
-                            // 延迟一小段时间，确保UI更新完成后再加载封面
-                            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
-                                // 异步加载可视区域及预加载区域的封面
-                                var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                                var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                                await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
-                            }), System.Windows.Threading.DispatcherPriority.Background);
-                        };
-                        
-                        // 移除旧的事件处理器（如果存在）
-                        if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var oldHandler))
-                        {
-                            filteredCollection.CollectionChanged -= oldHandler;
-                            _collectionChangedHandlers.Remove(scrollViewer);
-                        }
-                        
-                        // 添加新的事件处理器
-                        filteredCollection.CollectionChanged += handler;
-                        _collectionChangedHandlers[scrollViewer] = handler;
+                        filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
                     }
+                    
+                    // 添加新的事件处理器
+                    filteredCollection.CollectionChanged += handler;
+                    state.CollectionChangedHandler = handler;
+                }
                     
                     // 初始加载时使用异步加载+预加载（1.5倍视口）
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
@@ -153,10 +155,10 @@ namespace MusicPlayer.Helper
                 // 移除滚动事件处理器
                 scrollViewer.ScrollChanged -= OnScrollChanged;
                 
-                // 移除CollectionChanged事件处理器
-                if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var collectionHandler))
+                // 获取并清理该UI元素的状态
+                if (_elementStates.TryGetValue(scrollViewer, out var state))
                 {
-                    // 尝试从ViewModel中获取FilteredSingers集合
+                    // 移除CollectionChanged事件处理器
                     var viewModel = GetViewModel(scrollViewer);
                     if (viewModel == null)
                     {
@@ -167,19 +169,25 @@ namespace MusicPlayer.Helper
                         }
                     }
                     
-                    if (viewModel?.FilteredSingers is INotifyCollectionChanged filteredCollection)
+                    if (viewModel?.FilteredSingers is INotifyCollectionChanged filteredCollection && state.CollectionChangedHandler != null)
                     {
-                        filteredCollection.CollectionChanged -= collectionHandler;
+                        filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
                     }
                     
-                    _collectionChangedHandlers.Remove(scrollViewer);
-                }
-                
-                // 清理静态字段引用
-                if (_pendingScrollViewer == scrollViewer)
-                {
-                    _pendingScrollViewer = null;
-                    _pendingViewModel = null;
+                    // 停止并销毁计时器
+                    if (state.ScrollThrottleTimer != null)
+                    {
+                        state.ScrollThrottleTimer.Stop();
+                        state.ScrollThrottleTimer = null;
+                    }
+                    
+                    // 清理所有引用，以便垃圾回收
+                    state.PendingScrollViewer = null;
+                    state.PendingViewModel = null;
+                    state.CollectionChangedHandler = null;
+                    
+                    // 从状态字典中移除该元素
+                    _elementStates.Remove(scrollViewer);
                 }
              }
             catch (Exception ex)
@@ -215,38 +223,8 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 移除ScrollViewer相关事件
-                var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
-                if (scrollViewer != null)
-                {
-                    // 移除滚动事件处理器
-                    scrollViewer.ScrollChanged -= OnScrollChanged;
-                    
-                    // 移除CollectionChanged事件处理器
-                    if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var collectionHandler))
-                    {
-                        // 尝试从ViewModel中获取FilteredSingers集合
-                        var viewModel = GetViewModel(listBox);
-                        if (viewModel == null && listBox.DataContext is ISingerViewModel dataContextViewModel)
-                        {
-                            viewModel = dataContextViewModel;
-                        }
-                        
-                        if (viewModel?.FilteredSingers is INotifyCollectionChanged filteredCollection)
-                        {
-                            filteredCollection.CollectionChanged -= collectionHandler;
-                        }
-                        
-                        _collectionChangedHandlers.Remove(scrollViewer);
-                    }
-                    
-                    // 清理静态字段引用
-                    if (_pendingScrollViewer == scrollViewer)
-                    {
-                        _pendingScrollViewer = null;
-                        _pendingViewModel = null;
-                    }
-                }
+                // 调用统一的资源清理方法
+                CleanupListBoxResources(listBox);
                 
                 // 移除ListBox事件
                 listBox.DataContextChanged -= OnListBoxDataContextChanged;
@@ -347,8 +325,54 @@ namespace MusicPlayer.Helper
                 
                 if (viewModel != null)
                 {
+                    // 先清理可能存在的旧资源
+                    CleanupListBoxResources(listBox);
+                    // 初始化封面加载
                     InitializeCoverLoading(listBox, viewModel);
                 }
+            }
+        }
+        
+        /// <summary>
+        /// 清理ListBox资源
+        /// </summary>
+        private static void CleanupListBoxResources(System.Windows.Controls.ListBox listBox)
+        {
+            try
+            {
+                var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
+                if (scrollViewer != null)
+                {
+                    // 移除滚动事件处理器
+                    scrollViewer.ScrollChanged -= OnScrollChanged;
+                    
+                    // 清理状态字典
+                    if (_elementStates.ContainsKey(scrollViewer))
+                    {
+                        var state = _elementStates[scrollViewer];
+                        
+                        // 停止并销毁计时器
+                        if (state.ScrollThrottleTimer != null)
+                        {
+                            state.ScrollThrottleTimer.Stop();
+                            state.ScrollThrottleTimer = null;
+                        }
+                        
+                        // 清理所有引用
+                        state.PendingScrollViewer = null;
+                        state.PendingViewModel = null;
+                        state.CollectionChangedHandler = null;
+                        
+                        // 从状态字典中移除
+                        _elementStates.Remove(scrollViewer);
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: ListBox资源已清理");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 清理ListBox资源失败: {ex.Message}");
             }
         }
         
@@ -359,61 +383,150 @@ namespace MusicPlayer.Helper
         {
             try
             {
+                // 尝试立即查找ScrollViewer
                 var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
-                if (scrollViewer == null)
+                if (scrollViewer != null)
                 {
-                    System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 无法找到ListBox的ScrollViewer");
-                    return;
+                    InitializeWithScrollViewer(listBox, viewModel, scrollViewer);
                 }
-                
-                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 开始初始化封面加载逻辑");
-                
-                // 确保ScrollViewer的ScrollChanged事件被正确绑定
-                // 先移除旧的事件绑定，避免重复绑定
-                scrollViewer.ScrollChanged -= OnScrollChanged;
-                // 重新添加事件绑定
-                scrollViewer.ScrollChanged += OnScrollChanged;
-                
-                // 监听FilteredSingers集合的变化（索引切换时会更新）
-                if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
+                else
                 {
-                    // 创建唯一的事件处理器
-                    NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
-                        // 延迟一小段时间，确保UI更新完成后再加载封面
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
-                            // 异步加载可视区域及预加载区域的封面（1.5倍视口）
-                            var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                            var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                            await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
-                        }), System.Windows.Threading.DispatcherPriority.Background);
-                    };
+                    // 如果立即找不到，延迟一段时间后重试
+                    System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 立即查找ScrollViewer失败，尝试延迟重试");
                     
-                    // 移除旧的事件处理器（如果存在）
-                    if (_collectionChangedHandlers.TryGetValue(scrollViewer, out var oldHandler))
+                    // 使用DispatcherTimer实现延迟效果
+                    var timer = new System.Windows.Threading.DispatcherTimer();
+                    timer.Interval = TimeSpan.FromMilliseconds(100);
+                    timer.Tick += (sender, e) =>
                     {
-                        filteredCollection.CollectionChanged -= oldHandler;
-                        _collectionChangedHandlers.Remove(scrollViewer);
-                    }
-                    
-                    // 添加新的事件处理器
-                    filteredCollection.CollectionChanged += handler;
-                    _collectionChangedHandlers[scrollViewer] = handler;
+                        // 停止计时器
+                        timer.Stop();
+                        
+                        // 重试查找ScrollViewer
+                        var retryScrollViewer = FindVisualChild<ScrollViewer>(listBox);
+                        if (retryScrollViewer != null)
+                        {
+                            InitializeWithScrollViewer(listBox, viewModel, retryScrollViewer);
+                        }
+                        else
+                        {
+                            // 如果重试也找不到，尝试更深入的查找
+                            System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 延迟查找ScrollViewer失败，尝试更深入的查找");
+                            retryScrollViewer = FindScrollViewerRecursive(listBox);
+                            if (retryScrollViewer != null)
+                            {
+                                InitializeWithScrollViewer(listBox, viewModel, retryScrollViewer);
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 无法找到ListBox的ScrollViewer，初始化失败");
+                            }
+                        }
+                    };
+                    timer.Start();
                 }
-                
-                // 延迟一小段时间，确保ListBox完全初始化后再加载封面
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
-                    // 异步加载可视区域及预加载区域的封面（1.5倍视口）
-                    var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
-                    var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
-                    await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
-                }), System.Windows.Threading.DispatcherPriority.Background);
-                
-                System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 封面加载逻辑初始化完成");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 初始化封面加载逻辑失败: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// 递归查找ScrollViewer，更深入地搜索可视树
+        /// </summary>
+        private static ScrollViewer? FindScrollViewerRecursive(DependencyObject parent)
+        {
+            if (parent == null) return null;
+            
+            // 首先检查自身是否是ScrollViewer
+            if (parent is ScrollViewer scrollViewer)
+            {
+                return scrollViewer;
+            }
+            
+            // 遍历所有子元素
+            int childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                
+                // 递归查找
+                var found = FindScrollViewerRecursive(child);
+                if (found != null)
+                {
+                    return found;
+                }
+                
+                // 如果是ItemsPresenter，需要特殊处理
+                if (child is ItemsPresenter itemsPresenter)
+                {
+                    // 直接遍历ItemsPresenter的子元素，不需要EnsureChildVisuals
+                    for (int j = 0; j < System.Windows.Media.VisualTreeHelper.GetChildrenCount(itemsPresenter); j++)
+                    {
+                        var presenterChild = System.Windows.Media.VisualTreeHelper.GetChild(itemsPresenter, j);
+                        var presenterFound = FindScrollViewerRecursive(presenterChild);
+                        if (presenterFound != null)
+                        {
+                            return presenterFound;
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// 使用找到的ScrollViewer完成初始化
+        /// </summary>
+        private static void InitializeWithScrollViewer(System.Windows.Controls.ListBox listBox, ISingerViewModel viewModel, ScrollViewer scrollViewer)
+        {
+            System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 开始初始化封面加载逻辑");
+            
+            // 确保ScrollViewer的ScrollChanged事件被正确绑定
+            // 先移除旧的事件绑定，避免重复绑定
+            scrollViewer.ScrollChanged -= OnScrollChanged;
+            // 重新添加事件绑定
+            scrollViewer.ScrollChanged += OnScrollChanged;
+            
+            // 监听FilteredSingers集合的变化（索引切换时会更新）
+            if (viewModel.FilteredSingers is INotifyCollectionChanged filteredCollection)
+            {
+                // 获取或创建该UI元素的状态
+                var state = GetOrCreateElementState(scrollViewer);
+                
+                // 创建唯一的事件处理器
+                NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
+                    // 延迟一小段时间，确保UI更新完成后再加载封面
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
+                        // 异步加载可视区域及预加载区域的封面（1.5倍视口）
+                        var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                        var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                        await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
+                    }), System.Windows.Threading.DispatcherPriority.Background);
+                };
+                
+                // 移除旧的事件处理器（如果存在）
+                if (state.CollectionChangedHandler != null)
+                {
+                    filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
+                }
+                
+                // 添加新的事件处理器
+                filteredCollection.CollectionChanged += handler;
+                state.CollectionChangedHandler = handler;
+            }
+            
+            // 延迟一小段时间，确保ListBox完全初始化后再加载封面
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
+                // 异步加载可视区域及预加载区域的封面（1.5倍视口）
+                var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
+                var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
+                await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
+            }), System.Windows.Threading.DispatcherPriority.Background);
+            
+            System.Diagnostics.Debug.WriteLine("SingerAlbumArtBehavior: 封面加载逻辑初始化完成");
         }
 
         /// <summary>
@@ -422,19 +535,26 @@ namespace MusicPlayer.Helper
         /// 
         /// </summary>
 
-        // 节流计时器，用于限制滚动事件处理频率
-        private static System.Windows.Threading.DispatcherTimer? _scrollThrottleTimer;
-        private static ScrollViewer? _pendingScrollViewer;
-        private static ISingerViewModel? _pendingViewModel;
-        private static Rect _pendingViewport;
-        private static System.Windows.Point _pendingScrollOffset;
+        // 为每个UI元素存储独立的状态信息
+        private static readonly Dictionary<object, BehaviorState> _elementStates = new();
         
-        // 用于跟踪每个UI元素的事件处理器，以便正确移除
-        private static readonly Dictionary<object, NotifyCollectionChangedEventHandler> _collectionChangedHandlers = new();
+        // 状态类，存储每个UI元素的独立状态
+        private class BehaviorState
+        {
+            public System.Windows.Threading.DispatcherTimer? ScrollThrottleTimer { get; set; }
+            public ScrollViewer? PendingScrollViewer { get; set; }
+            public ISingerViewModel? PendingViewModel { get; set; }
+            public Rect PendingViewport { get; set; }
+            public System.Windows.Point PendingScrollOffset { get; set; }
+            public NotifyCollectionChangedEventHandler? CollectionChangedHandler { get; set; }
+        }
         
         private static void OnScrollChanged(object sender, ScrollChangedEventArgs e){
             try{
                 if (sender is ScrollViewer scrollViewer){
+                    // 获取或创建该UI元素的状态
+                    var state = GetOrCreateElementState(scrollViewer);
+                    
                     // 尝试从附加属性获取ViewModel
                     var viewModel = GetViewModel(scrollViewer);
                     
@@ -453,23 +573,23 @@ namespace MusicPlayer.Helper
                     var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
                     
                     // 使用节流机制，限制处理频率
-                    if (_scrollThrottleTimer == null){
-                        _scrollThrottleTimer = new System.Windows.Threading.DispatcherTimer();
-                        _scrollThrottleTimer.Interval = System.TimeSpan.FromMilliseconds(50); // 50ms节流
-                        _scrollThrottleTimer.Tick += OnScrollThrottleTimerTick;
+                    if (state.ScrollThrottleTimer == null){
+                        state.ScrollThrottleTimer = new System.Windows.Threading.DispatcherTimer();
+                        state.ScrollThrottleTimer.Interval = System.TimeSpan.FromMilliseconds(50); // 50ms节流
+                        state.ScrollThrottleTimer.Tick += (timerSender, timerE) => OnScrollThrottleTimerTick(scrollViewer, timerSender, timerE);
                     }
                     
                     // 取消现有计时器
-                    _scrollThrottleTimer.Stop();
+                    state.ScrollThrottleTimer.Stop();
                     
-                    // 保存当前状态
-                    _pendingScrollViewer = scrollViewer;
-                    _pendingViewModel = viewModel;
-                    _pendingViewport = viewport;
-                    _pendingScrollOffset = scrollOffset;
+                    // 保存当前状态到元素的独立状态中
+                    state.PendingScrollViewer = scrollViewer;
+                    state.PendingViewModel = viewModel;
+                    state.PendingViewport = viewport;
+                    state.PendingScrollOffset = scrollOffset;
                     
                     // 重新启动计时器
-                    _scrollThrottleTimer.Start();
+                    state.ScrollThrottleTimer.Start();
                 }
             }
             catch (Exception ex){
@@ -477,23 +597,26 @@ namespace MusicPlayer.Helper
             }
         }
         
-        private static void OnScrollThrottleTimerTick(object? sender, EventArgs e){
+        private static void OnScrollThrottleTimerTick(object element, object? sender, EventArgs e){
             try{
+                // 获取该UI元素的状态
+                if (!_elementStates.TryGetValue(element, out var state)) return;
+                
                 // 停止计时器
-                if (_scrollThrottleTimer != null){
-                    _scrollThrottleTimer.Stop();
+                if (state.ScrollThrottleTimer != null){
+                    state.ScrollThrottleTimer.Stop();
                 }
                 
                 // 检查是否有挂起的滚动事件
-                if (_pendingScrollViewer != null && _pendingViewModel != null){
+                if (state.PendingScrollViewer != null && state.PendingViewModel != null){
                     // 异步处理可视区域封面加载
                     Task.Run(async () => {
-                        await LoadVisibleAlbumCoversAsync(_pendingViewModel, _pendingScrollViewer, _pendingViewport, _pendingScrollOffset);
+                        await LoadVisibleAlbumCoversAsync(state.PendingViewModel, state.PendingScrollViewer, state.PendingViewport, state.PendingScrollOffset);
                     });
 
-                    // 同步处理清理，因为清理操作比较轻量
+                    // 异步处理清理
                     Task.Run(async () => {
-                        await   CleanupInvisibleAlbumCovers(_pendingViewModel, _pendingScrollViewer, _pendingViewport, _pendingScrollOffset);
+                        await CleanupInvisibleAlbumCovers(state.PendingViewModel, state.PendingScrollViewer, state.PendingViewport, state.PendingScrollOffset);
                     });
                    
                 }
@@ -502,6 +625,19 @@ namespace MusicPlayer.Helper
                 System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 处理节流滚动事件失败: {ex.Message}");
             }
         }
+        
+        /// <summary>
+        /// 获取或创建UI元素的状态
+        /// </summary>
+        private static BehaviorState GetOrCreateElementState(object element)
+        {
+            if (!_elementStates.TryGetValue(element, out var state))
+            {
+                state = new BehaviorState();
+                _elementStates[element] = state;
+            }
+            return state;
+        }
 
         /// <summary>
         /// 异步加载可视区域内及预加载区域的歌手封面
@@ -509,19 +645,15 @@ namespace MusicPlayer.Helper
         private static async Task LoadVisibleAlbumCoversAsync(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
         {
               // 创建一个列表来保存需要加载封面的歌手
-            var singersToLoad = new List<SingerInfo>();
-            
-            // 扩大可视区域检测范围，实现预加载
-            // 在当前可视区域上下各增加1.5倍视口高度的预加载区域
-            double preloadFactor = 1;
+            var singersToLoad = new List<SingerInfo>();  
             var extendedViewport = new Rect(
-                viewport.X,
-                viewport.Y - viewport.Height * preloadFactor,
-                viewport.Width,
-                viewport.Height * (1 + 2 * preloadFactor)
-            );
-            
-              
+                   viewport.X,
+                   viewport.Y - viewport.Height,
+                   viewport.Width,
+                   viewport.Height * 2
+               );
+
+
             // 遍历过滤后的歌手项，找出需要加载封面的歌手
             for (int i = 0; i < viewModel.FilteredSingers.Count; i++)
             {
@@ -561,14 +693,7 @@ namespace MusicPlayer.Helper
             });
         }
         
-        /// <summary>
-        /// 同步加载可视区域内及预加载区域的歌手封面（已废弃，使用异步版本）
-        /// </summary>
-        private static async Task LoadVisibleAlbumCovers(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
-        {
-            // 直接调用异步版本，统一使用异步加载+预加载
-            await LoadVisibleAlbumCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
-        }
+        
 
         private static async Task CleanupInvisibleAlbumCovers(ISingerViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
         { 
@@ -657,31 +782,11 @@ namespace MusicPlayer.Helper
         private static async Task LoadAlbumCoverAsync(SingerInfo singer)
         {
             if (singer.HasCoverImage) return; // 已有封面则跳过
-
-            // 获取歌曲文件路径
-            if (string.IsNullOrEmpty(singer.FirstSongFilePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 没有文件路径");
-                // 设置默认封面
-                await SetDefaultCoverAsync(singer);
-                return;
-            }
-
-            // 检查文件是否存在
-            if (!System.IO.File.Exists(singer.FirstSongFilePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 歌手 {singer.Name} 的文件不存在: {singer.FirstSongFilePath}");
-                // 设置默认封面
-                await SetDefaultCoverAsync(singer);
-                return;
-            }
-
-            
               
             try
             {
                 // 使用AlbumArtLoader异步加载封面，自动处理缓存和文件提取
-                var bitmap = await AlbumArtLoader.LoadAlbumArtAsync(singer.FirstSongFilePath);
+                var bitmap = await AlbumArtLoader.LoadAlbumArtAsync(singer.FirstSongFilePath,100,100);
                 if (bitmap != null)
                 {
                     // 确保在UI线程上更新封面
@@ -729,28 +834,6 @@ namespace MusicPlayer.Helper
             }
         }
         
-        /// <summary>
-        /// 同步设置默认封面
-        /// </summary>
-        private static void SetDefaultCover(SingerInfo singer)
-        {
-            try
-            {
-                // 调用AlbumArtLoader获取默认封面
-                var bitmap = MusicPlayer.Core.Data.AlbumArtLoader.GetDefaultAlbumArt();
-                
-                // 确保在UI线程上更新封面
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    // 先设置为null，再设置为新图片，强制UI更新
-                    singer.CoverImage = null;
-                    singer.CoverImage = bitmap;
-                });
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 为歌手 {singer.Name} 设置默认封面");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 设置默认封面失败: {ex.Message}");
-            }
-        }
+         
     }
 }

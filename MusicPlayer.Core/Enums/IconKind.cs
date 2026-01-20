@@ -43,7 +43,7 @@ namespace MusicPlayer.Core.Enums
         Time,
         Storage, 
         Heart,// 心形图标，表示收藏或喜欢 /关
-        InHeart,//实心爱心/开
+        HeartFill,//实心爱心/开
         Delete,// 删除图标 
         Back,//返回上一页
         InHome,//展开Tree

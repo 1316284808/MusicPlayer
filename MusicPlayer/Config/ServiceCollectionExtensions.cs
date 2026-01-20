@@ -304,6 +304,13 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
                     provider.GetRequiredService<IMessagingService>())); 
+            
+            // HeartViewModel - 单例模式
+            services.AddSingleton<IHeartViewModel>(provider => 
+                new HeartViewModel(
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaybackContextService>())); 
            
             
             // PlaylistSettingViewModel - 单例模式

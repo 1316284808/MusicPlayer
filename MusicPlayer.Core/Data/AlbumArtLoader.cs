@@ -4,6 +4,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TagLibFile = TagLib.File;
 
@@ -29,7 +31,8 @@ namespace MusicPlayer.Core.Data
         public static async Task<BitmapImage?> LoadAlbumArtAsync(string filePath)
         {
             // 1. 尝试从磁盘缓存加载
-            var cachedBitmap = TryLoadFromDiskCache(filePath);
+          
+                var cachedBitmap = TryLoadFromDiskCache(filePath);
             if (cachedBitmap != null)
             {
                 return cachedBitmap;
@@ -67,6 +70,20 @@ namespace MusicPlayer.Core.Data
             
             // 5. 返回封面
             return LoadBitmapFromBytes(albumArtData);
+        }
+        
+        // 异步加载封面 - 支持指定尺寸
+        public static async Task<BitmapImage?> LoadAlbumArtAsync(string filePath, int width, int height)
+        {
+            // 1. 加载原始图像（从缓存或文件）
+            var originalImage = await LoadAlbumArtAsync(filePath);
+            if (originalImage == null)
+            {
+                return GetDefaultAlbumArt();
+            }
+            
+            // 2. 缩放裁切图像
+            return ScaleAndCropImage(originalImage, width, height);
         }
         
         // 同步加载封面
@@ -262,6 +279,7 @@ namespace MusicPlayer.Core.Data
                     bitmap.Freeze(); // 冻结图像以确保线程安全
                     return bitmap;
                 });
+                
             }
             catch (Exception ex)
             {
@@ -294,6 +312,70 @@ namespace MusicPlayer.Core.Data
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"AlbumArtLoader: 清理过期缓存失败: {ex.Message}");
+            }
+        }
+        
+        // 缩放并裁切图像到指定尺寸
+        private static BitmapImage? ScaleAndCropImage(BitmapImage originalImage, int targetWidth, int targetHeight)
+        {
+            try
+            {
+                // 创建DrawingVisual用于绘制缩放裁切后的图像
+                DrawingVisual drawingVisual = new DrawingVisual();
+                using (DrawingContext drawingContext = drawingVisual.RenderOpen())
+                {
+                    // 计算缩放比例，保持宽高比
+                    double scaleX = (double)targetWidth / originalImage.Width;
+                    double scaleY = (double)targetHeight / originalImage.Height;
+                    double scale = Math.Max(scaleX, scaleY);
+                    
+                    // 计算缩放后的图像尺寸
+                    int scaledWidth = (int)(originalImage.Width * scale);
+                    int scaledHeight = (int)(originalImage.Height * scale);
+                    
+                    // 计算居中位置
+                    int offsetX = (targetWidth - scaledWidth) / 2;
+                    int offsetY = (targetHeight - scaledHeight) / 2;
+                    
+                    // 绘制图像（居中裁剪）
+                    drawingContext.DrawImage(
+                        originalImage,
+                        new Rect(offsetX, offsetY, scaledWidth, scaledHeight));
+                }
+                
+                // 创建RenderTargetBitmap来渲染DrawingVisual
+                RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap(
+                    targetWidth,
+                    targetHeight,
+                    96,  // DPI X
+                    96,  // DPI Y
+                    PixelFormats.Pbgra32);
+                    
+                renderTargetBitmap.Render(drawingVisual);
+                
+                // 将RenderTargetBitmap转换为BitmapImage
+                BitmapImage result = new BitmapImage();
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    // 保存到PNG格式，保证质量
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
+                    encoder.Save(memoryStream);
+                    
+                    // 加载到BitmapImage
+                    result.BeginInit();
+                    result.CacheOption = BitmapCacheOption.OnLoad;
+                    result.StreamSource = memoryStream;
+                    result.EndInit();
+                    result.Freeze(); // 冻结以确保线程安全
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AlbumArtLoader: 缩放裁切图像失败: {ex.Message}");
+                return null;
             }
         }
     }

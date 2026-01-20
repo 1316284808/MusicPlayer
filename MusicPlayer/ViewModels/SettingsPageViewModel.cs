@@ -50,7 +50,7 @@ namespace MusicPlayer.ViewModels
             try
             {
                 // 通过消息服务请求导航
-                _messagingService.Send(new NavigateToPageMessage("Page/HomePage.xaml"));
+                _messagingService.Send(new NavigateToPageMessage("Page/PlaylistPage.xaml"));
             }
             catch (Exception ex)
             {
@@ -94,6 +94,31 @@ namespace MusicPlayer.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"应用设置失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 清理ViewModel资源
+        /// </summary>
+        public override void Cleanup()
+        {
+            // 取消注册所有消息处理器
+            _messagingService.Unregister(this);
+            
+            // 清理子ViewModel
+            if (_windowSettingsViewModel is ObservableObject windowSettingsViewModel)
+            {
+                windowSettingsViewModel.Cleanup();
+            }
+            
+            if (_playlistSettingViewModel is ObservableObject playlistSettingViewModel)
+            {
+                playlistSettingViewModel.Cleanup();
+            }
+            
+            if (_soundSettingsViewModel is ObservableObject soundSettingsViewModel)
+            {
+                soundSettingsViewModel.Cleanup();
             }
         }
     }
