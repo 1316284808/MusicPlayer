@@ -19,12 +19,14 @@ namespace MusicPlayer.Helper
     /// ButtonControl.xaml 的交互逻辑
     /// 音质徽标显示控件，根据音频文件格式显示HiRes或SQ徽标
     /// </summary>
-    public partial class ButtonControl : UserControl
+    public partial class ButtonControl : UserControl, IDisposable
     {
+        private bool _disposed = false;
+
         /// <summary>
         /// 音频格式依赖属性，用于绑定数据源
         /// </summary>
-        public static readonly DependencyProperty AudioFormatProperty =
+        public static readonly DependencyProperty AudioFormatProperty = 
             DependencyProperty.Register("AudioFormat", typeof(string), typeof(ButtonControl), 
                 new PropertyMetadata(string.Empty));
 
@@ -40,6 +42,24 @@ namespace MusicPlayer.Helper
         public ButtonControl()
         {
             InitializeComponent();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // 清理托管资源
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

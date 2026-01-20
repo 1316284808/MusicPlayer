@@ -47,7 +47,7 @@
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
-                    <controls:SoundSettingsControl DataContext="{Binding SoundSettingsViewModel}" />
+                    <controls:SoundSettingsControl x:Name="SoundSettingsControl" DataContext="{Binding SoundSettingsViewModel}" />
                 </ScrollViewer>
             </TabItem>
             <TabItem>

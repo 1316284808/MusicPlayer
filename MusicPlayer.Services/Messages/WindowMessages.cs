@@ -127,4 +127,9 @@ namespace MusicPlayer.Services.Messages
     /// 导航到专辑页面消息
     /// </summary>
     public class NavigateToAlbumPageMessage : RequestMessage<bool> { }
+    
+    /// <summary>
+    /// 导航到歌单页面消息
+    /// </summary>
+    public class NavigateToHeartMessage : RequestMessage<bool> { }
 }

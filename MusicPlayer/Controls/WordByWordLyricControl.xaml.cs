@@ -11,7 +11,7 @@ namespace MusicPlayer.Controls
     /// <summary>
     /// 逐字歌词用户控件
     /// </summary>
-    public partial class WordByWordLyricControl : UserControl
+    public partial class WordByWordLyricControl : UserControl, IDisposable
     {
         // 配置项
         private readonly int _fontSize = 28;
@@ -342,20 +342,32 @@ namespace MusicPlayer.Controls
             }
         }
 
-        /// <summary>
-        /// 清理资源
-        /// </summary>
-        ~WordByWordLyricControl()
-        {
-            // 取消事件订阅
-            if (_previousLyricLine != null)
-            {
-                ((INotifyPropertyChanged)_previousLyricLine).PropertyChanged -= OnLyricLinePropertyChanged;
-            }
+        private bool _disposed = false;
 
-            // 清理字符列表
-            _charListCN.Clear();
-            _charListEN.Clear();
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // 取消事件订阅
+                    if (_previousLyricLine != null)
+                    {
+                        ((INotifyPropertyChanged)_previousLyricLine).PropertyChanged -= OnLyricLinePropertyChanged;
+                    }
+
+                    // 清理字符列表
+                    _charListCN.Clear();
+                    _charListEN.Clear();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

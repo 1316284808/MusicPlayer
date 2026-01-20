@@ -140,13 +140,12 @@ namespace MusicPlayer.ViewModels
                 .OrderBy(album => album.Name)
                 .ToList();
 
-            // 更新UI
-            _albums.Clear();
-            foreach (var album in albumGroups)
-            {
-                _albums.Add(album);
-            }
-
+            // 更新UI - 重新创建集合实例，确保VirtualizingWrapPanel能正确处理
+            _albums = new ObservableCollection<AlbumInfo>(albumGroups);
+            
+            // 重新创建过滤后的专辑列表，确保VirtualizingWrapPanel能正确处理
+            _filteredAlbums = new ObservableCollection<AlbumInfo>();
+            
             // 初始过滤
             UpdateFilteredAlbums();
         }
@@ -262,6 +261,13 @@ namespace MusicPlayer.ViewModels
         {
             System.Diagnostics.Debug.WriteLine("AlbumViewModel: Cleanup 方法被调用");
             _messagingService.Unregister(this);
+
+            // 主动清理所有已加载的封面图像
+            foreach (var album in _albums)
+            {
+                album.CoverImage = null;
+            }
+
             _albums.Clear();
             _filteredAlbums.Clear();
         }

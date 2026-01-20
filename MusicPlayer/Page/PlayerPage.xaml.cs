@@ -23,8 +23,10 @@ namespace MusicPlayer.Page
     /// <summary>
     /// PlayerPage.xaml 的交互逻辑
     /// </summary>
-    public partial class PlayerPage : System.Windows.Controls.Page
+    public partial class PlayerPage : System.Windows.Controls.Page, IDisposable
     {
+        private bool _disposed;
+
         public PlayerPage()
         {
             InitializeComponent();
@@ -34,10 +36,24 @@ namespace MusicPlayer.Page
             InitializeComponent();
             DataContext = mainViewModel;
             this.CenterContentControl.DataContext = mainViewModel.CenterContentViewModel;
-            
-            
+            Unloaded += (s, e) =>
+            {
+                Dispose();
+            };
+
+        }
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            CenterContentControl.Dispose();
+            this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
+            this.Content = null;     // 清空页面内容，释放UI资源
+            _disposed = true;
         }
 
-        
+
     }
 }

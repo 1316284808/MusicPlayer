@@ -16,7 +16,10 @@
     <Compile Update="Page\AlbumPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Page\HomePage.xaml.cs">
+    <Compile Update="Page\HeartPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Page\PlaylistPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Page\PlayerPage.xaml.cs">

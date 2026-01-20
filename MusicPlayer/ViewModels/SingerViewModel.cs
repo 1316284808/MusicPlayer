@@ -143,24 +143,15 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("SingerViewModel: Cleanup 方法被调用");
-            
-            // 解除消息注册，防止内存泄漏
-            _messagingService.Unregister(this);
-            
-            //// 清理所有歌手的封面资源
-            //foreach (var singer in _singers)
-            //{
-            //    singer.CoverImage = null;
-            //}
-            
-            //// 清理过滤后的歌手列表的封面资源
-            //foreach (var singer in _filteredSingers)
-            //{
-            //    singer.CoverImage = null;
-            //}
-            
-            // 清空集合，释放内存
-            _singers.Clear();
+            //_messagingService.Unregister(this);
+
+            // 主动清理所有已加载的封面图像
+            foreach (var singer in _singers)
+            {
+                singer.CoverImage = null;
+            }
+
+            //_singers.Clear();
             _filteredSingers.Clear();
         }
 
@@ -196,14 +187,11 @@ namespace MusicPlayer.ViewModels
 
             System.Diagnostics.Debug.WriteLine($"SingerViewModel: 找到 {singerGroups.Count} 位歌手");
 
-            // 更新UI
-            _singers.Clear();
-            foreach (var singer in singerGroups)
-            {
-                _singers.Add(singer);
-            }
-
-            // 初始化过滤后的歌手列表
+            // 更新UI - 重新创建集合实例，确保VirtualizingWrapPanel能正确处理
+            _singers = new ObservableCollection<SingerInfo>(singerGroups);
+            
+            // 重新创建过滤后的歌手列表，确保VirtualizingWrapPanel能正确处理
+            _filteredSingers = new ObservableCollection<SingerInfo>();
             FilterSingersByIndex(_currentIndex);
 
             // 通知UI更新

@@ -86,7 +86,7 @@ namespace MusicPlayer;
         RegisterNavigationMessageHandler();
         
         // 导航到首页
-        _navigationService.NavigateToHome();
+        _navigationService.NavigateToPlaylist();
     }
 
     protected override void OnStateChanged(EventArgs e)
@@ -227,7 +227,7 @@ namespace MusicPlayer;
         {
             try
             {
-                _navigationService.NavigateToHome();
+                _navigationService.NavigateToPlaylist();
             }
             catch (Exception ex)
             {
@@ -258,6 +258,19 @@ namespace MusicPlayer;
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"导航到专辑页面失败: {ex.Message}");
+            }
+        });
+        
+        // 注册导航到歌单页面的消息处理器
+        _serviceCoordinator.MessagingService.Register<NavigateToHeartMessage>(this, (r, m) =>
+        {
+            try
+            {
+                _navigationService.NavigateToHeart();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"导航到歌单页面失败: {ex.Message}");
             }
         });
         

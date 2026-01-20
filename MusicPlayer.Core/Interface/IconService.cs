@@ -60,8 +60,8 @@ namespace MusicPlayer.Core.Interface
                 IconKind.Storage => "\uE8F1",//文件柜
                 IconKind.InSettings => "\ue713",//空心设置-开
                 IconKind.Settings => "\uf8b0",//实心设置-关
-                IconKind.InHeart => "\uEB52",//爱心-开
-                IconKind.Heart => "\uEB51",//实心爱心-关
+                IconKind.InHeart => "\uEB51",//爱心-开
+                IconKind.Heart => "\uEB52",//实心爱心-关
                 IconKind.Delete => "\ue74d", //垃圾桶
                 IconKind.Back=> "\uf0d5",//返回上一页
                 IconKind.BackHome => "\uea8a",// 空心小房子-开

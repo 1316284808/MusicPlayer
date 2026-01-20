@@ -199,6 +199,7 @@
                         <DataTemplate>
                          
                             <local:WordByWordLyricItem 
+                                x:Name="WordByWordLyricItem"
                                 CurrentLyricLine="{Binding}" 
                                 CustomFontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                 SelectedFontSize="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 

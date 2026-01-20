@@ -8,7 +8,7 @@
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000"
-             Title="HomePage">
+             Title="PlaylistPage">
 
     <Grid>
         <Grid.ColumnDefinitions>

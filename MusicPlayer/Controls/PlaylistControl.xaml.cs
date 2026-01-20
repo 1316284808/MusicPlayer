@@ -11,8 +11,10 @@ namespace MusicPlayer.Controls
     /// 遵循MVVM架构原则，不包含业务逻辑
     /// 现在使用PlaylistInteractionBehavior处理交互逻辑
     /// </summary>
-    public partial class PlaylistControl : UserControl
+    public partial class PlaylistControl : UserControl, IDisposable
     {
+        private bool _disposed = false;
+
         public PlaylistControl()
         {
             InitializeComponent();
@@ -23,6 +25,28 @@ namespace MusicPlayer.Controls
                 // 处理搜索框焦点请求
                 SearchTextBox.Focus();
             });
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // 取消消息订阅
+                    //WeakReferenceMessenger.Default.UnregisterAll(this);
+                    //this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
+                    //this.Content = null;     // 清空页面内容，释放UI资源
+                    //_disposed = true;
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -1,10 +1,11 @@
+using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
+using MusicPlayer.Config;
+using MusicPlayer.Core.Interface;
+using MusicPlayer.ViewModels;
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using MusicPlayer.ViewModels;
-using MusicPlayer.Core.Interface;
-using MusicPlayer.Config;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicPlayer.Controls
 {
@@ -14,7 +15,7 @@ namespace MusicPlayer.Controls
     /// 通过ItemsControl和附加行为实现频谱显示
     /// 与全局单例SpectrumAnalyzerViewModel协作，通过SpectrumAnalyzerManager统一管理资源
     /// </summary>
-    public partial class CircularSpectrumControl : UserControl
+    public partial class CircularSpectrumControl : UserControl, IDisposable
     {
         private ISpectrumAnalyzerViewModel? _spectrumViewModel;
         private ISpectrumAnalyzerManager? _spectrumManager;
@@ -160,6 +161,33 @@ namespace MusicPlayer.Controls
             {
                 System.Diagnostics.Debug.WriteLine($"CircularSpectrumControl: SizeChanged事件处理失败 - {ex.Message}");
             }
+        }
+
+        private bool _disposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    WeakReferenceMessenger.Default.UnregisterAll(this);
+                    // 取消事件订阅
+                    this.IsVisibleChanged -= CircularSpectrumControl_IsVisibleChanged;
+                    this.SizeChanged -= CircularSpectrumControl_SizeChanged;
+
+                    // 释放资源
+                    _spectrumViewModel = null;
+                    _spectrumManager = null;
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

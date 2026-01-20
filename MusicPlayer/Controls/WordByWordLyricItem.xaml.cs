@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Messaging;
 using MusicPlayer.Core.Models;
 using MusicPlayer.ViewModels;
 using System;
@@ -12,7 +13,7 @@ namespace MusicPlayer.Controls
     /// <summary>
     /// 逐字歌词项控件
     /// </summary>
-    public partial class WordByWordLyricItem : UserControl
+    public partial class WordByWordLyricItem : UserControl, IDisposable
     {
         // 黑色和蓝色画笔
         private readonly SolidColorBrush _blackBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#99000000"));// #333333 
@@ -526,6 +527,37 @@ namespace MusicPlayer.Controls
             {
                 (charTb.Clip as RectangleGeometry).Rect = new Rect(0, 0, charWidth * fillPro, charHeight);
             }
+        }
+
+        private bool _disposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // 取消事件订阅
+                    if (_currentLyricLine != null)
+                    {
+                        WeakReferenceMessenger.Default.UnregisterAll(this);
+                        ((INotifyPropertyChanged)_currentLyricLine).PropertyChanged -= OnLyricLinePropertyChanged;
+                        this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
+                        this.Content = null;     // 清空页面内容，释放UI资源
+                     }
+
+                    // 清理资源
+                    _charListCN.Clear();
+                    _charListEN.Clear();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

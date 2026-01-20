@@ -9,15 +9,15 @@ namespace MusicPlayer.Page
     /// <summary>
     /// SettingsPage.xaml 的交互逻辑
     /// </summary>
-    public partial class SettingsPage : System.Windows.Controls.Page
+    public partial class SettingsPage : System.Windows.Controls.Page, IDisposable
     {
+        private bool _disposed;
+        
         public SettingsPage() { }
         public SettingsPage(ISettingsPageViewModel viewModel)
         {
             InitializeComponent();
             DataContext = viewModel;
-
-            // 按照HomePage的方式，明确设置子控件的DataContext
             this.WindowSettingsControl.DataContext = viewModel.WindowSettingsViewModel;
             this.PlaylistSettingControl.DataContext = viewModel.PlaylistSettingViewModel;
 
@@ -52,16 +52,7 @@ namespace MusicPlayer.Page
         {
             try
             {
-                // 直接在View中处理消息注销，符合MVVM架构
-                if (Application.Current is App app && app.ServiceProvider != null)
-                {
-                    var messagingService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<IMessagingService>(app.ServiceProvider);
-                    if (messagingService != null)
-                    {
-                        messagingService.Unregister(this);
-                    }
-                }
-
+                Dispose();
                 Unloaded -= SettingsPage_Unloaded;
             }
             catch (Exception ex)
@@ -82,6 +73,37 @@ namespace MusicPlayer.Page
             {
                 System.Diagnostics.Debug.WriteLine($"处理导航消息失败: {ex.Message}");
             }
+        }
+        
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            
+            try
+            {
+                // 直接在View中处理消息注销，符合MVVM架构
+                if (Application.Current is App app && app.ServiceProvider != null)
+                {
+                    var messagingService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<IMessagingService>(app.ServiceProvider);
+                    if (messagingService != null)
+                    {
+                        messagingService.Unregister(this);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取消注册导航消息失败: {ex.Message}");
+            }
+            WindowSettingsControl.Dispose();
+            SoundSettingsControl.Dispose();
+            PlaylistSettingControl.Dispose();
+            this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
+            this.Content = null;     // 清空页面内容，释放UI资源
+            _disposed = true;
         }
     }
 }

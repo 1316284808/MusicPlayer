@@ -4,34 +4,31 @@ using MusicPlayer.ViewModels;
 namespace MusicPlayer.Page
 {
     /// <summary>
-    /// SingerPage.xaml 的交互逻辑
+    /// PlaylistPage.xaml 的交互逻辑
     /// </summary>
-    public partial class SingerPage : System.Windows.Controls.Page, IDisposable
+    public partial class PlaylistPage : System.Windows.Controls.Page, IDisposable
     {
         private bool _disposed;
 
-        public SingerPage()
+        public PlaylistPage() { InitializeComponent(); }
+        public PlaylistPage(IMainViewModel mainViewModel)
         {
             InitializeComponent();
-        }
-        
-        public SingerPage(ISingerViewModel singerViewModel)
-        {
-            InitializeComponent();
-            DataContext = singerViewModel;
-            this.SingerControl.DataContext = singerViewModel;
+            DataContext = mainViewModel;
+            this.PlaylistControl.DataContext = mainViewModel.PlaylistViewModel;
             Unloaded += (s, e) =>
             {
                 Dispose();
             };
         }
+
         public void Dispose()
         {
             if (_disposed)
             {
                 return;
             }
-            SingerControl.Dispose();
+            PlaylistControl.Dispose();
             this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
             this.Content = null;     // 清空页面内容，释放UI资源
             _disposed = true;
