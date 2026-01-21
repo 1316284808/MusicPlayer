@@ -7,6 +7,9 @@ using MusicPlayer.ViewModels;
 using MusicPlayer.Core.Interface;
 using Hardcodet.Wpf.TaskbarNotification;
 using MusicPlayer.Navigation;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
+using System.Windows.Controls;
 
 namespace MusicPlayer;
 
@@ -32,8 +35,7 @@ namespace MusicPlayer;
                 
                 if (!isNewInstance)
                 {
-                    // 已有实例运行，显示错误信息或直接退出
-                    MessageBox.Show("应用程序已在运行中！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // 已有实例运行，直接退出
                     _mutex.Dispose();
                     Shutdown();
                     return;
@@ -49,7 +51,7 @@ namespace MusicPlayer;
                 // 通过依赖注入创建和显示主窗口，直接注入所有必需的ViewModel和服务
                 var mainWindow = new MainWindow(
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IMainViewModel>(_serviceProvider!),
-                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<NavigationService>(_serviceProvider!),
+                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Navigation.NavigationService>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IServiceCoordinator>(_serviceProvider!),
                     //Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IBackgroundViewModel>(_serviceProvider!),
                      Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService <ISettingsPageViewModel>(_serviceProvider!),
@@ -59,6 +61,18 @@ namespace MusicPlayer;
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ISettingsBarViewModel>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<WindowManagerService>(_serviceProvider!)
                 );
+                // 获取并初始化WPF-UI服务
+                var snackbarService = _serviceProvider?.GetRequiredService<ISnackbarService>();
+                var contentDialogService = _serviceProvider?.GetRequiredService<IContentDialogService>();
+                
+                // 设置SnackbarPresenter和ContentPresenter
+                if (snackbarService is SnackbarService snackbarServiceImpl) {
+                    snackbarServiceImpl.SetSnackbarPresenter(mainWindow.FindName("MainSnackbarPresenter") as SnackbarPresenter);
+                }
+                if (contentDialogService is ContentDialogService contentDialogServiceImpl) {
+                    contentDialogServiceImpl.SetDialogHost(mainWindow.FindName("RootContentDialog") as ContentPresenter);
+                }
+                
                 mainWindow.Show();
                 
                 // 初始化频谱分析管理器

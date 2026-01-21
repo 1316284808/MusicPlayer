@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\DialogService.cs" />
     <Compile Remove="WordLyricParser.cs" />
   </ItemGroup>
 

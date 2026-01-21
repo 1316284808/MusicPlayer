@@ -22,37 +22,40 @@
         <Border.Effect>
             <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
         </Border.Effect>
-   
         <Grid>
-        <Grid.RowDefinitions>
-            <!--标题栏 -->
-            <RowDefinition Height="Auto" MinHeight="40"/>
-            <!--内容 -->
-            <RowDefinition Height="*"/>
-            <!--控制栏 -->
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+            <Grid.RowDefinitions>
+                <!--内容 -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <!--标题栏 -->
+                    <RowDefinition Height="Auto" MinHeight="40"/>
+                    <!--内容 -->
+                    <RowDefinition Height="*"/>
+                    <!--控制栏 -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <!-- 背景层（最底层） -->
-        <!--<controls:BackgroundControl x:Name="BackgroundControl" Grid.RowSpan="3"/>-->
+                <!-- 背景层（最底层） -->
+                <!--<controls:BackgroundControl x:Name="BackgroundControl" Grid.RowSpan="3"/>-->
 
-        <!-- 主内容区域 - 使用Frame进行页面导航 -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="60" MaxWidth="250"/>
-                <ColumnDefinition Width="5"/>
-                <!-- 分割条列 -->
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                <!-- 主内容区域 - 使用Frame进行页面导航 -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="60" MaxWidth="250"/> 
+                        <!-- 分割条列 -->
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- 左侧设置栏 -->
-            <controls:SettingsBarControl x:Name="SettingsBarControl"
+                    <!-- 左侧设置栏 -->
+                    <controls:SettingsBarControl x:Name="SettingsBarControl"
                                  Grid.Column="0"
                                  MinWidth="60"
                                  MaxWidth="250"  />
 
-            <!-- 可拖动的分割条 -->
-            <!--<GridSplitter Grid.Column="1"
+                    <!-- 可拖动的分割条 -->
+                    <!--<GridSplitter Grid.Column="1"
                   Width="5"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
@@ -61,17 +64,30 @@
                   ResizeDirection="Columns"
                   Cursor="SizeWE"/>-->
 
-            <!-- 主内容区域 -->
-            <Navigation:AnimatedFrame x:Name="MainFrame" Grid.Column="2" NavigationUIVisibility="Hidden"/>
+                    <!-- 主内容区域 -->
+                    
+                        <Navigation:AnimatedFrame x:Name="MainFrame" Grid.Column="1"  NavigationUIVisibility="Hidden"/>
+                   
+                    <ui:SnackbarPresenter x:Name="MainSnackbarPresenter"  MinWidth="400"
+                                          HorizontalAlignment="Right" Grid.Column="1"
+                                          VerticalAlignment="Bottom"/>
+                </Grid>
+
+
+                <!-- 控制栏 -->
+                <controls:ControlBarControl x:Name="ControlBarControl" Grid.Row="2"  />
+
+                <!-- 标题栏（最顶层，确保可交互） -->
+                <controls:TitleBarControl x:Name="TitleBarControl" Grid.Row="0"   />
+                <!-- Snackbar 通知控件 -->
+               
+            </Grid>
+          
+
+            <!-- ContentDialog 宿主控件 -->
+            <ContentPresenter x:Name="RootContentDialog" Grid.Row="0"/>
+
         </Grid>
-
-
-        <!-- 控制栏 -->
-        <controls:ControlBarControl x:Name="ControlBarControl" Grid.Row="2"  />
-
-        <!-- 标题栏（最顶层，确保可交互） -->
-        <controls:TitleBarControl x:Name="TitleBarControl" Grid.Row="0"   />
-    </Grid>
     </Border>
 
 </ui:FluentWindow>

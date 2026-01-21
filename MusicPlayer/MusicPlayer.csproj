@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Page Remove="Controls\WordByWordLyricControl.xaml" />
+    <Page Remove="Styles\TreeViewStyles.xaml" />
   </ItemGroup>
 
 

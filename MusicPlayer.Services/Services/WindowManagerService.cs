@@ -214,7 +214,7 @@ namespace MusicPlayer.Services
                 {
                     if (_taskbarIcon != null)
                     {
-                        _taskbarIcon.ShowBalloonTip("音乐播放器", "主窗口已恢复", BalloonIcon.Info);
+                        _taskbarIcon.ShowBalloonTip("音乐播放器", "主窗口已恢复", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
                     }
                 }
                 catch (Exception ex)

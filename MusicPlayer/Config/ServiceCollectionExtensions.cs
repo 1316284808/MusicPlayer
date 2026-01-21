@@ -102,8 +102,15 @@ namespace MusicPlayer.Config
             
             services.AddSingleton<IDispatcherService, DispatcherService>();
             services.AddSingleton<ITimerService, TimerService>();
-            services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<ISystemTrayService, SystemTrayService>();
             services.AddSingleton<IErrorHandlingService, ErrorHandlingService>();
+            
+            // 手动注册WPF-UI服务
+            services.AddSingleton<Wpf.Ui.ISnackbarService, Wpf.Ui.SnackbarService>();
+            services.AddSingleton<Wpf.Ui.IContentDialogService, Wpf.Ui.ContentDialogService>();
+            
+            services.AddSingleton<IUINotificationService, UINotificationService>();
+            services.AddSingleton<IDialogService, WpfDialogService>();
             
             // 系统级服务 - 使用单例模式
             services.AddSingleton<ISystemMediaTransportService, SystemMediaTransportService>();
@@ -184,8 +191,9 @@ namespace MusicPlayer.Config
                     () => provider.GetRequiredService<IPlayerService>(),
                     () => provider.GetRequiredService<IPlaylistDataService>(),
                     () => provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IDialogService>(),
+                    provider.GetRequiredService<IUINotificationService>(),
                     provider.GetRequiredService<IDispatcherService>(),
+                    provider.GetRequiredService<ISystemTrayService>(),
                     provider.GetService<ILogger<NotificationService>>() ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<NotificationService>.Instance));
             
             return services;
@@ -319,7 +327,9 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IDispatcherService>(),
-                    provider.GetRequiredService<IConfigurationService>()));
+                    provider.GetRequiredService<IConfigurationService>(),
+                    provider.GetRequiredService<IDialogService>(),
+                    provider.GetRequiredService<IUINotificationService>()));
 
             // MainViewModel - 单例模式
             services.AddSingleton<IMainViewModel>(provider => 

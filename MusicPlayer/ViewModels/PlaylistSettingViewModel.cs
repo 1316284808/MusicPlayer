@@ -22,6 +22,8 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IDispatcherService _dispatcherService;
         private readonly IConfigurationService _configurationService;
+        private readonly IDialogService _dialogService;
+        private readonly IUINotificationService _uiNotificationService;
         private bool _isClearingPlaylist;
         private bool _isCoverCacheEnabled;
         private string _lyricDirectory;
@@ -118,16 +120,22 @@ namespace MusicPlayer.ViewModels
         /// <param name="playlistDataService">播放列表数据服务</param>
         /// <param name="dispatcherService">UI线程调度服务</param>
         /// <param name="configurationService">配置服务</param>
+        /// <param name="dialogService">对话框服务</param>
+        /// <param name="uiNotificationService">UI通知服务</param>
         public PlaylistSettingViewModel(
             IMessagingService messagingService,
             IPlaylistDataService playlistDataService,
             IDispatcherService dispatcherService,
-            IConfigurationService configurationService)
+            IConfigurationService configurationService,
+            IDialogService dialogService,
+            IUINotificationService uiNotificationService)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _dispatcherService = dispatcherService ?? throw new ArgumentNullException(nameof(dispatcherService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+            _uiNotificationService = uiNotificationService ?? throw new ArgumentNullException(nameof(uiNotificationService));
 
             ClearPlaylistCommand = new RelayCommand(async () => await ExecuteClearPlaylist(), () => CanClearPlaylist);
             OpenCacheDirectoryCommand = new RelayCommand(ExecuteOpenCacheDirectory);
@@ -200,21 +208,8 @@ namespace MusicPlayer.ViewModels
         /// <returns>用户是否确认</returns>
         private async Task<bool> ShowConfirmDialogAsync(string title, string message)
         {
-            return await _dispatcherService.InvokeAsync(() =>
-            {
-                // 这里应该显示一个确认对话框
-                // 由于项目中可能没有统一的对话框服务，这里使用简单的实现
-                // 在实际项目中，可以注入 IDialogService 并使用它
-                
-                // 暂时使用消息框实现
-                var result = System.Windows.MessageBox.Show(
-                    message,
-                    title,
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Question);
-                
-                return result == System.Windows.MessageBoxResult.Yes;
-            });
+            // 使用对话框服务显示确认对话框
+            return await _dialogService.ShowConfirmationAsync(message, title);
         }
 
         /// <summary>
@@ -224,22 +219,24 @@ namespace MusicPlayer.ViewModels
         /// <param name="type">消息类型</param>
         private async Task ShowMessageAsync(string message, MessageType type)
         {
+            // 使用UI通知服务显示消息
             await _dispatcherService.InvokeAsync(() =>
             {
-                // 这里应该显示一个通知消息
-                // 由于项目中可能没有统一的通知服务，这里使用简单的实现
-                // 在实际项目中，可以注入 INotificationService 并使用它
-                
-                // 暂时使用消息框实现
-                var icon = type switch
+                switch (type)
                 {
-                    MessageType.Information => System.Windows.MessageBoxImage.Information,
-                    MessageType.Error => System.Windows.MessageBoxImage.Error,
-                    MessageType.Warning => System.Windows.MessageBoxImage.Warning,
-                    _ => System.Windows.MessageBoxImage.Information
-                };
-                
-                System.Windows.MessageBox.Show(message, "提示", System.Windows.MessageBoxButton.OK, icon);
+                    case MessageType.Information:
+                        _uiNotificationService.ShowInfo("提示", message);
+                        break;
+                    case MessageType.Error:
+                        _uiNotificationService.ShowError("错误", message);
+                        break;
+                    case MessageType.Warning:
+                        _uiNotificationService.ShowWarning("警告", message);
+                        break;
+                    default:
+                        _uiNotificationService.ShowInfo("提示", message);
+                        break;
+                }
             });
         }
 
