@@ -28,6 +28,8 @@ namespace MusicPlayer.ViewModels
         private bool _isSearchExpanded = false;
         private readonly List<string> _indexList = new() {  "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
 
+        private readonly Navigation.NavigationService _navigationService;
+
      
 
         /// <summary>
@@ -110,17 +112,25 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public ICommand SearchButtonClickCommand { get; }
 
+        /// <summary>
+        /// 导航到歌手详情页命令
+        /// </summary>
+        public ICommand NavigateToSingerDetailCommand { get; }
+
         public SingerViewModel(
             IPlaylistDataService playlistDataService,
             IPlaybackContextService playbackContextService,
-            IMessagingService messagingService)
+            IMessagingService messagingService,
+            Navigation.NavigationService navigationService)
         {
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
             PlaySingerCommand = new RelayCommand<string>(ExecutePlaySinger);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
+            NavigateToSingerDetailCommand = new RelayCommand<string>(ExecuteNavigateToSingerDetail);
             
             // 注册消息处理器
             RegisterMessageHandlers();
@@ -301,6 +311,27 @@ namespace MusicPlayer.ViewModels
                 // 更新歌手播放状态 - 发送播放消息后，播放状态会变为true
                 UpdateSingerPlayingState(firstSong, true);
             }
+        }
+
+        /// <summary>
+        /// 执行导航到歌手详情页
+        /// </summary>
+        /// <param name="singerName">歌手名称</param>
+        private void ExecuteNavigateToSingerDetail(string? singerName)
+        {
+            if (string.IsNullOrEmpty(singerName))
+                return;
+
+            System.Diagnostics.Debug.WriteLine($"SingerViewModel: 准备导航到歌手 {singerName} 的详情页");
+            
+            // 使用导航参数，不修改播放上下文
+            var navParams = new PlaylistDetailParams
+            {
+                ArtistName = singerName
+            };
+            
+            // 导航到歌单详情页
+            _navigationService.NavigateToPlaylistDetail(navParams);
         }
         
         /// <summary>

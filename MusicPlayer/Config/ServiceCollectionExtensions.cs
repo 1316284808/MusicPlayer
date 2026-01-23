@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MusicPlayer.Core.Data;
+using MusicPlayer.Core.Models;
 using MusicPlayer.ViewModels;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Handlers;
@@ -95,6 +97,11 @@ namespace MusicPlayer.Config
             services.AddSingleton<FavoritesProvider>();
             services.AddSingleton<ArtistProvider>();
             services.AddSingleton<AlbumProvider>();
+            services.AddSingleton<CustomPlaylistProvider>();
+            
+            // 自定义歌单服务 - 单例模式
+            services.AddSingleton<ICustomPlaylistService, CustomPlaylistService>(provider => new CustomPlaylistService(
+                new PlaylistDataDAL(Paths.PlaylistDatabasePath)));
             
             // 消息服务必须在这里注册，因为PlayerStateService需要它
             services.AddSingleton<IMessagingService, MessagingService>();
@@ -284,7 +291,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IConfigurationService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>()));
+
+                    provider.GetRequiredService<ICustomPlaylistService>()));
             
             // SettingsPageViewModel - 单例模式
             services.AddSingleton<ISettingsPageViewModel, SettingsPageViewModel>(provider => 
@@ -304,23 +312,35 @@ namespace MusicPlayer.Config
                 new AlbumViewModel(
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IMessagingService>()));
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<Navigation.NavigationService>()));
             
             // SingerViewModel - 单例模式
             services.AddSingleton<ISingerViewModel>(provider => 
                 new SingerViewModel(
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IMessagingService>())); 
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<Navigation.NavigationService>())); 
             
             // HeartViewModel - 单例模式
             services.AddSingleton<IHeartViewModel>(provider => 
                 new HeartViewModel(
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>())); 
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<IDialogService>(),
+                    provider.GetRequiredService<IPlaylistCacheService>())); 
            
-            
+            // PlaylistDetailViewModel - 单例模式
+            services.AddSingleton<IPlaylistDetailViewModel>(provider => 
+                new PlaylistDetailViewModel(
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<ICustomPlaylistService>(),
+                    provider.GetRequiredService<IPlaylistCacheService>()));
+           
             // PlaylistSettingViewModel - 单例模式
             services.AddSingleton<PlaylistSettingViewModel>(provider => 
                 new PlaylistSettingViewModel(

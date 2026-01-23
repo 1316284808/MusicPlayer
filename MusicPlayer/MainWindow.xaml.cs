@@ -274,6 +274,19 @@ namespace MusicPlayer;
             }
         });
         
+        // 注册导航到歌单详情页面的消息处理器
+        _serviceCoordinator.MessagingService.Register<NavigateToPlaylistDetailMessage>(this, (r, m) =>
+        {
+            try
+            {
+                _navigationService.NavigateToPlaylistDetail();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"导航到歌单详情页面失败: {ex.Message}");
+            }
+        });
+        
         // 注册返回上一页的消息处理器
         _serviceCoordinator.MessagingService.Register<GoBackMessage>(this, (r, m) =>
         {

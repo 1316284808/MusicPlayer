@@ -4,6 +4,12 @@
     <_LastSelectedProfileId>C:\Users\fly\code\MusicPlayer\MusicPlayer\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Controls\HeartControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\PlaylistDetailControl.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Controls\PlaylistSettingControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -5,8 +5,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Xml.Linq;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
+using TextBlock = Wpf.Ui.Controls.TextBlock;
+using TextBox = Wpf.Ui.Controls.TextBox;
 
 namespace MusicPlayer.Services
 {
@@ -113,6 +117,149 @@ namespace MusicPlayer.Services
 
              return result;
         }
+
+        /// <summary>
+        /// 新建歌单的弹出层
+        /// </summary>
+        /// <returns></returns>
+        public async Task<string[]> ShowCreatePlaylistDialogAsync(string title)
+        {
+            // 用于存储验证提示的TextBlock（全局可访问）
+            TextBlock validationTip = null;
+
+            // 1. 创建主Grid，设置列和行定义（新增提示行）
+            var mainGrid = new Grid()
+            {
+
+                Width = 400,
+                MinHeight=50,
+            };
+
+            // 列定义：0列（标题）自适应，1列（输入框）占满剩余
+            mainGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = GridLength.Auto });
+            mainGrid.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
+
+            // 行定义：0行（名字）、1行（描述）、2行（验证提示）
+            mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
+            mainGrid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Star) });
+            mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto }); // 新增提示行
+
+            // 2. 构建「名字」相关控件
+            var nameLabel = new TextBlock()
+            {
+                Margin = new Thickness(0, 10, 0, 10),
+                Text = "名字：",
+                FontSize = 14,
+                FontWeight = FontWeights.Medium,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(nameLabel, 0);
+            Grid.SetRow(nameLabel, 0);
+            mainGrid.Children.Add(nameLabel);
+
+            var nameTextBox = new System.Windows.Controls.TextBox()
+            {
+                Margin = new Thickness(10),
+                FontSize = 14,
+                Height = 36
+            };
+            Grid.SetColumn(nameTextBox, 1);
+            Grid.SetRow(nameTextBox, 0);
+            mainGrid.Children.Add(nameTextBox);
+
+            // 3. 构建「描述」相关控件
+            var descLabel = new TextBlock()
+            {
+                Text = "描述：",
+                FontSize = 14,
+                FontWeight = FontWeights.Medium,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 10, 0, 10),
+            };
+            Grid.SetColumn(descLabel, 0);
+            Grid.SetRow(descLabel, 1);
+            mainGrid.Children.Add(descLabel);
+
+            var descTextBox = new System.Windows.Controls.TextBox()
+            {
+                Margin = new Thickness(10),
+                FontSize = 14,
+                MinHeight = 80,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+            Grid.SetColumn(descTextBox, 1);
+            Grid.SetRow(descTextBox, 1);
+            mainGrid.Children.Add(descTextBox);
+
+            // 4. 新增验证提示TextBlock（红色、居中、默认隐藏）
+            validationTip = new TextBlock()
+            {
+                Text = "",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Colors.Red), // 红色提示
+                HorizontalAlignment = HorizontalAlignment.Center, // 水平居中
+                Margin = new Thickness(0, 8, 0, 0)
+            };
+            Grid.SetColumn(validationTip, 0);
+            Grid.SetColumnSpan(validationTip, 2); // 跨两列显示
+            Grid.SetRow(validationTip, 2);
+            mainGrid.Children.Add(validationTip);
+
+            // 5. 创建对话框
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = mainGrid,
+                PrimaryButtonText = "确认",
+                IsSecondaryButtonEnabled = false,
+                CloseButtonText = "取消",
+                DefaultButton = ContentDialogButton.Primary
+            };
+
+            // 6. 自定义确认按钮逻辑（核心：验证不通过则不关闭对话框）
+            bool isValidationPassed = false;
+            while (!isValidationPassed)
+            {
+                var result = await _contentDialogService.ShowAsync(dialog, CancellationToken.None);
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    // 获取输入内容并去空格
+                    string name = nameTextBox.Text.Trim();
+                    string description = descTextBox.Text.Trim();
+
+                    // 非空验证逻辑
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        validationTip.Text = "请输入名字！"; // 显示验证提示
+                        isValidationPassed = false; // 验证失败，继续循环
+                    }
+                    else
+                    {
+                        validationTip.Text = ""; // 清空提示
+                        isValidationPassed = true; // 验证通过，退出循环
+
+                        // 验证通过后的业务逻辑
+                        string msg = string.IsNullOrWhiteSpace(description)
+                            ? $"名字：{name}（未填写描述）"
+                            : $"名字：{name}\n描述：{description}";
+                        return new string[] { name, description };
+
+                    }
+                }
+                else
+                {
+                    isValidationPassed = true;
+                    // 点击取消，直接退出循环，关闭对话框
+                  
+                  
+                }
+            }
+            return new string[] { string.Empty, string.Empty };
+        }
+
         /// <summary>
         /// 创建ContentDialog实例
         /// </summary>

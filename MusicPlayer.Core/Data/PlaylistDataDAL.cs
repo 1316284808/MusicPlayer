@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Media;
 using LiteDB;
 using MusicPlayer.Core.Models;
@@ -8,7 +9,7 @@ using MusicPlayer.Core.Models;
 namespace MusicPlayer.Core.Data
 {
     /// <summary>
-    /// 播放列表数据服务 - 负责对Songs表的增删改查操作
+    /// 播放列表数据服务 - 负责对Songs表、Playlists表和PlaylistSongs表的增删改查操作
     /// </summary>
     public class PlaylistDataDAL : DBHelper
     {
@@ -16,8 +17,8 @@ namespace MusicPlayer.Core.Data
         { 
         }
 
-        
-       
+        #region 歌曲管理方法（原有）
+
         /// <summary>
         /// 批量插入或更新歌曲
         /// </summary>
@@ -81,10 +82,10 @@ namespace MusicPlayer.Core.Data
         {
             try
             {
-                var collection = GetCollection<Song>("Songs");
-
-                collection.DeleteAll();
-                bool isDropped = DeleteTable("Songs");
+                 
+                bool isDropped = DeleteTable("Playlists");   
+                bool isDropped1 = DeleteTable("PlaylistSongs"); 
+                bool isDropped2 = DeleteTable("Songs");
             }
             catch (Exception ex)
             {
@@ -148,5 +149,288 @@ namespace MusicPlayer.Core.Data
                 throw;
             }
         }
+
+        #endregion
+
+        #region 播放列表管理方法
+
+        /// <summary>
+        /// 创建播放列表
+        /// </summary>
+        public int InsertPlaylist(Playlist playlist)
+        {
+            try
+            {
+                var collection = GetCollection<Playlist>("Playlists");
+                
+                // 确保创建时间和更新时间正确
+                if (playlist.CreatedTime == DateTime.MinValue)
+                    playlist.CreatedTime = DateTime.Now;
+                playlist.UpdatedTime = DateTime.Now;
+                
+                collection.Upsert(playlist);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 创建播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 更新播放列表
+        /// </summary>
+        public int UpdatePlaylist(Playlist playlist)
+        {
+            try
+            {
+                var collection = GetCollection<Playlist>("Playlists");
+                
+                // 更新时间
+                playlist.UpdatedTime = DateTime.Now;
+                
+                bool updated = collection.Update(playlist);
+                return updated ? 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 更新播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 删除播放列表
+        /// </summary>
+        public int DeletePlaylist(int playlistId)
+        {
+            try
+            {
+                // 先删除关联数据
+                var playlistSongCollection = GetCollection<PlaylistSong>("PlaylistSongs");
+                // 使用Find查询获取需要删除的文档，然后逐个删除
+                var playlistSongs = playlistSongCollection.Find(x => x.PlaylistId == playlistId).ToList();
+                foreach (var playlistSong in playlistSongs)
+                {
+                    playlistSongCollection.Delete(playlistSong.Id);
+                }
+                
+                // 再删除播放列表
+                var collection = GetCollection<Playlist>("Playlists");
+                bool deleted = collection.Delete(playlistId);
+                return deleted ? 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 删除播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 根据ID获取播放列表详情
+        /// </summary>
+        public Playlist? GetPlaylistById(int playlistId)
+        {
+            try
+            {
+                var collection = GetCollection<Playlist>("Playlists");
+                return collection.FindOne(x => x.Id == playlistId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 根据ID获取播放列表失败: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 获取所有播放列表
+        /// </summary>
+        public List<Playlist> GetAllPlaylists()
+        {
+            try
+            {
+                var collection = GetCollection<Playlist>("Playlists");
+                return collection.FindAll().OrderBy(x => x.CreatedTime).ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 获取所有播放列表失败: {ex.Message}");
+                return new List<Playlist>();
+            }
+        }
+
+        /// <summary>
+        /// 获取默认播放列表
+        /// </summary>
+        public Playlist? GetDefaultPlaylist()
+        {
+            try
+            {
+                var collection = GetCollection<Playlist>("Playlists");
+                return collection.FindOne(x => x.IsDefault == true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 获取默认播放列表失败: {ex.Message}");
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region 播放列表歌曲管理方法
+
+        /// <summary>
+        /// 添加歌曲到播放列表
+        /// </summary>
+        public int AddSongToPlaylist(int playlistId, int songId)
+        {
+            try
+            {
+                var collection = GetCollection<PlaylistSong>("PlaylistSongs");
+                
+                // 检查歌曲是否已在播放列表中
+                if (IsSongInPlaylist(playlistId, songId))
+                    return 0;
+                
+                // 获取当前最大顺序值
+                int maxOrder = collection.Find(x => x.PlaylistId == playlistId)
+                    .Select(x => x.Order)
+                    .DefaultIfEmpty(0)
+                    .Max();
+                
+                var playlistSong = new PlaylistSong
+                {
+                    PlaylistId = playlistId,
+                    SongId = songId,
+                    Order = maxOrder + 1,
+                    AddedTime = DateTime.Now
+                };
+                
+                collection.Upsert(playlistSong);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 添加歌曲到播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 从播放列表移除歌曲
+        /// </summary>
+        public int RemoveSongFromPlaylist(int playlistId, int songId)
+        {
+            try
+            {
+                var collection = GetCollection<PlaylistSong>("PlaylistSongs");
+                // 使用Find查询获取需要删除的文档，然后逐个删除
+                var playlistSongs = collection.Find(x => x.PlaylistId == playlistId && x.SongId == songId).ToList();
+                int deletedCount = 0;
+                foreach (var playlistSong in playlistSongs)
+                {
+                    if (collection.Delete(playlistSong.Id))
+                    {
+                        deletedCount++;
+                    }
+                }
+                return deletedCount;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 从播放列表移除歌曲失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取播放列表中的所有歌曲
+        /// </summary>
+        public List<Song> GetSongsByPlaylistId(int playlistId)
+        {
+            try
+            {
+                // 如果是默认播放列表，返回所有歌曲
+                var playlist = GetPlaylistById(playlistId);
+                if (playlist?.IsDefault == true)
+                {
+                    return LoadAllSongs();
+                }
+                
+                // 否则根据关联表获取歌曲
+                var playlistSongCollection = GetCollection<PlaylistSong>("PlaylistSongs");
+                var songCollection = GetCollection<Song>("Songs");
+                
+                // 获取播放列表中的歌曲ID列表，按顺序排序
+                var songIds = playlistSongCollection.Find(x => x.PlaylistId == playlistId)
+                    .OrderBy(x => x.Order)
+                    .Select(x => x.SongId)
+                    .ToList();
+                
+                // 如果没有歌曲，返回空列表
+                if (songIds.Count == 0)
+                    return new List<Song>();
+                
+                // 获取歌曲详情
+                return songCollection.Find(x => songIds.Contains(x.Id))
+                    .OrderBy(song => songIds.IndexOf(song.Id))
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 获取播放列表中的所有歌曲失败: {ex.Message}");
+                return new List<Song>();
+            }
+        }
+
+        /// <summary>
+        /// 清空播放列表中的歌曲
+        /// </summary>
+        public int ClearPlaylistSongs(int playlistId)
+        {
+            try
+            {
+                var collection = GetCollection<PlaylistSong>("PlaylistSongs");
+                // 使用Find查询获取需要删除的文档，然后逐个删除
+                var playlistSongs = collection.Find(x => x.PlaylistId == playlistId).ToList();
+                int deletedCount = 0;
+                foreach (var playlistSong in playlistSongs)
+                {
+                    if (collection.Delete(playlistSong.Id))
+                    {
+                        deletedCount++;
+                    }
+                }
+                return deletedCount;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 清空播放列表中的歌曲失败: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 检查歌曲是否在播放列表中
+        /// </summary>
+        public bool IsSongInPlaylist(int playlistId, int songId)
+        {
+            try
+            {
+                var collection = GetCollection<PlaylistSong>("PlaylistSongs");
+                return collection.Exists(x => x.PlaylistId == playlistId && x.SongId == songId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 检查歌曲是否在播放列表中失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

@@ -42,7 +42,11 @@ namespace MusicPlayer.ViewModels
         private readonly IMessagingService _messagingService;
         private readonly IConfigurationService? _configurationService;
         private readonly IPlaylistDataService _playlistDataService;
-        private readonly IPlaybackContextService _playbackContextService;
+        private readonly ICustomPlaylistService _customPlaylistService;
+        
+        // 所有歌单列表
+        private readonly ObservableCollection<Playlist> _allPlaylists = new();
+        public ObservableCollection<Playlist> AllPlaylists => _allPlaylists;
         
         // 本地状态通过消息同步
         // 注意：_playlist已移除，使用FilteredPlaylist作为主要的数据集合
@@ -51,9 +55,6 @@ namespace MusicPlayer.ViewModels
         private Song? _currentPlaylistItem;
         private Song? _currentSong;
         private bool _isSearchExpanded = false;
-        
-        // 过滤模式
-        private FilterMode _currentFilterMode = FilterMode.All;
 
         /// <summary>
         /// 专辑加载请求事件
@@ -90,10 +91,7 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public int SongCount => _filteredPlaylist.Count;
 
-        /// <summary>
-        /// 播放列表标题（根据当前过滤模式显示）
-        /// </summary>
-        public string PlaylistTitle => _currentFilterMode == FilterMode.Favorites ? "收藏列表" : "默认列表";
+
 
         /// <summary>
         /// 当前播放列表选中项
@@ -196,7 +194,11 @@ namespace MusicPlayer.ViewModels
         /// 滚动到当前播放歌曲命令
         /// </summary>
         public ICommand ScrollToCurrentSongCommand { get; }
-
+        
+        /// <summary>
+        /// 添加歌曲到歌单命令
+        /// </summary>
+        public ICommand AddSongToPlaylistCommand { get; }
         
 
         /// <summary>
@@ -273,12 +275,12 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, IPlaybackContextService? playbackContextService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
-            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
+            _customPlaylistService = customPlaylistService ?? throw new ArgumentNullException(nameof(customPlaylistService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -296,6 +298,7 @@ namespace MusicPlayer.ViewModels
             ToggleSongHeartCommand = new RelayCommand<Song>(ExecuteToggleSongHeart);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
             ScrollToCurrentSongCommand = new RelayCommand(ExecuteScrollToCurrentSong);
+            AddSongToPlaylistCommand = new RelayCommand<object>(ExecuteAddSongToPlaylist);
           
          
             
@@ -303,10 +306,13 @@ namespace MusicPlayer.ViewModels
             RegisterMessageHandlers();
             
             // 注册UI相关的消息处理器
-            RegisterUIMessageHandlers();
+            //RegisterUIMessageHandlers();
             
             // 主动获取初始数据，确保UI有数据
             InitializePlaylistData();
+            
+            // 加载所有歌单
+            _ = LoadAllPlaylistsAsync();
             
             // 初始化过滤后的播放列表
             UpdateFilteredPlaylist();
@@ -322,8 +328,6 @@ namespace MusicPlayer.ViewModels
             // 初始化时清空过滤列表
             _filteredPlaylist.Clear();
             
-            System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 初始化完成，过滤列表已清空，将使用数据服务的缓存作为唯一数据源");
-            
             // 初始化排序选项
             var currentSortRule = _playlistDataService.CurrentSortRule;
             var matchingOption = SortOptions.FirstOrDefault(o => o.Value == currentSortRule);
@@ -335,10 +339,56 @@ namespace MusicPlayer.ViewModels
                 System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 初始化排序选项为: {matchingOption.Display}");
             }
             
+            // 加载当前播放上下文对应的歌曲
+            LoadSongsForCurrentContext();
+            
             System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 初始化完成，过滤列表包含 {_filteredPlaylist.Count} 首歌曲");
             
             // 通知SongCount属性已更新
             OnPropertyChanged(nameof(SongCount));
+        }
+
+        /// <summary>
+        /// 加载所有歌曲并应用过滤
+        /// </summary>
+        private void LoadSongsForCurrentContext()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 开始加载所有歌曲");
+                
+                // 加载所有歌曲
+                List<Core.Models.Song> songs = _playlistDataService.DataSource;
+                
+                // 更新过滤后的播放列表
+                _filteredPlaylist.Clear();
+                
+                // 应用搜索过滤
+                var filteredSongs = string.IsNullOrWhiteSpace(SearchText)
+                    ? songs
+                    : songs.Where(song => 
+                        (song.Title != null && song.Title.ToLower().Contains(SearchText.ToLower(), StringComparison.OrdinalIgnoreCase)) ||
+                        (song.Artist != null && song.Artist.ToLower().Contains(SearchText.ToLower(), StringComparison.OrdinalIgnoreCase)) ||
+                        (song.Album != null && song.Album.ToLower().Contains(SearchText.ToLower(), StringComparison.OrdinalIgnoreCase))).ToList();
+                
+                // 只添加未删除的歌曲
+                foreach (var song in filteredSongs)
+                {
+                    if (!song.IsDeleted)
+                    {
+                        _filteredPlaylist.Add(song);
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 加载完成，共加载 {songs.Count} 首歌曲，过滤后显示 {_filteredPlaylist.Count} 首歌曲");
+                
+                // 通知相关属性已更新
+                OnPropertyChanged(nameof(SongCount));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 加载歌曲失败: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -412,19 +462,6 @@ namespace MusicPlayer.ViewModels
         {
             if (song != null)
             {
-                // 根据当前过滤模式设置播放上下文
-                var contextType = _currentFilterMode == FilterMode.Favorites 
-                    ? PlaybackContextType.Favorites 
-                    : PlaybackContextType.DefaultPlaylist;
-                
-                var context = contextType == PlaybackContextType.Favorites 
-                    ? PlaybackContext.CreateFavorites() 
-                    : PlaybackContext.CreateDefault();
-                
-                // 设置播放上下文
-                _playbackContextService.SetPlaybackContext(context.Type, context.Identifier, context.DisplayName);
-                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 设置播放上下文为 {context.DisplayName}");
-                
                 // 发送播放消息
                 _messagingService.Send(new PlaySelectedSongMessage(song));
             }
@@ -467,79 +504,12 @@ namespace MusicPlayer.ViewModels
             // 保存当前选中的歌曲
             var selectedSong = CurrentPlaylistItem;
             
-            System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: UpdateFilteredPlaylist - 搜索文本: '{SearchText}', 当前排序规则: {_playlistDataService.CurrentSortRule}, 过滤模式: {_currentFilterMode}");
+            System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: UpdateFilteredPlaylist - 搜索文本: '{SearchText}', 当前排序规则: {_playlistDataService.CurrentSortRule}");
             
-            // 直接从数据服务获取最新的播放列表数据，不使用本地缓存
-            var dataSource = _playlistDataService.DataSource;
+            // 加载当前播放上下文对应的歌曲
+            LoadSongsForCurrentContext();
             
-            // 清空过滤列表
-            _filteredPlaylist.Clear();
-            
-            foreach (var song in dataSource)
-            {
-                // 首先检查删除状态，这是最高优先级
-                if (song.IsDeleted)
-                {
-                    // 已删除的歌曲不在任何列表中显示
-                    continue;
-                }
-                
-                bool shouldInclude = false;
-                
-                // 然后检查过滤模式
-                if (_currentFilterMode == FilterMode.Favorites)
-                {
-                    // 收藏模式，只包含收藏的歌曲
-                    if (song.Heart)
-                    {
-                        // 如果有搜索文本，还要检查搜索条件
-                        if (string.IsNullOrWhiteSpace(SearchText))
-                        {
-                            shouldInclude = true;
-                        }
-                        else
-                        {
-                            var lowerSearchText = SearchText.ToLower();
-                            if ((song.Title != null && song.Title.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)) ||
-                                (song.Artist != null && song.Artist.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)) ||
-                                (song.Album != null && song.Album.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)))
-                            {
-                                shouldInclude = true;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    // 全部模式
-                    if (string.IsNullOrWhiteSpace(SearchText))
-                    {
-                        // 如果没有搜索文本，则显示所有歌曲
-                        shouldInclude = true;
-                    }
-                    else
-                    {
-                        // 如果有搜索文本，则根据搜索条件过滤
-                        var lowerSearchText = SearchText.ToLower();
-                        if ((song.Title != null && song.Title.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)) ||
-                            (song.Artist != null && song.Artist.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)) ||
-                            (song.Album != null && song.Album.ToLower().Contains(lowerSearchText, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            shouldInclude = true;
-                        }
-                    }
-                }
-                
-                if (shouldInclude)
-                {
-                    _filteredPlaylist.Add(song);
-                }
-            }
-            
-            System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: UpdateFilteredPlaylist 完成，过滤后列表包含 {_filteredPlaylist.Count} 首歌曲，过滤模式: {_currentFilterMode}");
-            
-            // 清除临时数据缓存
-            _playlistDataService.ClearDataSource();
+            System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: UpdateFilteredPlaylist 完成，过滤后列表包含 {_filteredPlaylist.Count} 首歌曲");
             
             // 尝试恢复之前选中的歌曲
             if (selectedSong != null && _filteredPlaylist.Contains(selectedSong))
@@ -551,8 +521,9 @@ namespace MusicPlayer.ViewModels
                 CurrentPlaylistItem = null;
             }
 
-            // 通知SongCount属性已更新
+            // 通知相关属性已更新
             OnPropertyChanged(nameof(SongCount));
+            
         }
 
         /// <summary>
@@ -587,80 +558,9 @@ namespace MusicPlayer.ViewModels
  
  
         
-        /// <summary>
-        /// 注册UI相关的消息处理器
-        /// </summary>
-        private void RegisterUIMessageHandlers()
-        {
-            // 注册过滤收藏歌曲消息处理器
-            _messagingService.Register<FilterFavoriteSongsMessage>(this, OnFilterFavoriteSongsRequested);
-            _messagingService.Register<ShowAllSongsMessage>(this, OnShowAllSongsRequested);
-        }
+
         
-        /// <summary>
-        /// 处理过滤收藏歌曲请求
-        /// </summary>
-        private void OnFilterFavoriteSongsRequested(object recipient, FilterFavoriteSongsMessage message)
-        {
-            try
-            {
-                // 设置过滤模式为收藏
-                _currentFilterMode = FilterMode.Favorites;
-                
-                // 通知UI更新标题
-                OnPropertyChanged(nameof(PlaylistTitle));
-                
-                // 获取当前播放列表数据
-                var currentPlaylist = _playlistDataService.DataSource;
-                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 切换到收藏模式，当前播放列表中有 {currentPlaylist.Count} 首歌曲");
-                
-                // 统计收藏歌曲数量
-                var favoriteCount = currentPlaylist.Count(s => s.Heart);
-                
-                // 清除临时数据缓存
-                _playlistDataService.ClearDataSource();
-                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 其中收藏的歌曲有 {favoriteCount} 首");
-                
-                // 更新过滤后的播放列表
-                UpdateFilteredPlaylist();
-                
-                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 过滤后的列表包含 {_filteredPlaylist.Count} 首收藏歌曲");
-                
-                // 回复消息
-                message.Reply(true);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"过滤收藏歌曲失败: {ex.Message}");
-                message.Reply(false);
-            }
-        }
-        
-        /// <summary>
-        /// 处理显示所有歌曲请求
-        /// </summary>
-        private void OnShowAllSongsRequested(object recipient, ShowAllSongsMessage message)
-        {
-            try
-            {
-                // 设置过滤模式为全部
-                _currentFilterMode = FilterMode.All;
-                
-                // 通知UI更新标题
-                OnPropertyChanged(nameof(PlaylistTitle));
-                
-                // 更新过滤后的播放列表
-                UpdateFilteredPlaylist();
-                
-                // 回复消息
-                message.Reply(true);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"显示所有歌曲失败: {ex.Message}");
-                message.Reply(false);
-            }
-        }
+
         
         
 
@@ -740,7 +640,7 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("PlaylistViewModel: Cleanup 方法被调用");
-             
+              
         }
 
         /// <summary>
@@ -778,6 +678,58 @@ namespace MusicPlayer.ViewModels
             }
         }
 
+        /// <summary>
+        /// 加载所有歌单
+        /// </summary>
+        private async Task LoadAllPlaylistsAsync()
+        {
+            try
+            {
+                var playlists = await _customPlaylistService.GetAllPlaylistsAsync();
+                _allPlaylists.Clear();
+                foreach (var playlist in playlists)
+                {
+                    _allPlaylists.Add(playlist);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载歌单失败: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 执行添加歌曲到歌单操作
+        /// </summary>
+        private async void ExecuteAddSongToPlaylist(object? param)
+        {
+            if (param is ValueTuple<Song, int> tuple)
+            {
+                var song = tuple.Item1;
+                var playlistId = tuple.Item2;
+                
+                if (song == null || playlistId <= -1) //只要不是默认列表就行
+                    return;
+                
+                try
+                {
+                    bool result = await _customPlaylistService.AddSongToPlaylistAsync(playlistId, song.Id);
+                    if (result)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"成功将歌曲 {song.Title} 添加到歌单 {playlistId}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"歌曲 {song.Title} 已存在于歌单 {playlistId} 中");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"添加歌曲到歌单失败: {ex.Message}");
+                }
+            }
+        }
+        
         public void Dispose()
         {
             Cleanup();

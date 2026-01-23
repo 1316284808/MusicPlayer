@@ -153,7 +153,8 @@ Helper:AlbumAlbumArtBehavior.ViewModel="{Binding }"
                            Margin="10"
                            Width="280"
                            Height="120" 
-                           Cursor="Hand">
+                           Cursor="Hand"
+                           MouseLeftButtonDown="Border_MouseLeftButtonDown">
                         
                         <!-- 专辑卡片内容 -->
                         <Grid>

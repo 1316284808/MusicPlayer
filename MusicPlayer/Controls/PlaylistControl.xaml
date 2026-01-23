@@ -16,6 +16,7 @@
         <converters:SortRuleToSymbolConverter x:Key="SortRuleToSymbolConverter"/>
         <!-- 搜索框宽度转换器 -->
         <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
+        <CollectionViewSource x:Key="PlaylistCollectionViewSource" Source="{Binding AllPlaylists}" />
     </UserControl.Resources>
 
     <Grid Helper:PlaylistInitializationBehavior.IsEnabled="True"
@@ -29,10 +30,22 @@
 
 
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
-            <TextBlock  Text="{Binding PlaylistTitle}" FontSize="24" FontWeight="Bold"  Margin="10"   />
+            <TextBlock  Text="默认列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
             </StackPanel>
-       
-        <StackPanel Grid.Row="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Orientation="Horizontal"> 
+
+        <ui:Button   Grid.Row="1"  ToolTip="播放全部"   Command="{Binding PlayAllCommand}"
+   HorizontalAlignment="Left"
+   Width="auto" 
+  Padding="5" Margin="5"  >
+            <StackPanel Orientation="Horizontal">
+                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
+                <Separator Margin="2" />
+                <ui:TextBlock Text="播放全部"/>
+            </StackPanel>
+        </ui:Button>
+
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Center"    HorizontalAlignment="Right" Orientation="Horizontal"> 
                 <!-- 添加按钮 -->
                 <ui:Button    Command="{Binding AddMusicCommand}" ToolTip="添加音乐文件"
            Margin="0,0,5,0"
@@ -129,6 +142,25 @@
                                 <MenuItem.Icon>
                                     <Helper:CustomIcon Kind="Heart"  Foreground="Red" />
                                 </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="添加到" ItemsSource="{Binding PlacementTarget.DataContext.AllPlaylists, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                <MenuItem.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Header" Value="{Binding Name}" />
+                                        <Setter Property="Command" Value="{Binding PlacementTarget.DataContext.AddSongToPlaylistCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                        <Setter Property="CommandParameter">
+                                            <Setter.Value>
+                                                <MultiBinding>
+                                                    <MultiBinding.Converter>
+                                                        <converters:SongAndPlaylistConverter />
+                                                    </MultiBinding.Converter>
+                                                    <Binding Path="PlacementTarget.SelectedItem" RelativeSource="{RelativeSource AncestorType=ContextMenu}" />
+                                                    <Binding Path="Id" />
+                                                </MultiBinding>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </MenuItem.ItemContainerStyle>
                             </MenuItem>
                             <Separator Margin="2"/>
                             <MenuItem Header="删除此项"  Command="{Binding DeleteSelectedSongCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"   >

@@ -90,4 +90,90 @@ public interface IPlaylistCacheService
     /// <param name="song">要更新的歌曲</param>
     /// <returns>异步任务</returns>
     Task UpdateSongStatusInDatabaseAsync(Song song);
+
+    #region 播放列表管理方法
+
+    /// <summary>
+    /// 创建播放列表
+    /// </summary>
+    /// <param name="playlist">要创建的播放列表</param>
+    /// <returns>创建的播放列表ID</returns>
+    Task<int> InsertPlaylistAsync(Playlist playlist);
+
+    /// <summary>
+    /// 更新播放列表
+    /// </summary>
+    /// <param name="playlist">要更新的播放列表</param>
+    /// <returns>更新是否成功</returns>
+    Task<int> UpdatePlaylistAsync(Playlist playlist);
+
+    /// <summary>
+    /// 删除播放列表
+    /// </summary>
+    /// <param name="playlistId">要删除的播放列表ID</param>
+    /// <returns>删除是否成功</returns>
+    Task<int> DeletePlaylistAsync(int playlistId);
+
+    /// <summary>
+    /// 根据ID获取播放列表详情
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <returns>播放列表详情</returns>
+    Task<Playlist?> GetPlaylistByIdAsync(int playlistId);
+
+    /// <summary>
+    /// 获取所有播放列表
+    /// </summary>
+    /// <returns>所有播放列表</returns>
+    Task<List<Playlist>> GetAllPlaylistsAsync();
+
+    /// <summary>
+    /// 获取默认播放列表
+    /// </summary>
+    /// <returns>默认播放列表</returns>
+    Task<Playlist?> GetDefaultPlaylistAsync();
+
+    #endregion
+
+    #region 播放列表歌曲管理方法
+
+    /// <summary>
+    /// 添加歌曲到播放列表
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <param name="songId">歌曲ID</param>
+    /// <returns>添加是否成功</returns>
+    Task<int> AddSongToPlaylistAsync(int playlistId, int songId);
+
+    /// <summary>
+    /// 从播放列表移除歌曲
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <param name="songId">歌曲ID</param>
+    /// <returns>移除是否成功</returns>
+    Task<int> RemoveSongFromPlaylistAsync(int playlistId, int songId);
+
+    /// <summary>
+    /// 获取播放列表中的所有歌曲
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <returns>播放列表中的歌曲</returns>
+    Task<List<Song>> GetSongsByPlaylistIdAsync(int playlistId);
+
+    /// <summary>
+    /// 清空播放列表中的歌曲
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <returns>清空的歌曲数量</returns>
+    Task<int> ClearPlaylistSongsAsync(int playlistId);
+
+    /// <summary>
+    /// 检查歌曲是否在播放列表中
+    /// </summary>
+    /// <param name="playlistId">播放列表ID</param>
+    /// <param name="songId">歌曲ID</param>
+    /// <returns>歌曲是否在播放列表中</returns>
+    Task<bool> IsSongInPlaylistAsync(int playlistId, int songId);
+
+    #endregion
 }

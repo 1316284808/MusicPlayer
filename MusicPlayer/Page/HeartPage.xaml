@@ -4,11 +4,12 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:MusicPlayer.Page"
+      xmlns:controls="clr-namespace:MusicPlayer.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="HeartPage">
 
     <Grid>
-        <!--<Border Background="Pink"></Border>-->
+        <controls:HeartControl/>
     </Grid>
 </Page>

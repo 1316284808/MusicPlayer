@@ -1,14 +1,15 @@
-using System.Runtime.Caching;
-using System.IO;
-using System.Text.Json.Serialization;
-using TagLib;
+using MusicPlayer.Core.Data;
+using MusicPlayer.Core.Enums;
+using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
+using System.IO;
+using System.Runtime.Caching;
  
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using TagLib;
 using File = System.IO.File;
-using MusicPlayer.Core.Data;
-using MusicPlayer.Core.Interfaces;
-using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Services;
 
@@ -60,10 +61,12 @@ public class PlaylistCacheService : IPlaylistCacheService
 {
     private static readonly MemoryCache _cache = new MemoryCache("PlaylistCache");
     private const string PlaylistKey = "MainPlaylist";
+    private const string PlaylistsKey = "Playlists";
     private bool _isInitialized = false;
     private readonly object _lock = new object();
     private readonly PlaylistDataDAL _playlistDataDal;
     private static int _nextSongId = 1; // 用于生成唯一ID的计数器
+    private static int _nextPlaylistId = 1; // 用于生成唯一播放列表ID的计数器
 
     public bool IsCacheReady => _isInitialized;
 
@@ -83,7 +86,8 @@ public class PlaylistCacheService : IPlaylistCacheService
     /// </summary>
     public PlaylistCacheService()
     {
-        _playlistDataDal = new PlaylistDataDAL(Paths.PlaylistDatabasePath);
+        _playlistDataDal = new PlaylistDataDAL(Paths.PlaylistDatabasePath); 
+
     }
 
     /// <summary>
@@ -121,10 +125,41 @@ public class PlaylistCacheService : IPlaylistCacheService
             // 将加载的数据存入缓存
             _cache.Set(PlaylistKey, songs, new CacheItemPolicy());
             
+            // 加载所有播放列表
+            var playlists = _playlistDataDal.GetAllPlaylists();
+            
+            // 如果没有播放列表，创建一个收藏列表
+            if (playlists.Count == 0)
+            {
+                var favoritesPlaylist = new Playlist
+                {
+                    Id = 0,
+                    Name = "收藏列表",
+                    Description = "包含用户收藏的歌曲",
+                    IsDefault = false,
+                    CreatedTime = DateTime.Now,
+                    UpdatedTime = DateTime.Now
+                };
+                
+                _playlistDataDal.InsertPlaylist(favoritesPlaylist);
+                playlists.Add(favoritesPlaylist);
+                System.Diagnostics.Debug.WriteLine("PlaylistCacheService: 创建了收藏列表");
+            }
+            
+            // 设置下一个播放列表ID为现有最大ID+1，避免ID冲突
+            if (playlists.Count > 0)
+            {
+                _nextPlaylistId = playlists.Max(p => p.Id) + 1;
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 设置起始播放列表ID为 {_nextPlaylistId}，基于现有播放列表的最大ID");
+            }
+            
+            // 将播放列表存入缓存
+            _cache.Set(PlaylistsKey, playlists, new CacheItemPolicy());
+            
             _isInitialized = true;
             
            
-            System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 缓存初始化完成，加载了 {songs.Count} 首歌曲");
+            System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 缓存初始化完成，加载了 {songs.Count} 首歌曲和 {playlists.Count} 个播放列表");
                  return true;
         }
         catch (Exception ex)
@@ -399,4 +434,301 @@ public class PlaylistCacheService : IPlaylistCacheService
         _cache?.Dispose();
         _playlistDataDal?.Dispose();
     }
+
+    #region 播放列表管理方法实现
+
+    /// <summary>
+    /// 创建播放列表
+    /// </summary>
+    public async Task<int> InsertPlaylistAsync(Playlist playlist)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 为新播放列表分配唯一ID
+                playlist.Id = _nextPlaylistId++;
+                
+                // 保存到数据库
+                _playlistDataDal.InsertPlaylist(playlist);
+                
+                // 更新缓存
+                var playlists = GetPlaylistsFromCache();
+                playlists.Add(playlist);
+                _cache.Set(PlaylistsKey, playlists, new CacheItemPolicy());
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 创建了新的播放列表: {playlist.Name}");
+                return playlist.Id;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 创建播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 更新播放列表
+    /// </summary>
+    public async Task<int> UpdatePlaylistAsync(Playlist playlist)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 保存到数据库
+                int result = _playlistDataDal.UpdatePlaylist(playlist);
+                
+                if (result > 0)
+                {
+                    // 更新缓存
+                    var playlists = GetPlaylistsFromCache();
+                    var index = playlists.FindIndex(p => p.Id == playlist.Id);
+                    if (index >= 0)
+                    {
+                        playlists[index] = playlist;
+                        _cache.Set(PlaylistsKey, playlists, new CacheItemPolicy());
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 更新了播放列表: {playlist.Name}");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 更新播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 删除播放列表
+    /// </summary>
+    public async Task<int> DeletePlaylistAsync(int playlistId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 保存到数据库
+                int result = _playlistDataDal.DeletePlaylist(playlistId);
+                
+                if (result > 0)
+                {
+                    // 更新缓存
+                    var playlists = GetPlaylistsFromCache();
+                    playlists.RemoveAll(p => p.Id == playlistId);
+                    _cache.Set(PlaylistsKey, playlists, new CacheItemPolicy());
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 删除了播放列表: {playlistId}");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 删除播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 根据ID获取播放列表详情
+    /// </summary>
+    public async Task<Playlist?> GetPlaylistByIdAsync(int playlistId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                var playlists = GetPlaylistsFromCache();
+                return playlists.FirstOrDefault(p => p.Id == playlistId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 根据ID获取播放列表失败: {ex.Message}");
+                // 从数据库重试
+                return _playlistDataDal.GetPlaylistById(playlistId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取所有播放列表
+    /// </summary>
+    public async Task<List<Playlist>> GetAllPlaylistsAsync()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                return new List<Playlist>(GetPlaylistsFromCache());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取所有播放列表失败: {ex.Message}");
+                // 从数据库重试
+                return _playlistDataDal.GetAllPlaylists();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取默认播放列表
+    /// </summary>
+    public async Task<Playlist?> GetDefaultPlaylistAsync()
+    {
+        lock (_lock)
+        {
+            try
+            {
+                var playlists = GetPlaylistsFromCache();
+                return playlists.FirstOrDefault(p => p.IsDefault);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取默认播放列表失败: {ex.Message}");
+                // 从数据库重试
+                return _playlistDataDal.GetDefaultPlaylist();
+            }
+        }
+    }
+
+    #endregion
+
+    #region 播放列表歌曲管理方法实现
+
+    /// <summary>
+    /// 添加歌曲到播放列表
+    /// </summary>
+    public async Task<int> AddSongToPlaylistAsync(int playlistId, int songId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 保存到数据库
+                int result = _playlistDataDal.AddSongToPlaylist(playlistId, songId);
+               
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 添加歌曲到播放列表: 播放列表ID={playlistId}, 歌曲ID={songId}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 添加歌曲到播放列表失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 从播放列表移除歌曲
+    /// </summary>
+    public async Task<int> RemoveSongFromPlaylistAsync(int playlistId, int songId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 保存到数据库
+                int result = _playlistDataDal.RemoveSongFromPlaylist(playlistId, songId);
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 从播放列表移除歌曲: 播放列表ID={playlistId}, 歌曲ID={songId}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 从播放列表移除歌曲失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取播放列表中的所有歌曲
+    /// </summary>
+    public async Task<List<Song>> GetSongsByPlaylistIdAsync(int playlistId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 从数据库获取
+                var songs = _playlistDataDal.GetSongsByPlaylistId(playlistId);
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取播放列表中的歌曲: 播放列表ID={playlistId}, 歌曲数量={songs.Count}");
+                return songs;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取播放列表中的歌曲失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 清空播放列表中的歌曲
+    /// </summary>
+    public async Task<int> ClearPlaylistSongsAsync(int playlistId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 保存到数据库
+                int result = _playlistDataDal.ClearPlaylistSongs(playlistId);
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 清空播放列表中的歌曲: 播放列表ID={playlistId}, 清空数量={result}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 清空播放列表中的歌曲失败: {ex.Message}");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 检查歌曲是否在播放列表中
+    /// </summary>
+    public async Task<bool> IsSongInPlaylistAsync(int playlistId, int songId)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                // 从数据库检查
+                return _playlistDataDal.IsSongInPlaylist(playlistId, songId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 检查歌曲是否在播放列表中失败: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    #endregion
+
+    #region 私有辅助方法
+
+    /// <summary>
+    /// 从缓存获取播放列表
+    /// </summary>
+    private List<Playlist> GetPlaylistsFromCache()
+    {
+        if (_cache.Contains(PlaylistsKey))
+        {
+            return (List<Playlist>)_cache.Get(PlaylistsKey);
+        }
+        return new List<Playlist>();
+    }
+
+    #endregion
 }

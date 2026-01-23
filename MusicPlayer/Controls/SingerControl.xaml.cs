@@ -24,6 +24,29 @@ namespace MusicPlayer.Controls
             });
         }
 
+        private void Border_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Border border)
+            {
+                // 获取歌手信息
+                var singerInfo = border.DataContext as MusicPlayer.Core.Models.SingerInfo;
+                if (singerInfo != null)
+                {
+                    // 获取父级ViewModel
+                    var viewModel = this.DataContext as MusicPlayer.ViewModels.SingerViewModel;
+                    if (viewModel != null)
+                    {
+                        // 调用导航命令
+                        var navigateCommand = viewModel.GetType().GetProperty("NavigateToSingerDetailCommand")?.GetValue(viewModel) as System.Windows.Input.ICommand;
+                        if (navigateCommand != null && navigateCommand.CanExecute(singerInfo.Name))
+                        {
+                            navigateCommand.Execute(singerInfo.Name);
+                        }
+                    }
+                }
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

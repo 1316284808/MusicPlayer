@@ -821,10 +821,6 @@ namespace MusicPlayer.ViewModels
                         // 默认列表：所有未删除的歌曲
                         filteredSongs = allSongs.Where(s => !s.IsDeleted).ToList();
                         break;
-                    case Core.Enums.PlaybackContextType.Favorites:
-                        // 收藏列表：所有收藏且未删除的歌曲
-                        filteredSongs = allSongs.Where(s => s.Heart && !s.IsDeleted).ToList();
-                        break;
                     case Core.Enums.PlaybackContextType.Artist:
                         // 歌手列表：所有属于当前歌手且未删除的歌曲
                         filteredSongs = allSongs.Where(s => s.Artist == context.Identifier && !s.IsDeleted).ToList();

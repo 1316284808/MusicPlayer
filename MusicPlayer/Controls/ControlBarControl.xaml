@@ -244,13 +244,13 @@
                              PlacementTarget="{Binding ElementName=MusicInfoButton}"
                                Placement="Top"
                            PopupAnimation="Slide" 
-                               HorizontalOffset="-320"   
+                               HorizontalOffset="-270"   
                         AllowsTransparency="True"
                                StaysOpen="False" >
                         <Border Background="#f0f0f0"  
                                 BorderBrush="#d0d0d0" BorderThickness="1"
                                 CornerRadius="8" Padding="5"> 
-                            <StackPanel Width="350" Height="550">
+                            <StackPanel Width="300" Height="500">
                                 <!-- 播放队列标题 -->
                                 <StackPanel Margin="5"  VerticalAlignment="Center">
                                     <TextBlock Text="{Binding QueueTitle}" FontSize="14" 

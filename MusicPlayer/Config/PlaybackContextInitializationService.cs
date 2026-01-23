@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Services.Providers;
@@ -21,19 +21,22 @@ namespace MusicPlayer.Config
         private readonly FavoritesProvider _favoritesProvider;
         private readonly ArtistProvider _artistProvider;
         private readonly AlbumProvider _albumProvider;
+        private readonly CustomPlaylistProvider _customPlaylistProvider;
 
         public PlaybackContextInitializationService(
             IPlaybackContextService playbackContextService,
             IPlaybackContextProvider defaultProvider,
             FavoritesProvider favoritesProvider,
             ArtistProvider artistProvider,
-            AlbumProvider albumProvider)
+            AlbumProvider albumProvider,
+            CustomPlaylistProvider customPlaylistProvider)
         {
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _defaultProvider = defaultProvider ?? throw new ArgumentNullException(nameof(defaultProvider));
             _favoritesProvider = favoritesProvider ?? throw new ArgumentNullException(nameof(favoritesProvider));
             _artistProvider = artistProvider ?? throw new ArgumentNullException(nameof(artistProvider));
             _albumProvider = albumProvider ?? throw new ArgumentNullException(nameof(albumProvider));
+            _customPlaylistProvider = customPlaylistProvider ?? throw new ArgumentNullException(nameof(customPlaylistProvider));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -44,9 +47,10 @@ namespace MusicPlayer.Config
 
                 // 注册各种播放上下文提供者
                 _playbackContextService.RegisterProvider(PlaybackContextType.DefaultPlaylist, _defaultProvider);
-                _playbackContextService.RegisterProvider(PlaybackContextType.Favorites, _favoritesProvider);
+
                 _playbackContextService.RegisterProvider(PlaybackContextType.Artist, _artistProvider);
                 _playbackContextService.RegisterProvider(PlaybackContextType.Album, _albumProvider);
+                _playbackContextService.RegisterProvider(PlaybackContextType.CustomPlaylist, _customPlaylistProvider);
 
                 System.Diagnostics.Debug.WriteLine("PlaybackContextInitializationService: 播放上下文提供者初始化完成");
             }

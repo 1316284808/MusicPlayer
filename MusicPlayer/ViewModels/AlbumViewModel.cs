@@ -26,6 +26,8 @@ namespace MusicPlayer.ViewModels
         private bool _isSearchExpanded = false;
         private readonly List<string> _indexList = new() { "ALL","#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"  };
 
+        private readonly Navigation.NavigationService _navigationService;
+
         /// <summary>
         /// 专辑列表
         /// </summary>
@@ -106,17 +108,31 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public ICommand SearchButtonClickCommand { get; }
 
+        /// <summary>
+        /// 导航到专辑详情页命令
+        /// </summary>
+        public ICommand NavigateToAlbumDetailCommand { get; }
+
+        // 当前播放状态
+        private bool _isPlaying = false;
+        
         public AlbumViewModel(
             IPlaylistDataService playlistDataService,
             IPlaybackContextService playbackContextService,
-            IMessagingService messagingService)
+            IMessagingService messagingService,
+            Navigation.NavigationService navigationService)
         {
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
             PlayAlbumCommand = new RelayCommand<string>(ExecutePlayAlbum);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
+            NavigateToAlbumDetailCommand = new RelayCommand<string>(ExecuteNavigateToAlbumDetail);
+            
+            // 注册消息处理器
+            RegisterMessageHandlers();
 
             LoadAlbums();
         }
@@ -222,6 +238,84 @@ namespace MusicPlayer.ViewModels
 
                 // 发送播放消息
                 _messagingService.Send(new PlaySelectedSongMessage(firstSong));
+            }
+        }
+
+        /// <summary>
+        /// 执行导航到专辑详情页
+        /// </summary>
+        /// <param name="albumName">专辑名称</param>
+        private void ExecuteNavigateToAlbumDetail(string? albumName)
+        {
+            if (string.IsNullOrEmpty(albumName))
+                return;
+
+            System.Diagnostics.Debug.WriteLine($"AlbumViewModel: 准备导航到专辑 {albumName} 的详情页");
+            
+           
+            var navParams = new PlaylistDetailParams
+            {
+                AlbumName = albumName
+            };
+            
+            // 导航到歌单详情页
+            _navigationService.NavigateToPlaylistDetail(navParams);
+        }
+        
+        /// <summary>
+        /// 注册消息处理器
+        /// </summary>
+        private void RegisterMessageHandlers()
+        {
+            // 监听当前歌曲变化消息
+            _messagingService.Register<CurrentSongChangedMessage>(this, OnCurrentSongChanged);
+            
+            // 监听播放状态变化消息
+            _messagingService.Register<PlaybackStateChangedMessage>(this, OnPlaybackStateChanged);
+        }
+        
+        /// <summary>
+        /// 处理当前歌曲变化消息
+        /// </summary>
+        private void OnCurrentSongChanged(object recipient, CurrentSongChangedMessage message)
+        {
+            UpdateAlbumPlayingState(message.Value, _isPlaying);
+        }
+        
+        /// <summary>
+        /// 处理播放状态变化消息
+        /// </summary>
+        private void OnPlaybackStateChanged(object recipient, PlaybackStateChangedMessage message)
+        {
+            _isPlaying = message.Value;
+            UpdateAlbumPlayingState(_playlistDataService.CurrentSong, _isPlaying);
+        }
+        
+        /// <summary>
+        /// 更新专辑播放状态
+        /// </summary>
+        private void UpdateAlbumPlayingState(Core.Models.Song? currentSong, bool isPlaying)
+        {
+            // 先重置所有专辑的播放状态
+            foreach (var album in _albums)
+            {
+                album.IsPlaying = false;
+            }
+            
+            // 如果有当前播放歌曲，且专辑不为空，则更新对应专辑的播放状态
+            if (currentSong != null && !string.IsNullOrEmpty(currentSong.Album))
+            {
+                var album = _albums.FirstOrDefault(a => 
+                    string.Equals(a.Name, currentSong.Album, StringComparison.OrdinalIgnoreCase));
+                
+                if (album != null)
+                {
+                    // 从PlayerStateService获取当前播放上下文
+                    var context = _playbackContextService.CurrentPlaybackContext;
+                    album.IsPlaying = isPlaying && 
+                                      context.Type == Core.Enums.PlaybackContextType.Album && 
+                                      string.Equals(context.Identifier, album.Name, StringComparison.OrdinalIgnoreCase);
+                }
             }
         }
 

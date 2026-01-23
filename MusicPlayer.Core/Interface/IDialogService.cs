@@ -47,5 +47,11 @@ namespace MusicPlayer.Core.Interface
         /// <param name="message">消息内容</param>
         /// <param name="title">标题</param>
         void ShowInformation(string message, string title = "信息");
+        
+        /// <summary>
+        /// 显示新建歌单对话框
+        /// </summary>
+        /// <returns>返回歌单名称和描述，如果取消则返回null</returns>
+        Task<string[]> ShowCreatePlaylistDialogAsync(string title);
     }
 }

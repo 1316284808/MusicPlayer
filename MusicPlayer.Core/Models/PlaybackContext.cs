@@ -41,20 +41,6 @@ namespace MusicPlayer.Core.Models
         }
 
         /// <summary>
-        /// 创建收藏列表上下文
-        /// </summary>
-        /// <returns>收藏列表上下文实例</returns>
-        public static PlaybackContext CreateFavorites()
-        {
-            return new PlaybackContext
-            {
-                Type = PlaybackContextType.Favorites,
-                Identifier = "Favorites",
-                DisplayName = "收藏列表"
-            };
-        }
-
-        /// <summary>
         /// 创建歌手上下文
         /// </summary>
         /// <param name="artistName">歌手名称</param>

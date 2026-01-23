@@ -1,0 +1,150 @@
+<UserControl x:Class="MusicPlayer.Controls.HeartControl"
+                         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MusicPlayer.Controls"
+              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <Grid  >
+        <Grid.RowDefinitions>
+
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
+            <TextBlock  Text="歌单列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
+        </StackPanel>
+
+      
+
+        <Grid Grid.Row="1" Height="100" Margin="15"  >
+            <Rectangle Stroke="Black" StrokeThickness="1" StrokeDashArray="4 2"
+               RadiusX="8" RadiusY="8" />
+            <StackPanel Orientation="Vertical"   VerticalAlignment="Center">
+
+
+                <ui:Button   ToolTip="选择目录"  
+                           HorizontalAlignment="Center"
+                           Width="auto" 
+                          Padding="5" Margin="5"  >
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="NewFolder"  />
+                        <Separator Margin="2" />
+                        <ui:TextBlock Text="选择目录"/>
+                    </StackPanel>
+             </ui:Button>
+            <ui:TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.7"
+           Text="将文件夹拖到此处，将自动识别文件导入到默认列表"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2"  Margin="10" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0">
+               
+                <ui:Button    ToolTip="新建歌单"  Command="{Binding CreatePlaylistCommand}"
+   HorizontalAlignment="Left"
+   Width="auto" 
+  Padding="5" Margin="5"  >
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon Kind="Add"  /> 
+                        <Separator Margin="2" />
+                        <ui:TextBlock Text="新建歌单"/>
+                    </StackPanel>
+                </ui:Button>
+
+            </StackPanel>
+            <!--直接将ListView放置在Grid单元格中，不使用StackPanel作为中间容器-->
+            <ui:ListView x:Name="PlaylistListBox"  Grid.Row="1"
+                             ItemsSource="{Binding MusicGroups}" 
+                             SelectedItem="{Binding SelectedPlaylist, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0" AlternationCount="2"  
+        
+ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+ScrollViewer.VerticalScrollBarVisibility="Auto"
+ScrollViewer.CanContentScroll="True"
+VirtualizingStackPanel.IsVirtualizing="True"
+VirtualizingStackPanel.VirtualizationMode="Recycling"
+VirtualizingStackPanel.ScrollUnit="Pixel"
+VirtualizingStackPanel.CacheLength="5,5"
+VirtualizingStackPanel.CacheLengthUnit="Item"
+Helper:PlaylistScrollBehavior.IsEnabled="True" 
+SelectionMode="Single"
+Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
+Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
+  Helper:PlaylistInteractionBehavior.IsEnabled="True"
+Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
+
+                <ui:ListView.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <!-- 优化虚拟化性能的设置 -->
+                        <Setter Property="Padding" Value="5,10"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="ItemBorder" Margin="0,0,15,0" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+
+                        
+
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#80FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#4DFFFFFF" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ui:ListView.ItemContainerStyle>
+                <ui:ListView.ItemTemplate>
+                    <DataTemplate >
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 歌单封面 -->
+                            <Border Grid.Column="0"  Width="40" Height="40" CornerRadius="8" Background="#1AFFFFFF" Margin="0,0,8,0">
+                                <Grid>
+                                  
+                                </Grid>
+                            </Border>
+
+                            <!-- 歌单信息 -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
+                                <TextBlock Text="{Binding Description}" FontSize="12"     Opacity="0.7"   />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ui:ListView.ItemTemplate>
+            </ui:ListView>
+
+
+          
+        </Grid>
+    </Grid>
+
+
+</UserControl>
+
