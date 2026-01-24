@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using MusicPlayer.Services.Messages;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace MusicPlayer.Controls
 {
@@ -25,6 +27,13 @@ namespace MusicPlayer.Controls
         public PlaylistDetailControl()
         {
             InitializeComponent();
+
+            // 注册消息处理器，处理搜索框焦点请求
+            WeakReferenceMessenger.Default.Register<SearchBoxFocusRequestMessage>(this, (recipient, message) =>
+            {
+                // 处理搜索框焦点请求
+                SearchTextBox.Focus();
+            });
         }
         protected virtual void Dispose(bool disposing)
         {
@@ -33,10 +42,10 @@ namespace MusicPlayer.Controls
                 if (disposing)
                 {
                     // 取消消息订阅
-                    //WeakReferenceMessenger.Default.UnregisterAll(this);
-                    //this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
-                    //this.Content = null;     // 清空页面内容，释放UI资源
-                    //_disposed = true;
+                    WeakReferenceMessenger.Default.UnregisterAll(this);
+                    this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
+                    this.Content = null;     // 清空页面内容，释放UI资源
+                    _disposed = true;
                 }
                 _disposed = true;
             }

@@ -17,13 +17,15 @@ namespace MusicPlayer.Services.Handlers
         private readonly IPlayerStateService _playerStateService;
         private readonly IPlayerService _playerService;
         private readonly IPlaylistDataService _playlistDataService;
+        private readonly IPlaybackContextService _playbackContextService;
         private bool _disposed = false;
 
         public PlayerControlMessageHandler(
             IMessagingService messagingService,
             IPlayerStateService playerStateService,
             IPlayerService playerService,
-            IPlaylistDataService playlistDataService)
+            IPlaylistDataService playlistDataService,
+            IPlaybackContextService playbackContextService)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: 创建新实例，ID: {GetHashCode()}");
@@ -33,6 +35,7 @@ namespace MusicPlayer.Services.Handlers
             _playerStateService = playerStateService;
             _playerService = playerService;
             _playlistDataService = playlistDataService;
+            _playbackContextService = playbackContextService;
 
             RegisterMessageHandlers();
         }
@@ -92,6 +95,16 @@ namespace MusicPlayer.Services.Handlers
                     {
                         // 加载第一首歌曲
                         var firstSong = dataSource[0];
+                        
+                        // 设置当前歌曲到PlaylistDataService
+                        _playlistDataService.CurrentSong = firstSong;
+                        
+                        // 设置播放上下文为默认列表
+                        var context = PlaybackContext.CreateDefault();
+                        _playbackContextService.SetPlaybackContext(context.Type, context.Identifier, context.DisplayName);
+                        
+                        System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: 设置播放上下文为默认列表");
+                        
                         _playerService.LoadSong(firstSong);
                         _playerService.StartPlayback();
                     }

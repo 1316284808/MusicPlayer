@@ -31,9 +31,16 @@ namespace MusicPlayer.ViewModels
 
         // 过滤后的播放列表
         private readonly ObservableCollection<Song> _filteredPlaylist = new();
+        // 原始歌曲列表，用于保存未过滤的所有歌曲
+        private List<Song> _allSongs = new();
         private string _searchText = string.Empty;
         private Song? _currentPlaylistItem;
         private Playlist _currentPlaylist = new Playlist();
+        
+        // 添加字段保存当前的播放上下文类型和标识符
+        private PlaybackContextType _currentContextType;
+        private string _currentContextIdentifier = string.Empty;
+        private string _currentContextDisplayName = string.Empty;
 
         /// <summary>
         /// 当前歌单
@@ -77,6 +84,23 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(SearchText));
                     // 更新过滤后的播放列表
                     UpdateFilteredPlaylist();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 搜索框是否展开
+        /// </summary>
+        private bool _isSearchExpanded = false;
+        public bool IsSearchExpanded
+        {
+            get => _isSearchExpanded;
+            set
+            {
+                if (_isSearchExpanded != value)
+                {
+                    _isSearchExpanded = value;
+                    OnPropertyChanged(nameof(IsSearchExpanded));
                 }
             }
         }
@@ -189,10 +213,17 @@ namespace MusicPlayer.ViewModels
                 // 根据导航参数类型加载对应内容
                 if (@params.PlaylistId.HasValue)
                 {
+                    _currentContextType = PlaybackContextType.CustomPlaylist;
+                    _currentContextIdentifier = @params.PlaylistId.Value.ToString();
+                    _currentContextDisplayName = @params.PlaylistId.Value.ToString();
                     LoadCurrentPlaylistAsync(@params.PlaylistId.Value);
                 }
                 else if (!string.IsNullOrEmpty(@params.ArtistName))
                 {
+                    _currentContextType = PlaybackContextType.Artist;
+                    _currentContextIdentifier = @params.ArtistName;
+                    _currentContextDisplayName = @params.ArtistName;
+                    
                     // 立即设置当前歌单为虚拟歌单（显示歌手名称）
                     CurrentPlaylist = new Playlist
                     {
@@ -206,6 +237,10 @@ namespace MusicPlayer.ViewModels
                 }
                 else if (!string.IsNullOrEmpty(@params.AlbumName))
                 {
+                    _currentContextType = PlaybackContextType.Album;
+                    _currentContextIdentifier = @params.AlbumName;
+                    _currentContextDisplayName = @params.AlbumName;
+                    
                     // 立即设置当前歌单为虚拟歌单（显示专辑名称）
                     CurrentPlaylist = new Playlist
                     {
@@ -224,6 +259,10 @@ namespace MusicPlayer.ViewModels
                 System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 使用播放上下文初始化");
                 
                 var context = _playbackContextService.CurrentPlaybackContext;
+                _currentContextType = context.Type;
+                _currentContextIdentifier = context.Identifier;
+                _currentContextDisplayName = context.DisplayName;
+                
                 if (context.Type == PlaybackContextType.CustomPlaylist)
                 {
                     if (int.TryParse(context.Identifier, out int playlistId))
@@ -282,6 +321,9 @@ namespace MusicPlayer.ViewModels
                 
                 System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 找到 {songs.Count} 首 {artistName} 的歌曲");
                 
+                // 更新原始歌曲列表
+                _allSongs = songs.ToList();
+                
                 // 更新过滤后的播放列表
                 _filteredPlaylist.Clear();
                 foreach (var song in songs)
@@ -320,6 +362,9 @@ namespace MusicPlayer.ViewModels
                     .ToList();
                 
                 System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 找到 {songs.Count} 首 {albumName} 的歌曲");
+                
+                // 更新原始歌曲列表
+                _allSongs = songs.ToList();
                 
                 // 更新过滤后的播放列表
                 _filteredPlaylist.Clear();
@@ -362,6 +407,8 @@ namespace MusicPlayer.ViewModels
                 if (playlist != null)
                 {
                     CurrentPlaylist = playlist;
+                    // 更新显示名称为歌单名称
+                    _currentContextDisplayName = playlist.Name;
                 }
             }
             catch (Exception ex)
@@ -388,6 +435,9 @@ namespace MusicPlayer.ViewModels
                     .ToList();
                 
                 System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 找到 {songs.Count} 首 {artistName} 的歌曲");
+                
+                // 更新原始歌曲列表
+                _allSongs = songs.ToList();
                 
                 // 更新过滤后的播放列表
                 _filteredPlaylist.Clear();
@@ -417,6 +467,9 @@ namespace MusicPlayer.ViewModels
             try
             {
                 var songs = await _playlistCacheService.GetSongsByPlaylistIdAsync(_currentPlaylist.Id);
+                
+                // 更新原始歌曲列表
+                _allSongs = songs.ToList();
                 
                 // 更新过滤后的播放列表
                 _filteredPlaylist.Clear();
@@ -461,8 +514,8 @@ namespace MusicPlayer.ViewModels
             // 这里不需要重新加载数据，因为我们已经有了歌单的所有歌曲
             // 只需要根据搜索文本过滤即可
             var filteredSongs = string.IsNullOrWhiteSpace(_searchText)
-                ? _filteredPlaylist.ToList()
-                : _filteredPlaylist.Where(song => 
+                ? _allSongs.ToList()
+                : _allSongs.Where(song => 
                     (song.Title != null && song.Title.ToLower().Contains(_searchText.ToLower(), System.StringComparison.OrdinalIgnoreCase)) ||
                     (song.Artist != null && song.Artist.ToLower().Contains(_searchText.ToLower(), System.StringComparison.OrdinalIgnoreCase)) ||
                     (song.Album != null && song.Album.ToLower().Contains(_searchText.ToLower(), System.StringComparison.OrdinalIgnoreCase))).ToList();
@@ -488,6 +541,15 @@ namespace MusicPlayer.ViewModels
                 {
                     IsPlaying= true;
                     OnPropertyChanged(nameof(IsPlaying));
+                    
+                    // 设置播放上下文
+                    _playbackContextService.SetPlaybackContext(
+                        _currentContextType,
+                        _currentContextIdentifier,
+                        _currentContextDisplayName);
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 设置播放上下文为 {_currentContextType}: {_currentContextDisplayName}");
+                    
                     // 发送播放消息
                     var firstSong = _filteredPlaylist.First();
                     _messagingService.Send(new SongSelectionMessage(firstSong, 0));
@@ -504,8 +566,21 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         private void ExecuteSearchButtonClick()
         {
-            // 更新过滤后的播放列表
-            UpdateFilteredPlaylist();
+            if (!IsSearchExpanded)
+            {
+                // 第一次点击：展开搜索框并发送焦点请求消息
+                IsSearchExpanded = true;
+                // 发送消息通知UI获取焦点
+                _messagingService.Send(new SearchBoxFocusRequestMessage());
+            }
+            else
+            {
+                // 第二次点击：清空搜索文本并折叠搜索框
+                SearchText = string.Empty;
+                IsSearchExpanded = false;
+                // 刷新列表
+                UpdateFilteredPlaylist();
+            }
         }
 
         /// <summary>
@@ -518,6 +593,14 @@ namespace MusicPlayer.ViewModels
             {
                 try
                 {
+                    // 设置播放上下文
+                    _playbackContextService.SetPlaybackContext(
+                        _currentContextType,
+                        _currentContextIdentifier,
+                        _currentContextDisplayName);
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 设置播放上下文为 {_currentContextType}: {_currentContextDisplayName}");
+                    
                     // 发送播放消息
                     int index = _filteredPlaylist.IndexOf(song);
                     _messagingService.Send(new SongSelectionMessage(song, index));

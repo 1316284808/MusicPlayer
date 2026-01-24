@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Navigation;
 using MusicPlayer.Page;
@@ -10,6 +11,7 @@ using MusicPlayer.Services.Messages;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -29,6 +31,7 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IPlaylistViewModel _playlistViewModel;
         private readonly IPlaybackContextService _playbackContextService;
+        private readonly IPlaylistCacheService _playlistCacheService;
         private bool _isUserDragging = false; // 标记用户是否正在拖拽进度条
         private double _dragPosition = 0.0; // 拖动过程中的临时位置
         private bool _isVolumeFlyoutOpen = false; // 音量弹出层打开状态
@@ -85,6 +88,8 @@ namespace MusicPlayer.ViewModels
                             return $"正在播放[歌手:{context.Identifier}]";
                         case Core.Enums.PlaybackContextType.Album:
                             return $"正在播放[专辑:{context.Identifier}]";
+                        case Core.Enums.PlaybackContextType.CustomPlaylist:
+                            return $"正在播放[歌单:{context.DisplayName}]";
                         default:
                             return "正在播放[默认列表]";
                     }
@@ -388,7 +393,7 @@ namespace MusicPlayer.ViewModels
 
         private readonly NavigationService _navigationService;
 
-        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService, IPlaylistViewModel playlistViewModel, IPlaybackContextService playbackContextService)
+        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService, IPlaylistViewModel playlistViewModel, IPlaybackContextService playbackContextService, IPlaylistCacheService playlistCacheService)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 创建新实例，ID: {GetHashCode()}");
@@ -401,9 +406,11 @@ namespace MusicPlayer.ViewModels
             _playlistDataService = playlistDataService;
             _playlistViewModel = playlistViewModel;
             _playbackContextService = playbackContextService;
+            _playlistCacheService = playlistCacheService;
             
             // 初始化当前上下文播放队列
-            UpdateCurrentContextPlaylist();
+            // 使用Task.Run处理异步调用，避免构造函数阻塞
+            _ = Task.Run(async () => await UpdateCurrentContextPlaylistAsync());
 
             // 初始化命令
             PlayPauseCommand = new RelayCommand(ExecutePlayPause);
@@ -784,7 +791,7 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 切换播放队列弹出层的显示状态
         /// </summary>
-        private void ExecuteToggleQueueFlyout()
+        private async void ExecuteToggleQueueFlyout()
         {
             // 切换播放队列弹出层的显示状态
             IsQueueFlyoutOpen = !IsQueueFlyoutOpen;
@@ -792,7 +799,7 @@ namespace MusicPlayer.ViewModels
             // 每次打开时更新当前上下文播放队列
             if (IsQueueFlyoutOpen)
             {
-                UpdateCurrentContextPlaylist();
+                await UpdateCurrentContextPlaylistAsync();
             }
             
             System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 切换播放队列弹出层状态为: {IsQueueFlyoutOpen}");
@@ -801,16 +808,13 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 更新当前播放上下文的播放队列
         /// </summary>
-        private void UpdateCurrentContextPlaylist()
+        private async Task UpdateCurrentContextPlaylistAsync()
         {
             try
             {
                 // 获取当前播放上下文
                 var context = _playbackContextService.CurrentPlaybackContext;
                 System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 正在更新当前上下文播放队列，上下文类型: {context.Type}, 标识符: {context.Identifier}");
-                
-                // 获取当前播放列表数据
-                var allSongs = _playlistDataService.DataSource;
                 
                 // 根据上下文类型过滤歌曲
                 var filteredSongs = new List<Core.Models.Song>();
@@ -819,18 +823,30 @@ namespace MusicPlayer.ViewModels
                 {
                     case Core.Enums.PlaybackContextType.DefaultPlaylist:
                         // 默认列表：所有未删除的歌曲
+                        var allSongs = _playlistDataService.DataSource;
                         filteredSongs = allSongs.Where(s => !s.IsDeleted).ToList();
                         break;
                     case Core.Enums.PlaybackContextType.Artist:
                         // 歌手列表：所有属于当前歌手且未删除的歌曲
+                        allSongs = _playlistDataService.DataSource;
                         filteredSongs = allSongs.Where(s => s.Artist == context.Identifier && !s.IsDeleted).ToList();
                         break;
                     case Core.Enums.PlaybackContextType.Album:
                         // 专辑列表：所有属于当前专辑且未删除的歌曲
+                        allSongs = _playlistDataService.DataSource;
                         filteredSongs = allSongs.Where(s => s.Album == context.Identifier && !s.IsDeleted).ToList();
+                        break;
+                    case Core.Enums.PlaybackContextType.CustomPlaylist:
+                        // 自定义歌单：所有属于当前歌单且未删除的歌曲
+                        if (int.TryParse(context.Identifier, out int playlistId))
+                        {
+                            var customPlaylistSongs = await _playlistCacheService.GetSongsByPlaylistIdAsync(playlistId);
+                            filteredSongs = customPlaylistSongs.Where(s => !s.IsDeleted).ToList();
+                        }
                         break;
                     default:
                         // 默认情况：所有未删除的歌曲
+                        allSongs = _playlistDataService.DataSource;
                         filteredSongs = allSongs.Where(s => !s.IsDeleted).ToList();
                         break;
                 }

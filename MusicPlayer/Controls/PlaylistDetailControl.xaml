@@ -6,8 +6,14 @@
              xmlns:local="clr-namespace:MusicPlayer.Controls"
               xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+             xmlns:converters="clr-namespace:MusicPlayer.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
+        <!-- 搜索框宽度转换器 -->
+        <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -30,37 +36,37 @@
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 播放全部按钮 --> 
-            <ui:Button  Grid.Column="0" ToolTip="播放全部"   Command="{Binding PlayAllCommand}"
-              HorizontalAlignment="Center"
-              Width="auto" 
-             Padding="5" Margin="5"  >
-                <StackPanel Orientation="Horizontal">
-                    <Helper:CustomIcon  >
-                        <Helper:CustomIcon.Style>
-                            <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
-                                <!-- 默认显示播放图标 -->
-                                <Setter Property="Kind" Value="Play"/>
-                                <Style.Triggers>
-                                    <!-- 播放时显示暂停图标 -->
-                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
-                                        <Setter Property="Kind" Value="Pause"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Helper:CustomIcon.Style>
-                    </Helper:CustomIcon>
-                    <Separator Margin="2" />
-                    <ui:TextBlock Text="播放全部"/>
-                </StackPanel>
-            </ui:Button>
+            <!-- 播放全部按钮 -->
+            <StackPanel  Grid.Column="0" Orientation="Horizontal">
+                <ui:Button    ToolTip="播放全部"   Command="{Binding PlayAllCommand}"
+ HorizontalAlignment="Left"
+ Width="auto" 
+Padding="5" Margin="5"  >
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
+                        <Separator Margin="2" />
+                        <ui:TextBlock Text="播放全部"/>
+                    </StackPanel>
+                </ui:Button>
+                <ui:Button    ToolTip="随机播放"   Command="{Binding PlayAllCommand}"
+ HorizontalAlignment="Left"
+ Width="auto" 
+Padding="5" Margin="5"  >
+                    <StackPanel Orientation="Horizontal">
+                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle"  />
+                        <Separator Margin="2" />
+                        <ui:TextBlock Text="随机播放"/>
+                    </StackPanel>
+                </ui:Button>
+            </StackPanel>
+
 
             <!-- 搜索区域 -->
             <ui:Button Grid.Column="2" Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Helper:CustomIcon Kind="Search" />
                     <Separator Margin="2" />
-                    <TextBox x:Name="SearchTextBox" Width="200"
+                    <TextBox x:Name="SearchTextBox" Width="{Binding IsSearchExpanded, Converter={StaticResource SearchBoxWidthConverter}}"
                           FontSize="14" FontWeight="Normal"  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"   
                           HorizontalAlignment="Left" VerticalAlignment="Center"   
                           MaxLength="20"

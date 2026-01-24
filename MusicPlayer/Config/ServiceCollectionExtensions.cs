@@ -255,7 +255,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IConfigurationService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaylistViewModel>(),
-                    provider.GetRequiredService<IPlaybackContextService>());
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<IPlaylistCacheService>());
                 System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
@@ -291,8 +292,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IConfigurationService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
-
-                    provider.GetRequiredService<ICustomPlaylistService>()));
+                    provider.GetRequiredService<ICustomPlaylistService>(),
+                    provider.GetRequiredService<IPlaybackContextService>()));
             
             // SettingsPageViewModel - 单例模式
             services.AddSingleton<ISettingsPageViewModel, SettingsPageViewModel>(provider => 
@@ -330,7 +331,9 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
                     provider.GetRequiredService<IDialogService>(),
-                    provider.GetRequiredService<IPlaylistCacheService>())); 
+                    provider.GetRequiredService<IPlaylistCacheService>(),
+                    provider.GetRequiredService<IPlaylistService>(),
+                    provider.GetRequiredService<INotificationService>())); 
            
             // PlaylistDetailViewModel - 单例模式
             services.AddSingleton<IPlaylistDetailViewModel>(provider => 
@@ -398,7 +401,12 @@ namespace MusicPlayer.Config
         public static IServiceCollection AddMessageServices(this IServiceCollection services)
         {
             // 所有消息处理器注册为单例模式
-            services.AddSingleton<PlayerControlMessageHandler>();
+            services.AddSingleton<PlayerControlMessageHandler>(provider => new PlayerControlMessageHandler(
+                provider.GetRequiredService<IMessagingService>(),
+                provider.GetRequiredService<IPlayerStateService>(),
+                provider.GetRequiredService<IPlayerService>(),
+                provider.GetRequiredService<IPlaylistDataService>(),
+                provider.GetRequiredService<IPlaybackContextService>()));
             services.AddSingleton<PlaylistMessageHandler>(); 
             services.AddSingleton<SystemMessageHandler>(provider =>
                 new SystemMessageHandler(

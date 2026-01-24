@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
@@ -25,10 +26,10 @@ namespace MusicPlayer.Helper
                 typeof(NewPlaylistAlbumArtBehavior),
                 new PropertyMetadata(false, OnIsEnabledChanged));
 
-        public static readonly DependencyProperty ViewModelProperty =
+        public static readonly DependencyProperty ViewModelProperty = 
             DependencyProperty.RegisterAttached(
                 "ViewModel",
-                typeof(IPlaylistViewModel),
+                typeof(object),
                 typeof(NewPlaylistAlbumArtBehavior),
                 new PropertyMetadata(null));
 
@@ -42,12 +43,12 @@ namespace MusicPlayer.Helper
             obj.SetValue(IsEnabledProperty, value);
         }
 
-        public static IPlaylistViewModel GetViewModel(DependencyObject obj)
+        public static object GetViewModel(DependencyObject obj)
         {
-            return (IPlaylistViewModel)obj.GetValue(ViewModelProperty);
+            return obj.GetValue(ViewModelProperty);
         }
 
-        public static void SetViewModel(DependencyObject obj, IPlaylistViewModel value)
+        public static void SetViewModel(DependencyObject obj, object value)
         {
             obj.SetValue(ViewModelProperty, value);
         }
@@ -89,9 +90,9 @@ namespace MusicPlayer.Helper
                 if (viewModel == null)
                 {
                     var listBox = FindVisualParent<System.Windows.Controls.ListBox>(scrollViewer);
-                    if (listBox?.DataContext is IPlaylistViewModel dataContextViewModel)
+                    if (listBox?.DataContext != null)
                     {
-                        viewModel = dataContextViewModel;
+                        viewModel = listBox.DataContext;
                         System.Diagnostics.Debug.WriteLine("NewPlaylistAlbumArtBehavior: 从父级ListBox的DataContext获取ViewModel");
                     }
                 }
@@ -101,8 +102,9 @@ namespace MusicPlayer.Helper
                     // 滚动事件处理懒加载
                     scrollViewer.ScrollChanged += OnScrollChanged;
                     
-                    // 监听FilteredPlaylist集合的变化
-                    if (viewModel.FilteredPlaylist is INotifyCollectionChanged filteredCollection)
+                    // 获取FilteredPlaylist集合
+                    var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                    if (filteredPlaylist is INotifyCollectionChanged filteredCollection)
                     {
                         filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
                             // 延迟一小段时间，确保UI更新完成后再加载封面
@@ -197,10 +199,10 @@ namespace MusicPlayer.Helper
             {
                 System.Diagnostics.Debug.WriteLine("NewPlaylistAlbumArtBehavior: ListBox DataContext已变化，重新初始化封面加载");
                 
-                // 检查新的DataContext是否为IPlaylistViewModel
-                if (e.NewValue is IPlaylistViewModel viewModel)
+                // 检查新的DataContext是否为IPlaylistViewModel或IPlaylistDetailViewModel
+                if (e.NewValue is IPlaylistViewModel || e.NewValue is IPlaylistDetailViewModel)
                 {
-                    InitializeCoverLoading(listBox, viewModel);
+                    InitializeCoverLoading(listBox, e.NewValue);
                 }
             }
         }
@@ -212,9 +214,9 @@ namespace MusicPlayer.Helper
                 System.Diagnostics.Debug.WriteLine("NewPlaylistAlbumArtBehavior: ListBox已加载，初始化封面加载");
                 
                 // 尝试从DataContext获取ViewModel
-                if (listBox.DataContext is IPlaylistViewModel viewModel)
+                if (listBox.DataContext is IPlaylistViewModel || listBox.DataContext is IPlaylistDetailViewModel)
                 {
-                    InitializeCoverLoading(listBox, viewModel);
+                    InitializeCoverLoading(listBox, listBox.DataContext);
                 }
             }
         }
@@ -228,14 +230,14 @@ namespace MusicPlayer.Helper
                 System.Diagnostics.Debug.WriteLine("NewPlaylistAlbumArtBehavior: 找到ListBox内部的ScrollViewer");
                 
                 // 尝试从ListBox的DataContext获取ViewModel
-                if (listBox.DataContext is IPlaylistViewModel viewModel)
+                if (listBox.DataContext is IPlaylistViewModel || listBox.DataContext is IPlaylistDetailViewModel)
                 {
-                    InitializeCoverLoading(listBox, viewModel);
+                    InitializeCoverLoading(listBox, listBox.DataContext);
                 }
             }
         }
 
-        private static void InitializeCoverLoading(System.Windows.Controls.ListBox listBox, IPlaylistViewModel viewModel)
+        private static void InitializeCoverLoading(System.Windows.Controls.ListBox listBox, object viewModel)
         {
             try
             {
@@ -254,8 +256,11 @@ namespace MusicPlayer.Helper
                 // 重新添加事件绑定
                 scrollViewer.ScrollChanged += OnScrollChanged;
                 
+                // 获取过滤后的播放列表
+                var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                
                 // 监听FilteredPlaylist集合的变化
-                if (viewModel.FilteredPlaylist is INotifyCollectionChanged filteredCollection)
+                if (filteredPlaylist is INotifyCollectionChanged filteredCollection)
                 {
                     filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
                         // 延迟一小段时间，确保UI更新完成后再加载封面
@@ -283,7 +288,7 @@ namespace MusicPlayer.Helper
         // 节流计时器，用于限制滚动事件处理频率
         private static System.Windows.Threading.DispatcherTimer? _scrollThrottleTimer;
         private static ScrollViewer? _pendingScrollViewer;
-        private static IPlaylistViewModel? _pendingViewModel;
+        private static object? _pendingViewModel;
         private static Rect _pendingViewport;
         private static System.Windows.Point _pendingScrollOffset;
         
@@ -300,9 +305,9 @@ namespace MusicPlayer.Helper
                     if (viewModel == null)
                     {
                         var listBox = FindVisualParent<System.Windows.Controls.ListBox>(scrollViewer);
-                        if (listBox?.DataContext is IPlaylistViewModel dataContextViewModel)
+                        if (listBox?.DataContext != null)
                         {
-                            viewModel = dataContextViewModel;
+                            viewModel = listBox.DataContext;
                         }
                     }
                     
@@ -369,7 +374,7 @@ namespace MusicPlayer.Helper
             }
         }
 
-        private static async Task LoadVisibleSongCoversAsync(IPlaylistViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
+        private static async Task LoadVisibleSongCoversAsync(object viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
         {
             try
             {
@@ -385,10 +390,13 @@ namespace MusicPlayer.Helper
                     viewport.Height * (1 + 2 * preloadFactor)
                 );
                 
+                // 获取过滤后的播放列表
+                var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                
                 // 遍历过滤后的歌曲项，找出需要加载封面的歌曲
-                for (int i = 0; i < viewModel.FilteredPlaylist.Count; i++)
+                for (int i = 0; i < filteredPlaylist.Count; i++)
                 {
-                    var song = viewModel.FilteredPlaylist[i];
+                    var song = filteredPlaylist[i];
                     
                     // 跳过已有封面的项
                     if (song.AlbumArt != null) continue;
@@ -428,7 +436,7 @@ namespace MusicPlayer.Helper
             }
         }
 
-        private static async Task CleanupInvisibleSongCovers(IPlaylistViewModel viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
+        private static async Task CleanupInvisibleSongCovers(object viewModel, ScrollViewer scrollViewer, Rect viewport, Point scrollOffset)
         {
             try
             {
@@ -442,10 +450,13 @@ namespace MusicPlayer.Helper
                     viewport.Height * (1 + 2 * cleanupFactor)
                 );
                 
+                // 获取过滤后的播放列表
+                var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                
                 // 遍历过滤后的歌曲项
-                for (int i = 0; i < viewModel.FilteredPlaylist.Count; i++)
+                for (int i = 0; i < filteredPlaylist.Count; i++)
                 {
-                    var song = viewModel.FilteredPlaylist[i];
+                    var song = filteredPlaylist[i];
                     
                     // 跳过没有封面的项
                     if (song.AlbumArt == null) continue;
@@ -541,6 +552,24 @@ namespace MusicPlayer.Helper
             }
 
             return null;
+        }
+
+        // 获取FilteredPlaylist集合
+        private static ObservableCollection<Song> GetFilteredPlaylist(object viewModel)
+        {
+            if (viewModel is IPlaylistViewModel playlistViewModel)
+            {
+                return playlistViewModel.FilteredPlaylist;
+            }
+            else if (viewModel is IPlaylistDetailViewModel playlistDetailViewModel)
+            {
+                return playlistDetailViewModel.FilteredPlaylist;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"NewPlaylistAlbumArtBehavior: 未知的ViewModel类型: {viewModel.GetType().FullName}");
+                return new ObservableCollection<Song>();
+            }
         }
 
         // 查找可视化子元素

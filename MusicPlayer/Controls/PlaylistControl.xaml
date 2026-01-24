@@ -32,26 +32,32 @@
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
             <TextBlock  Text="默认列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
             </StackPanel>
-
-        <ui:Button   Grid.Row="1"  ToolTip="播放全部"   Command="{Binding PlayAllCommand}"
-   HorizontalAlignment="Left"
-   Width="auto" 
-  Padding="5" Margin="5"  >
-            <StackPanel Orientation="Horizontal">
-                <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
-                <Separator Margin="2" />
-                <ui:TextBlock Text="播放全部"/>
-            </StackPanel>
-        </ui:Button>
+        <StackPanel  Grid.Row="1" Orientation="Horizontal">
+            <ui:Button    ToolTip="播放全部"  
+ HorizontalAlignment="Left"
+ Width="auto" 
+Padding="5" Margin="5"  >
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="播放全部"/>
+                </StackPanel>
+            </ui:Button>
+            <ui:Button    ToolTip="随机播放"   
+ HorizontalAlignment="Left"
+ Width="auto" 
+Padding="5" Margin="5"  >
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle"  />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="随机播放"/>
+                </StackPanel>
+            </ui:Button>
+        </StackPanel>
+       
 
 
         <StackPanel Grid.Row="1" VerticalAlignment="Center"    HorizontalAlignment="Right" Orientation="Horizontal"> 
-                <!-- 添加按钮 -->
-                <ui:Button    Command="{Binding AddMusicCommand}" ToolTip="添加音乐文件"
-           Margin="0,0,5,0"
-           Background="Transparent"  BorderThickness="0" >
-                    <Helper:CustomIcon Kind="Add"    />
-                </ui:Button>
 
                 <!-- 排序下拉按钮 -->
 

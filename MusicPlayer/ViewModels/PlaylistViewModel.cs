@@ -43,6 +43,7 @@ namespace MusicPlayer.ViewModels
         private readonly IConfigurationService? _configurationService;
         private readonly IPlaylistDataService _playlistDataService;
         private readonly ICustomPlaylistService _customPlaylistService;
+        private readonly IPlaybackContextService _playbackContextService;
         
         // 所有歌单列表
         private readonly ObservableCollection<Playlist> _allPlaylists = new();
@@ -181,11 +182,6 @@ namespace MusicPlayer.ViewModels
         public ICommand ClearPlaylistCommand { get; }
 
         /// <summary>
-        /// 添加播放列表
-        /// </summary>
-        public ICommand AddMusicCommand { get; }
-
-        /// <summary>
         /// 搜索按钮点击命令
         /// </summary>
         public ICommand SearchButtonClickCommand { get; }
@@ -275,12 +271,13 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _customPlaylistService = customPlaylistService ?? throw new ArgumentNullException(nameof(customPlaylistService));
+            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -292,7 +289,6 @@ namespace MusicPlayer.ViewModels
             PlaySelectedSongCommand = new RelayCommand<Song>(ExecutePlaySelectedSong);
             DeleteSelectedSongCommand = new RelayCommand<Song>(ExecuteDeleteSelectedSong);
             ClearPlaylistCommand = new RelayCommand(ExecuteClearPlaylist);
-            AddMusicCommand = new RelayCommand(async () => await ExecuteAddMusic()); 
             SortCommand = new RelayCommand<string>(ExecuteSort);
             SelectSortOptionCommand = new RelayCommand<SortOption>(ExecuteSelectSortOption);
             ToggleSongHeartCommand = new RelayCommand<Song>(ExecuteToggleSongHeart);
@@ -462,6 +458,12 @@ namespace MusicPlayer.ViewModels
         {
             if (song != null)
             {
+                // 设置播放上下文为默认列表
+                var context = PlaybackContext.CreateDefault();
+                _playbackContextService.SetPlaybackContext(context.Type, context.Identifier, context.DisplayName);
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 设置播放上下文为默认列表");
+                
                 // 发送播放消息
                 _messagingService.Send(new PlaySelectedSongMessage(song));
             }
@@ -479,13 +481,7 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        /// <summary>
-        /// 执行添加音乐命令
-        /// </summary>
-        private async Task ExecuteAddMusic()
-        {
-            _messagingService.Send(new AddMusicFilesMessage());
-        }
+
 
         /// <summary>
         /// 执行清空播放列表操作

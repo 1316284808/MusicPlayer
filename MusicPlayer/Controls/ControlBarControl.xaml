@@ -250,9 +250,14 @@
                         <Border Background="#f0f0f0"  
                                 BorderBrush="#d0d0d0" BorderThickness="1"
                                 CornerRadius="8" Padding="5"> 
-                            <StackPanel Width="300" Height="500">
+                            <Grid Width="300" Height="500">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
                                 <!-- 播放队列标题 -->
-                                <StackPanel Margin="5"  VerticalAlignment="Center">
+                                <StackPanel Margin="5" Grid.Row="0"  VerticalAlignment="Center">
                                     <TextBlock Text="{Binding QueueTitle}" FontSize="14" 
                     FontWeight="Bold"  HorizontalAlignment="Left"
                     TextWrapping="Wrap"   />
@@ -260,8 +265,8 @@
                                 </StackPanel>
 
                                 <!-- 播放队列列表 -->
-                                <ListBox ItemsSource="{Binding CurrentContextPlaylist}" 
-                                      Height="480" 
+                                <ListBox Grid.Row="1" ItemsSource="{Binding CurrentContextPlaylist}" 
+                                      
                                       VerticalAlignment="Stretch" 
                                       HorizontalContentAlignment="Stretch" 
                                       Background="Transparent" 
@@ -316,7 +321,7 @@
                                 </ListBox>
 
 
-                                <StackPanel Margin="5"  VerticalAlignment="Center">
+                                <StackPanel Margin="5" Grid.Row="2" VerticalAlignment="Center">
 
                                     <Separator Margin="2"/>
                                     <ui:TextBlock Text="{Binding SongCount,StringFormat='共{0}首'}" 
@@ -324,7 +329,7 @@
 
                                 </StackPanel>
 
-                            </StackPanel>
+                            </Grid>
                         </Border>
                        
                     </Popup>

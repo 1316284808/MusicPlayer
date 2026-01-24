@@ -2,8 +2,10 @@ using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
+using MusicPlayer.Services.Messages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -19,6 +21,8 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaybackContextService _playbackContextService;
         private readonly IDialogService _dialogService;
         private readonly IPlaylistCacheService _playlistCacheService;
+        private readonly IPlaylistService _playlistService;
+        private readonly INotificationService _notificationService;
 
         /// <summary>
         /// 音乐分组列表 - 绑定到UI的歌单列表
@@ -77,22 +81,104 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public ICommand SelectPlaylistCommand { get; }
 
+        /// <summary>
+        /// 添加音乐命令
+        /// </summary>
+        public ICommand AddMusicCommand { get; }
+
+        /// <summary>
+        /// 选择目录命令
+        /// </summary>
+        public ICommand SelectDirectoryCommand { get; }
+
         public HeartViewModel(
             IMessagingService messagingService,
             IPlaylistDataService playlistDataService,
             IPlaybackContextService playbackContextService,
             IDialogService dialogService,
-            IPlaylistCacheService playlistCacheService)
+            IPlaylistCacheService playlistCacheService,
+            IPlaylistService playlistService,
+            INotificationService notificationService)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _playlistCacheService = playlistCacheService ?? throw new ArgumentNullException(nameof(playlistCacheService));
+            _playlistService = playlistService ?? throw new ArgumentNullException(nameof(playlistService));
+            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
 
             // 初始化命令
             CreatePlaylistCommand = new AsyncRelayCommand(CreatePlaylistAsync);
             SelectPlaylistCommand = new RelayCommand<Playlist>(ExecuteSelectPlaylist);
+            AddMusicCommand = new RelayCommand(async () => await ExecuteAddMusic());
+            SelectDirectoryCommand = new RelayCommand(async () => await ExecuteSelectDirectory());
+        }
+
+        /// <summary>
+        /// 执行添加音乐命令
+        /// </summary>
+        private async Task ExecuteAddMusic()
+        {
+            _messagingService.Send(new AddMusicFilesMessage());
+        }
+
+        /// <summary>
+        /// 执行选择目录命令
+        /// </summary>
+        private async Task ExecuteSelectDirectory()
+        {
+            using (var folderDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                folderDialog.Description = "选择音乐文件夹";
+                folderDialog.ShowNewFolderButton = false;
+
+                if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    string folderPath = folderDialog.SelectedPath;
+                    ImportSongsFromFolder(folderPath);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 从文件夹导入歌曲
+        /// </summary>
+        /// <param name="folderPath">文件夹路径</param>
+        public void ImportSongsFromFolder(string folderPath)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (!Directory.Exists(folderPath))
+                    {
+                        _notificationService.ShowWarning("文件夹不存在");
+                        return;
+                    }
+
+                    // 扫描文件夹中的歌曲
+                    var songs = _playlistService.LoadSongsFromFolder(folderPath);
+                    if (songs.Count == 0)
+                    {
+                        _notificationService.ShowInfo("未发现音乐文件");
+                        return;
+                    }
+
+                    // 添加歌曲到数据库
+                    await _playlistDataService.AddSongsAndReloadAsync(songs);
+                    
+                    // 更新歌单列表
+                    await LoadPlaylistsAsync();
+
+                    _notificationService.ShowSuccess($"成功添加 {songs.Count} 首歌曲");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"HeartViewModel: 导入歌曲失败: {ex.Message}");
+                    _notificationService.ShowError("导入歌曲失败");
+                }
+            });
         }
 
         /// <summary>

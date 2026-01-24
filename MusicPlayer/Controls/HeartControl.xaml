@@ -19,27 +19,31 @@
             <TextBlock  Text="歌单列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
         </StackPanel>
 
-      
 
-        <Grid Grid.Row="1" Height="100" Margin="15"  >
+
+        <Grid Grid.Row="1" Height="150" Margin="15"  x:Name="DropArea" AllowDrop="True" 
+              DragEnter="DropArea_DragEnter" DragOver="DropArea_DragOver" Drop="DropArea_Drop">
+
             <Rectangle Stroke="Black" StrokeThickness="1" StrokeDashArray="4 2"
-               RadiusX="8" RadiusY="8" />
+      RadiusX="8" RadiusY="8" />
+            <Border Background="#4DFFFFFF" CornerRadius="8">
             <StackPanel Orientation="Vertical"   VerticalAlignment="Center">
 
 
-                <ui:Button   ToolTip="选择目录"  
-                           HorizontalAlignment="Center"
-                           Width="auto" 
-                          Padding="5" Margin="5"  >
-                    <StackPanel Orientation="Horizontal">
-                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="NewFolder"  />
-                        <Separator Margin="2" />
-                        <ui:TextBlock Text="选择目录"/>
-                    </StackPanel>
-             </ui:Button>
-            <ui:TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.7"
-           Text="将文件夹拖到此处，将自动识别文件导入到默认列表"/>
+                    <ui:Button ToolTip="选择目录" Command="{Binding SelectDirectoryCommand}"
+        HorizontalAlignment="Center"
+        Width="auto" 
+       Padding="5" Margin="5">
+                        <StackPanel Orientation="Horizontal">
+                            <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="NewFolder" />
+                            <Separator Margin="2" />
+                            <ui:TextBlock Text="选择目录"/>
+                        </StackPanel>
+                    </ui:Button>
+                    <ui:TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.7"
+Text="将文件夹拖到此处，将自动识别文件导入到默认列表"/>
             </StackPanel>
+            </Border>
         </Grid>
 
         <Grid Grid.Row="2"  Margin="10" >
