@@ -1,16 +1,16 @@
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
-using MusicPlayer.Core.Models;
-using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Enums;
+using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Models;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages; // 引入新的消息类型
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace MusicPlayer.ViewModels
 {
@@ -44,6 +44,7 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaylistDataService _playlistDataService;
         private readonly ICustomPlaylistService _customPlaylistService;
         private readonly IPlaybackContextService _playbackContextService;
+        private readonly INotificationService _notificationService;
         
         // 所有歌单列表
         private readonly ObservableCollection<Playlist> _allPlaylists = new();
@@ -209,7 +210,7 @@ namespace MusicPlayer.ViewModels
 
         
 
-        private SortRule _currentSortRule = SortRule.ByAddedTime;
+
 
         /// <summary>
         /// 当前排序规则
@@ -271,13 +272,14 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null, INotificationService? notificationService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
             _playlistDataService = playlistDataService ?? throw new ArgumentNullException(nameof(playlistDataService));
             _customPlaylistService = customPlaylistService ?? throw new ArgumentNullException(nameof(customPlaylistService));
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
+            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -308,7 +310,7 @@ namespace MusicPlayer.ViewModels
             InitializePlaylistData();
             
             // 加载所有歌单
-            _ = LoadAllPlaylistsAsync();
+           
             
             // 初始化过滤后的播放列表
             UpdateFilteredPlaylist();
@@ -335,9 +337,9 @@ namespace MusicPlayer.ViewModels
                 System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 初始化排序选项为: {matchingOption.Display}");
             }
             
-            // 加载当前播放上下文对应的歌曲
+            // 加载当歌曲
             LoadSongsForCurrentContext();
-            
+            _ = LoadAllPlaylistsAsync();
             System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 初始化完成，过滤列表包含 {_filteredPlaylist.Count} 首歌曲");
             
             // 通知SongCount属性已更新
@@ -478,6 +480,7 @@ namespace MusicPlayer.ViewModels
             {
                 // 发送更新删除状态的消息，而不是真正删除
                 _messagingService.Send(new UpdateSongDeletionStatusMessage(song, true));
+                _notificationService.ShowSuccess($"成功删除歌曲[{song.Title}]");
             }
         }
 
@@ -627,7 +630,8 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Initialize()
         {
-            //InitializePlaylistData();
+            System.Diagnostics.Debug.WriteLine("PlaylistViewModel: Initialize 方法被调用");
+            InitializePlaylistData();
         }
 
         /// <summary>
@@ -636,7 +640,15 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("PlaylistViewModel: Cleanup 方法被调用");
-              
+            
+            // 注销消息处理器
+            _messagingService.Unregister(this);
+            
+            // 取消配置变化监听
+            if (_configurationService != null)
+            {
+                _configurationService.ConfigurationChanged -= OnConfigurationChanged;
+            }
         }
 
         /// <summary>
@@ -713,15 +725,22 @@ namespace MusicPlayer.ViewModels
                     if (result)
                     {
                         System.Diagnostics.Debug.WriteLine($"成功将歌曲 {song.Title} 添加到歌单 {playlistId}");
+                        // 获取歌单名称
+                        var playlist = await _customPlaylistService.GetPlaylistByIdAsync(playlistId);
+                        _notificationService.ShowSuccess($"成功将歌曲 '{song.Title}' 添加到歌单 '{playlist?.Name}'");
                     }
                     else
                     {
                         System.Diagnostics.Debug.WriteLine($"歌曲 {song.Title} 已存在于歌单 {playlistId} 中");
+                        // 获取歌单名称
+                        var playlist = await _customPlaylistService.GetPlaylistByIdAsync(playlistId);
+                        _notificationService.ShowInfo($"歌曲 '{song.Title}' 已存在于歌单 '{playlist?.Name}' 中");
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"添加歌曲到歌单失败: {ex.Message}");
+                    _notificationService.ShowError($"添加歌曲到歌单失败: {ex.Message}");
                 }
             }
         }

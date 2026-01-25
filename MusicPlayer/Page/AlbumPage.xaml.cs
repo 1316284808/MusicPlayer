@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using MusicPlayer.ViewModels;
 
@@ -9,6 +10,7 @@ namespace MusicPlayer.Page
     public partial class AlbumPage : System.Windows.Controls.Page, IDisposable
     {
         private bool _disposed = false;
+        private bool _isUnloadedRegistered = false;
         
         public AlbumPage()
         {
@@ -20,21 +22,34 @@ namespace MusicPlayer.Page
             InitializeComponent();
             DataContext = albumViewModel;
             this.AlbumControl.DataContext = albumViewModel;
-            Unloaded += (s, e) =>
-            {
-                Dispose();
-            };
+            Unloaded += AlbumPage_Unloaded;
+            _isUnloadedRegistered = true;
         }
+        
+        // 命名的Unloaded事件处理方法
+        private void AlbumPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Dispose();
+        }
+        
         public void Dispose()
         {
             if (_disposed)
             {
                 return;
             }
+            
+            // 取消Unloaded事件订阅
+            if (_isUnloadedRegistered)
+            {
+                Unloaded -= AlbumPage_Unloaded;
+                _isUnloadedRegistered = false;
+            }
           
+            // 先调用控件的Dispose方法，再清理数据上下文
+            AlbumControl.Dispose();
             this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
             this.Content = null;     // 清空页面内容，释放UI资源
-            AlbumControl.Dispose();
             _disposed = true;
         }
     }

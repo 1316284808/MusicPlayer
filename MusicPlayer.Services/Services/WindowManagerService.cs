@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Input;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Services.Messages;
-using Hardcodet.Wpf.TaskbarNotification;
 using System.IO;
 
 
@@ -18,7 +17,6 @@ namespace MusicPlayer.Services
         private readonly IConfigurationService _configurationService;
         private readonly INotificationService _notificationService;
         private Window? _window;
-        private TaskbarIcon? _taskbarIcon;
         
         // 添加静态引用，确保所有实例都使用同一个窗口对象
         private static Window? _staticWindow;
@@ -51,19 +49,8 @@ namespace MusicPlayer.Services
                 return;
             }
             
-            // 获取系统托盘图标
-            if (Application.Current != null)
-            {
-                _taskbarIcon = Application.Current.FindResource("NotifyIcon") as TaskbarIcon;
-                if (_taskbarIcon != null)
-                {
-                    System.Diagnostics.Debug.WriteLine("WindowManagerService: 系统托盘图标获取成功");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("WindowManagerService: 无法获取系统托盘图标资源");
-                }
-            }
+            // 系统托盘功能已移至SystemTrayService，此处不再直接获取TaskbarIcon
+            System.Diagnostics.Debug.WriteLine("WindowManagerService: 系统托盘图标管理已移至SystemTrayService");
         }
 
 
@@ -212,10 +199,7 @@ namespace MusicPlayer.Services
                 // 显示系统托盘通知
                 try
                 {
-                    if (_taskbarIcon != null)
-                    {
-                        _taskbarIcon.ShowBalloonTip("音乐播放器", "主窗口已恢复", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
-                    }
+                    _notificationService.ShowBalloonTip("音乐播放器", "主窗口已恢复", BalloonIcon.Info);
                 }
                 catch (Exception ex)
                 {

@@ -136,7 +136,7 @@ public class PlaylistCacheService : IPlaylistCacheService
                     Id = 0,
                     Name = "收藏列表",
                     Description = "包含用户收藏的歌曲",
-                    IsDefault = false,
+                    IsDefault = true, // 标记为系统默认列表
                     CreatedTime = DateTime.Now,
                     UpdatedTime = DateTime.Now
                 };

@@ -116,16 +116,16 @@ namespace MusicPlayer.Services.Services
             {
                 try
                 {
+                    // 如果已经有均衡器流，先释放
+                    if (_currentEqualizerStream is IDisposable disposableStream)
+                    {
+                        disposableStream.Dispose();
+                        _currentEqualizerStream = null;
+                    }
+
                     // 检查是否为WaveStream
                     if (audioStream is WaveStream sourceWaveStream)
                     {
-                        // 如果已经有均衡器流，先释放
-                        if (_currentEqualizerStream is IDisposable disposableStream)
-                        {
-                            disposableStream.Dispose();
-                            _currentEqualizerStream = null;
-                        }
-
                         // 创建新的均衡器流
                         var equalizerStream = new EqualizerStream(sourceWaveStream, EqualizerSettings.FrequencyBands);
                         
@@ -141,13 +141,6 @@ namespace MusicPlayer.Services.Services
                         // 创建一个适配器，将ISampleProvider转换为WaveStream
                         var adapterWaveStream = new WaveProvider32ToWaveStream(sampleProvider);
                         
-                        // 如果已经有均衡器流，先释放
-                        if (_currentEqualizerStream is IDisposable disposableStream)
-                        {
-                            disposableStream.Dispose();
-                            _currentEqualizerStream = null;
-                        }
-
                         // 创建新的均衡器流
                         var equalizerStream = new EqualizerStream(adapterWaveStream, EqualizerSettings.FrequencyBands);
                         
@@ -455,6 +448,8 @@ namespace MusicPlayer.Services.Services
         private readonly ISampleProvider _sourceProvider;
         private readonly object _lockObject = new object();
         private long _position;
+        private float[]? _sampleBuffer; // 预分配的样本缓冲区，避免频繁GC
+        private const int _maxBufferSize = 32768; // 32KB的最大缓冲区大小
 
         /// <summary>
         /// 初始化适配器
@@ -495,23 +490,30 @@ namespace MusicPlayer.Services.Services
         {
             lock (_lockObject)
             {
-                // 创建临时浮点缓冲区
-                int samplesRequired = count / 4; // 32位音频，每样本4字节
-                float[] sampleBuffer = new float[samplesRequired];
-
+                // 计算需要的样本数
+                int bytesPerSample = 4; // 32位音频，每样本4字节
+                int samplesRequired = count / bytesPerSample;
+                
+                // 确保样本缓冲区足够大
+                if (_sampleBuffer == null || _sampleBuffer.Length < samplesRequired)
+                {
+                    // 分配足够大的缓冲区，最大不超过_maxBufferSize
+                    int bufferSize = Math.Min(samplesRequired, _maxBufferSize);
+                    _sampleBuffer = new float[bufferSize];
+                }
+                
                 // 从样本提供者读取数据
-                int samplesRead = _sourceProvider.Read(sampleBuffer, 0, samplesRequired);
+                int samplesRead = _sourceProvider.Read(_sampleBuffer, 0, samplesRequired);
 
                 // 将浮点样本转换为字节数组
                 int bytesRead = 0;
                 for (int i = 0; i < samplesRead; i++)
                 {
-                    int bytePos = offset + i * 4;
-                    if (bytePos + 4 <= buffer.Length)
+                    int bytePos = offset + i * bytesPerSample;
+                    if (bytePos + bytesPerSample <= buffer.Length)
                     {
-                        byte[] bytes = BitConverter.GetBytes(sampleBuffer[i]);
-                        Buffer.BlockCopy(bytes, 0, buffer, bytePos, 4);
-                        bytesRead += 4;
+                        BitConverter.GetBytes(_sampleBuffer[i]).CopyTo(buffer, bytePos);
+                        bytesRead += bytesPerSample;
                     }
                 }
 
@@ -526,9 +528,16 @@ namespace MusicPlayer.Services.Services
         /// <param name="disposing">是否正在释放</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _sourceProvider is IDisposable disposableProvider)
+            if (disposing)
             {
-                disposableProvider.Dispose();
+                // 释放样本提供者资源
+                if (_sourceProvider is IDisposable disposableProvider)
+                {
+                    disposableProvider.Dispose();
+                }
+                
+                // 清理缓冲区
+                _sampleBuffer = null;
             }
             base.Dispose(disposing);
         }

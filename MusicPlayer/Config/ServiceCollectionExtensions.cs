@@ -12,7 +12,6 @@ using MusicPlayer.Services.Providers;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Helper;
 using CommunityToolkit.Mvvm.Messaging;
-using Serilog;
 using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Enums;
 using System.Linq;
@@ -33,13 +32,12 @@ namespace MusicPlayer.Config
         /// <returns>服务集合</returns>
         public static IServiceCollection AddMusicPlayerServices(this IServiceCollection services)
         {
-            // 日志配置 - 添加Serilog支持
+            // 日志配置 - 只记录错误信息
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
                 builder.AddDebug();
-                builder.AddSerilog(); // 添加Serilog
-                builder.SetMinimumLevel(LogLevel.Information);
+                builder.SetMinimumLevel(LogLevel.Error);
             });
             services.AddMessageServices();
             services.AddCoreServices();
@@ -293,7 +291,9 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IConfigurationService>(),
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<ICustomPlaylistService>(),
-                    provider.GetRequiredService<IPlaybackContextService>()));
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<INotificationService>()));
+
             
             // SettingsPageViewModel - 单例模式
             services.AddSingleton<ISettingsPageViewModel, SettingsPageViewModel>(provider => 

@@ -71,6 +71,7 @@ namespace MusicPlayer.Core.Enums
         FolderOpen,//打开文件夹
         MusicInfo,//播放队列
         LocaleLanguage,//语言
+        Update,//修改
 
     }
 }

@@ -354,14 +354,8 @@ namespace MusicPlayer.Core.Data
         {
             try
             {
-                // 如果是默认播放列表，返回所有歌曲
+                // 获取当前歌单信息
                 var playlist = GetPlaylistById(playlistId);
-                if (playlist?.IsDefault == true)
-                {
-                    return LoadAllSongs();
-                }
-                
-                // 否则根据关联表获取歌曲
                 var playlistSongCollection = GetCollection<PlaylistSong>("PlaylistSongs");
                 var songCollection = GetCollection<Song>("Songs");
                 

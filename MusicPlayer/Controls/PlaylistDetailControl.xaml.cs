@@ -43,11 +43,27 @@ namespace MusicPlayer.Controls
                 {
                     // 取消消息订阅
                     WeakReferenceMessenger.Default.UnregisterAll(this);
-                    this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
-                    this.Content = null;     // 清空页面内容，释放UI资源
-                    _disposed = true;
+                    
+                    // 清理附加行为
+                    CleanupAttachedBehaviors();
+                    
+                    // 清空DataContext，解除Page对ViewModel的强引用
+                    this.DataContext = null;
                 }
                 _disposed = true;
+            }
+        }
+
+        private void CleanupAttachedBehaviors()
+        {
+            // 清理PlaylistListBox的附加行为
+            if (PlaylistListBox != null)
+            {
+                Helper.PlaylistScrollBehavior.SetIsEnabled(PlaylistListBox, false);
+                Helper.NewPlaylistAlbumArtBehavior.SetIsEnabled(PlaylistListBox, false);
+                Helper.NewPlaylistAlbumArtBehavior.SetViewModel(PlaylistListBox, null);
+                Helper.PlaylistInteractionBehavior.SetIsEnabled(PlaylistListBox, false);
+                Helper.PlaylistScrollToCurrentSongBehavior.SetIsEnabled(PlaylistListBox, false);
             }
         }
 

@@ -1,5 +1,4 @@
 using System;
-using Hardcodet.Wpf.TaskbarNotification;
 
 namespace MusicPlayer.Core.Interface
 {

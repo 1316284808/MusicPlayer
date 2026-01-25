@@ -572,7 +572,6 @@ namespace MusicPlayer.Services
 
       
 
-
         /// <summary>
         /// 初始化WASAPI音频设备
         /// </summary>
@@ -626,7 +625,6 @@ namespace MusicPlayer.Services
                 System.Diagnostics.Debug.WriteLine($"WASAPI初始化失败：{ex.Message}");
             }
         }
-
 
 
 
@@ -872,36 +870,6 @@ namespace MusicPlayer.Services
         }
 
       
-        /// <summary>
-        /// 尝试使用备用音频设备
-        /// </summary>
-        private void TryFallbackAudioDevice()
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("尝试使用备用音频设备");
-                
-                // 尝试使用DirectSoundOut作为备用设备
-                var directSoundOut = new NAudio.Wave.DirectSoundOut();
-                if (_audioFileReader != null)
-                {
-                    directSoundOut.Init(_audioFileReader);
-                    directSoundOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
-                    
-                    // 更新_waveOut为备用设备
-                    _waveOut?.Dispose();
-                    _waveOut = null;
-                    
-                    System.Diagnostics.Debug.WriteLine("备用音频设备初始化成功");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"备用音频设备初始化失败: {ex.Message}");
-                _notificationService.ShowError($"所有音频设备均无法使用: {ex.Message}");
-            }
-        }
-
         public void Dispose()
         {
             Dispose(true);
@@ -947,6 +915,9 @@ namespace MusicPlayer.Services
                         _mediaTransportService.PreviousRequested -= OnPreviousRequested;
                          // 释放 SMTC 服务
                         _mediaTransportService?.Dispose();
+                        
+                        // 取消订阅所有消息
+                        _messagingService.Unregister(this);
                         
                         // 重置单例标志，允许重新创建实例（线程安全）
                         lock (_initLock)

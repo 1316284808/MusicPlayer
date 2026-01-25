@@ -35,5 +35,9 @@ namespace MusicPlayer.Core.Models
         /// <summary>歌曲数量（非持久化，运行时计算）</summary>
         [ObservableProperty]
         private int _songCount = 0;
+
+        /// <summary>是否正在播放（非持久化，运行时计算）</summary>
+        [ObservableProperty]
+        private bool _isPlaying = false;
     }
 }

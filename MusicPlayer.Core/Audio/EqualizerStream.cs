@@ -425,7 +425,26 @@ namespace MusicPlayer.Core.Audio
         {
             if (disposing)
             {
+                // 释放源流
                 _sourceStream?.Dispose();
+                
+                // 清理滤波器数组
+                if (_filters != null)
+                {
+                    Array.Clear(_filters, 0, _filters.Length);
+                }
+                
+                // 清理增益数组
+                if (_gains != null)
+                {
+                    Array.Clear(_gains, 0, _gains.Length);
+                }
+                
+                // 清理启用状态数组
+                if (_isEnabled != null)
+                {
+                    Array.Clear(_isEnabled, 0, _isEnabled.Length);
+                }
             }
             base.Dispose(disposing);
         }

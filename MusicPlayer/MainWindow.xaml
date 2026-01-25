@@ -67,10 +67,11 @@
                     <!-- 主内容区域 -->
                     
                         <Navigation:AnimatedFrame x:Name="MainFrame" Grid.Column="1"  NavigationUIVisibility="Hidden"/>
-                   
-                    <ui:SnackbarPresenter x:Name="MainSnackbarPresenter"  MinWidth="400"
-                                          HorizontalAlignment="Right" Grid.Column="1"
+
+                    <ui:SnackbarPresenter x:Name="MainSnackbarPresenter"  MinWidth="400" Grid.Column="1"
+                                          HorizontalAlignment="Right"  
                                           VerticalAlignment="Bottom"/>
+                    
                 </Grid>
 
 

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="MusicPlayer.Controls.SoundSettingsControl"
+<UserControl x:Class="MusicPlayer.Controls.SoundSettingsControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -103,8 +103,7 @@
                         <ComboBox x:Name="EqualizerComboBox" FontWeight="Normal"   Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center"
         ItemsSource="{Binding EqualizerPresets}"
         SelectedValue="{Binding CurrentEqualizerPresetName, Mode=TwoWay}"
-        SelectedValuePath="PresetName"
-        DisplayMemberPath="PresetName">
+        SelectedValuePath="PresetName"  DisplayMemberPath="PresetName" >
                         </ComboBox>
                         <Separator Margin="2" />
                     </StackPanel>

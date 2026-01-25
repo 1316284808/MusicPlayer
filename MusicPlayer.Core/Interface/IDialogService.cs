@@ -53,5 +53,14 @@ namespace MusicPlayer.Core.Interface
         /// </summary>
         /// <returns>返回歌单名称和描述，如果取消则返回null</returns>
         Task<string[]> ShowCreatePlaylistDialogAsync(string title);
+
+        /// <summary>
+        /// 显示修改歌单对话框
+        /// </summary>
+        /// <param name="title">对话框标题</param>
+        /// <param name="currentName">当前歌单名称</param>
+        /// <param name="currentDescription">当前歌单描述</param>
+        /// <returns>返回修改后的歌单名称和描述，如果取消则返回null</returns>
+        Task<string[]> ShowEditPlaylistDialogAsync(string title, string currentName, string currentDescription);
     }
 }

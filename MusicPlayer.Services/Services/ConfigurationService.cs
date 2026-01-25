@@ -22,19 +22,13 @@ namespace MusicPlayer.Services
         private readonly ConfigurationDAL _configurationDal;
         private IPlayerStateService? _playerStateService;
         
-        // 自动保存相关字段
-        private bool _autoSaveEnabled = false;
-        private int _autoSaveIntervalMs = 5000; // 默认5秒自动保存
-        private System.Threading.Timer? _autoSaveTimer;
-        
         // 事件
         public event Action<PlayerConfiguration>? ConfigurationChanged;
         public event Action<PlayerConfiguration>? ConfigurationLoaded;
-        public event Action<PlayerConfiguration>? ConfigurationSaved;
 
         public PlayerConfiguration CurrentConfiguration 
-        { 
-            get => _currentConfiguration; 
+        {
+            get => _currentConfiguration;
             private set
             {
                 _currentConfiguration = value;
@@ -131,79 +125,6 @@ namespace MusicPlayer.Services
                 System.Diagnostics.Debug.WriteLine($"保存配置到SQLite失败: {ex.Message}");
             }
         }
-        
-        /// <summary>
-        /// 自动持久化配置
-        /// </summary>
-        public bool AutoSaveEnabled 
-        { 
-            get => _autoSaveEnabled;
-            set
-            {
-                if (_autoSaveEnabled != value)
-                {
-                    _autoSaveEnabled = value;
-                    SetupAutoSaveTimer();
-                    System.Diagnostics.Debug.WriteLine($"ConfigurationService: 自动保存已{(_autoSaveEnabled ? "启用" : "禁用")}");
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 自动保存间隔（毫秒）
-        /// </summary>
-        public int AutoSaveIntervalMs 
-        { 
-            get => _autoSaveIntervalMs;
-            set
-            {
-                if (_autoSaveIntervalMs != value && value > 0)
-                {
-                    _autoSaveIntervalMs = value;
-                    SetupAutoSaveTimer();
-                    System.Diagnostics.Debug.WriteLine($"ConfigurationService: 自动保存间隔已设置为 {_autoSaveIntervalMs}ms");
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 设置自动保存定时器
-        /// </summary>
-        private void SetupAutoSaveTimer()
-        {
-            lock (_lockObject)
-            {
-                // 停止现有定时器
-                _autoSaveTimer?.Dispose();
-                _autoSaveTimer = null;
-                
-                // 如果启用了自动保存，启动新的定时器
-                if (_autoSaveEnabled)
-                {
-                    _autoSaveTimer = new System.Threading.Timer(AutoSaveCallback, null, _autoSaveIntervalMs, _autoSaveIntervalMs);
-                    System.Diagnostics.Debug.WriteLine($"ConfigurationService: 自动保存定时器已启动，间隔: {_autoSaveIntervalMs}ms");
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 自动保存回调
-        /// </summary>
-        private void AutoSaveCallback(object? state)
-        {
-            try
-            {
-                if (_isModified)
-                {
-                    SaveCurrentConfiguration();
-                    System.Diagnostics.Debug.WriteLine("ConfigurationService: 自动保存完成");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"ConfigurationService: 自动保存失败: {ex.Message}");
-            }
-        }
 
         /// <summary>
         /// 保存当前配置 - 先同步PlayerState状态，然后持久化
@@ -240,14 +161,6 @@ namespace MusicPlayer.Services
                 CurrentConfiguration.Volume = Math.Clamp(volume, 0f, 1f);
                 CurrentConfiguration.LastSaved = DateTime.Now;
                 _isModified = true;
-                
-                // 如果启用自动保存，启动延迟保存
-                if (!_autoSaveEnabled)
-                {
-                    // 传统的延迟保存方式
-                    StartDelayedSave();
-                }
-                // 自动保存模式下的保存由定时器处理
             }
         }
 
@@ -278,8 +191,6 @@ namespace MusicPlayer.Services
                 CurrentConfiguration.CurrentSongPath = currentSongPath;
                 CurrentConfiguration.LastSaved = DateTime.Now;
                 _isModified = true;
-                // 播放进度频繁变化，延迟保存
-                StartDelayedSave();
             }
         }
 
@@ -342,14 +253,6 @@ namespace MusicPlayer.Services
                 // SaveCurrentConfiguration(); // 注释掉自动保存
             }
         }
-
-
-
-
-
-
-
-
 
         /// <summary>
         /// 更新主题
@@ -579,29 +482,6 @@ namespace MusicPlayer.Services
         {
             SaveCurrentConfiguration();
         }
-
-        private System.Threading.Timer? _saveTimer;
-
-        private void StartDelayedSave()
-        {
-            lock (_lockObject)
-            {
-                if (_disposed) return;
-
-                _saveTimer?.Dispose();
-                _saveTimer = new System.Threading.Timer(_ =>
-                {
-                    try
-                    {
-                        SaveCurrentConfiguration();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"延迟保存配置失败: {ex.Message}");
-                    }
-                }, null, 2000, System.Threading.Timeout.Infinite); // 2秒后保存
-            }
-        }
         
         /// <summary>
         /// 同步PlayerState状态到配置（内存同步，不持久化）
@@ -741,20 +621,12 @@ namespace MusicPlayer.Services
         {
             if (!_disposed && disposing)
             {
-                // 释放所有Timer资源
-                _saveTimer?.Dispose();
-                _saveTimer = null;
-
-                _autoSaveTimer?.Dispose();
-                _autoSaveTimer = null;
-
                 // 释放ConfigurationDAL（包含LiteDB数据库连接）
                 _configurationDal?.Dispose();
 
                 // 清理事件处理器
                 ConfigurationChanged = null;
                 ConfigurationLoaded = null;
-                ConfigurationSaved = null;
 
                 _disposed = true;
             }

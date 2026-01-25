@@ -87,50 +87,54 @@ namespace MusicPlayer.Core.Audio
         public int Read(float[] buffer, int offset, int count)
         {
             if (_disposed) return 0;
-            int samplesRead = 0;//声明时给初始值，不然报错；
             if (_source == null) return 0;
+            
+            int samplesRead = 0;
             try
             {
                 samplesRead = _source.Read(buffer, offset, count);
             }
-            catch (Exception ex) {
-                /*
-                 System.NullReferenceException
-  HResult=0x80004003
-  Message=Object reference not set to an instance of an object.
-  Source=NAudio.Wasapi
-  StackTrace:
-   在 NAudio.Wave.MediaFoundationReader.Read(Byte[] buffer, Int32 offset, Int32 count)
-
-                 
-                 */
-
-                System.Diagnostics.Debug.WriteLine( ex.Message);
-            }
-            for (int i = 0; i < samplesRead; i += _channels)
+            catch (Exception ex)
             {
-                // 多通道混音为单声道
-                float sample = 0;
-                for (int channel = 0; channel < _channels && (i + channel) < samplesRead; channel++)
+                System.Diagnostics.Debug.WriteLine($"SpectrumAnalyzer.Read: 读取音频数据时发生错误: {ex.Message}");
+                return 0;
+            }
+            
+            if (samplesRead == 0) return 0;
+            
+            try
+            {
+                for (int i = 0; i < samplesRead; i += _channels)
                 {
-                    sample += buffer[offset + i + channel];
-                }
-                sample /= _channels;
+                    // 多通道混音为单声道
+                    float sample = 0;
+                    for (int channel = 0; channel < _channels && (i + channel) < samplesRead; channel++)
+                    {
+                        sample += buffer[offset + i + channel];
+                    }
+                    sample /= _channels;
 
-                // 应用窗函数并填入FFT缓冲区
-                _fftBuffer[_fftPos] = new Complex
-                {
-                    X = sample * _window[_fftPos],
-                    Y = 0
-                };
-                _fftPos++;
+                    // 应用窗函数并填入FFT缓冲区
+                    _fftBuffer[_fftPos] = new Complex
+                    {
+                        X = sample * _window[_fftPos],
+                        Y = 0
+                    };
+                    _fftPos++;
 
-                // 缓冲区满，执行FFT
-                if (_fftPos >= _fftLength)
-                {
-                    _fftPos = 0;
-                    ProcessFFT();
+                    // 缓冲区满，执行FFT
+                    if (_fftPos >= _fftLength)
+                    {
+                        _fftPos = 0;
+                        ProcessFFT();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SpectrumAnalyzer.Read: 处理音频数据时发生错误: {ex.Message}");
+                // 重置FFT位置，避免缓冲区状态不一致
+                _fftPos = 0;
             }
 
             return samplesRead;

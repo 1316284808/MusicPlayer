@@ -12,6 +12,8 @@ namespace MusicPlayer.Page
     public partial class SettingsPage : System.Windows.Controls.Page, IDisposable
     {
         private bool _disposed;
+        private bool _isLoadedRegistered = false;
+        private bool _isUnloadedRegistered = false;
         
         public SettingsPage() { }
         public SettingsPage(ISettingsPageViewModel viewModel)
@@ -23,7 +25,9 @@ namespace MusicPlayer.Page
 
             // 订阅导航消息
             Loaded += SettingsPage_Loaded;
+            _isLoadedRegistered = true;
             Unloaded += SettingsPage_Unloaded;
+            _isUnloadedRegistered = true;
         }
 
         private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
@@ -40,7 +44,12 @@ namespace MusicPlayer.Page
                     }
                 }
 
-                Loaded -= SettingsPage_Loaded;
+                // 取消Loaded事件订阅
+                if (_isLoadedRegistered)
+                {
+                    Loaded -= SettingsPage_Loaded;
+                    _isLoadedRegistered = false;
+                }
             }
             catch (Exception ex)
             {
@@ -53,7 +62,13 @@ namespace MusicPlayer.Page
             try
             {
                 Dispose();
-                Unloaded -= SettingsPage_Unloaded;
+                
+                // 取消Unloaded事件订阅
+                if (_isUnloadedRegistered)
+                {
+                    Unloaded -= SettingsPage_Unloaded;
+                    _isUnloadedRegistered = false;
+                }
             }
             catch (Exception ex)
             {
@@ -98,6 +113,19 @@ namespace MusicPlayer.Page
             {
                 System.Diagnostics.Debug.WriteLine($"取消注册导航消息失败: {ex.Message}");
             }
+            
+            // 确保所有事件处理器都被取消注册
+            if (_isLoadedRegistered)
+            {
+                Loaded -= SettingsPage_Loaded;
+                _isLoadedRegistered = false;
+            }
+            if (_isUnloadedRegistered)
+            {
+                Unloaded -= SettingsPage_Unloaded;
+                _isUnloadedRegistered = false;
+            }
+            
             WindowSettingsControl.Dispose();
             SoundSettingsControl.Dispose();
             PlaylistSettingControl.Dispose();

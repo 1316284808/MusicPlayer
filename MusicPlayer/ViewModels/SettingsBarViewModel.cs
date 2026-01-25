@@ -264,7 +264,7 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 初始化ViewModel
         /// </summary>
-        public void Initialize()
+        public override void Initialize()
         {
             // SettingsBarViewModel的初始化逻辑
         }
@@ -272,7 +272,7 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 清理ViewModel资源
         /// </summary>
-        public void Cleanup()
+        public override void Cleanup()
         {
             // 注销消息处理器
             if (_messagingService != null)
@@ -332,8 +332,8 @@ namespace MusicPlayer.ViewModels
         {
             NavigationItems = new ObservableCollection<NavigationItem>
             {
-                new NavigationItem { Page = PageEnums.PlaylistPage, Name = "默认列表", IconKind = "List", SelectedIconKind = "InList" },
-                new NavigationItem { Page = PageEnums.HeartPage, Name = "歌单列表", IconKind = "HeartFill", SelectedIconKind = "Heart" },
+                new NavigationItem { Page = PageEnums.PlaylistPage, Name = "全部歌曲", IconKind = "List", SelectedIconKind = "InList" },
+                new NavigationItem { Page = PageEnums.HeartPage, Name = "音乐库", IconKind = "HeartFill", SelectedIconKind = "Heart" },
                 new NavigationItem { Page = PageEnums.SingerPage, Name = "歌手列表", IconKind = "Person", SelectedIconKind = "InPerson" },
                 new NavigationItem { Page = PageEnums.AlbumPage, Name = "专辑列表", IconKind = "Album", SelectedIconKind = "InAlbum" },
                 new NavigationItem { Page = PageEnums.SettingsPage, Name = "设置", IconKind = "Settings", SelectedIconKind = "InSettings" }

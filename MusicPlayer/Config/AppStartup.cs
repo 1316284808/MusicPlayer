@@ -7,8 +7,6 @@ using MusicPlayer.Services;
 using MusicPlayer.Services.Handlers;
 using MusicPlayer.Services.Messages;
 using CommunityToolkit.Mvvm.Messaging;
-using Serilog;
-using Serilog.Sinks.Async;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -77,9 +75,6 @@ namespace MusicPlayer.Config
                     await _host.WaitForShutdownAsync();
                 }
 
-                // 关闭并刷新Serilog日志
-                Log.CloseAndFlush();
-
                 System.Diagnostics.Debug.WriteLine("Application services stopped successfully");
             }
             catch (Exception ex)
@@ -114,20 +109,6 @@ namespace MusicPlayer.Config
         /// </summary>
         private IHost CreateHost(IServiceCollection services)
         {
-            // 确保日志目录存在
-            Paths.EnsureDirectoryExists(Paths.LogsDirectory);
-            
-            // 配置Serilog日志 - 异步写入，精简内容，较高日志级别
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Error() // 只记录Error级别及以上的日志，确保内容精简
-                .Enrich.FromLogContext()
-                .WriteTo.Async(a => a.File(
-                    path: Path.Combine(Paths.LogsDirectory, "error-.txt"),
-                    rollingInterval: Serilog.RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")) // 精简的日志格式
-                .CreateLogger();
-
             // 注意：这里不重复配置服务，直接使用已有的服务集合
             return new HostBuilder()
                 .ConfigureServices((context, hostingServices) => {
@@ -137,13 +118,12 @@ namespace MusicPlayer.Config
                         hostingServices.Add(service);
                     }
                 })
-                .UseSerilog()
                 .ConfigureLogging(logging =>
                 {
                     logging.ClearProviders();
                     logging.AddConsole();
                     logging.AddDebug();
-                    logging.SetMinimumLevel(LogLevel.Error); // 与Serilog保持一致，只记录Error级别及以上
+                    logging.SetMinimumLevel(LogLevel.Error); // 只记录Error级别及以上
                 })
                 .Build();
         }

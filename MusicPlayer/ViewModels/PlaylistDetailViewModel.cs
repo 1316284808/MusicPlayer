@@ -50,13 +50,11 @@ namespace MusicPlayer.ViewModels
             get => _currentPlaylist;
             set
             {
-                if (_currentPlaylist != value)
-                {
-                    _currentPlaylist = value;
-                    OnPropertyChanged(nameof(CurrentPlaylist));
-                    // 加载歌单歌曲
-                    LoadPlaylistSongsAsync();
-                }
+                if (value == null) return;
+                _currentPlaylist = value;
+                OnPropertyChanged(nameof(CurrentPlaylist));
+                // 加载歌单歌曲
+                LoadPlaylistSongsAsync();
             }
         }
 
@@ -181,9 +179,7 @@ namespace MusicPlayer.ViewModels
             PlayAllCommand = new RelayCommand(ExecutePlayAll);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
             PlaySelectedSongCommand = new RelayCommand<Song>(ExecutePlaySelectedSong);
-            DeleteSelectedSongCommand = new RelayCommand<Song>(ExecuteDeleteSelectedSong);
-            AddSongToPlaylistCommand = new RelayCommand<object>(ExecuteAddSongToPlaylist);
-
+          
             // 注册消息处理器
             RegisterMessageHandlers();
 
@@ -194,7 +190,7 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 初始化视图模型
         /// </summary>
-        public void Initialize()
+        public override void Initialize()
         {
             Initialize(null);
         }
@@ -389,10 +385,19 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 清理视图模型资源
         /// </summary>
-        public void Cleanup()
+        public override void Cleanup()
         {
             // 取消消息注册
             _messagingService.Unregister(this);
+            
+            // 清空列表，释放资源
+            _allSongs.Clear();
+            
+            // 释放播放列表引用，使用空歌单对象代替null
+            CurrentPlaylist = new Playlist();
+            
+            // 重置当前选中项
+            CurrentPlaylistItem = null;
         }
 
         /// <summary>
@@ -417,47 +422,7 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        /// <summary>
-        /// 根据歌手名称加载歌曲
-        /// </summary>
-        /// <param name="artistName">歌手名称</param>
-        private async Task LoadSongsByArtistAsync(string artistName)
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 开始加载歌手 {artistName} 的歌曲");
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 数据源中共有 {_playlistDataService.DataSource.Count} 首歌曲");
-                
-                // 从数据源中获取该歌手的所有歌曲
-                var songs = _playlistDataService.DataSource
-                    .Where(song => !string.IsNullOrEmpty(song.Artist) && 
-                                  string.Equals(song.Artist, artistName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 找到 {songs.Count} 首 {artistName} 的歌曲");
-                
-                // 更新原始歌曲列表
-                _allSongs = songs.ToList();
-                
-                // 更新过滤后的播放列表
-                _filteredPlaylist.Clear();
-                foreach (var song in songs)
-                {
-                    _filteredPlaylist.Add(song);
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 添加歌曲 {song.Title} ({song.Artist})");
-                }
-                
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 过滤后的播放列表共有 {_filteredPlaylist.Count} 首歌曲");
-                
-                OnPropertyChanged(nameof(FilteredPlaylist));
-                OnPropertyChanged(nameof(SongCount));
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 加载歌手歌曲失败: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 异常堆栈: {ex.StackTrace}");
-            }
-        }
+        
 
         /// <summary>
         /// 加载歌单歌曲
@@ -466,6 +431,9 @@ namespace MusicPlayer.ViewModels
         {
             try
             {
+                // 如果是虚拟歌单（歌手/专辑），直接返回，避免清空歌曲列表
+                if (_currentPlaylist.Id == -1) return;
+                
                 var songs = await _playlistCacheService.GetSongsByPlaylistIdAsync(_currentPlaylist.Id);
                 
                 // 更新原始歌曲列表
@@ -612,28 +580,7 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        /// <summary>
-        /// 删除选中歌曲
-        /// </summary>
-        /// <param name="song"></param>
-        private void ExecuteDeleteSelectedSong(Song? song)
-        {
-            if (song != null)
-            {
-                try
-                {
-                    // 从歌单中删除歌曲
-                    _customPlaylistService.RemoveSongFromPlaylistAsync(CurrentPlaylist.Id, song.Id).Wait();
-                    // 更新本地列表
-                    _filteredPlaylist.Remove(song);
-                    OnPropertyChanged(nameof(SongCount));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 删除选中歌曲失败: {ex.Message}");
-                }
-            }
-        }
+       
 
         /// <summary>
         /// 注册消息处理器
@@ -644,30 +591,6 @@ namespace MusicPlayer.ViewModels
         }
 
        
-        /// <summary>
-        /// 添加歌曲到歌单
-        /// </summary>
-        /// <param name="parameter"></param>
-        private void ExecuteAddSongToPlaylist(object? parameter)
-        {
-            if (parameter is object[] parameters && parameters.Length == 2)
-            {
-                var song = parameters[0] as Song;
-                var playlistId = (int)parameters[1];
-                
-                if (song != null)
-                {
-                    try
-                    {
-                        // 添加歌曲到指定歌单
-                        _customPlaylistService.AddSongToPlaylistAsync(playlistId, song.Id).Wait();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 添加歌曲到歌单失败: {ex.Message}");
-                    }
-                }
-            }
-        }
+        
     }
 }

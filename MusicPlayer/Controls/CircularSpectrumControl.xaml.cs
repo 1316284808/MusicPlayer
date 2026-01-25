@@ -179,6 +179,9 @@ namespace MusicPlayer.Controls
                     // 释放资源
                     _spectrumViewModel = null;
                     _spectrumManager = null;
+                    
+                    // 清空DataContext，解除对ViewModel的强引用
+                    this.DataContext = null;
                 }
                 _disposed = true;
             }

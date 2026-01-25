@@ -16,7 +16,6 @@ namespace MusicPlayer.ViewModels
     private readonly IMessagingService _messagingService;
     private Core.Models.Song? _currentSong;
     private double _backgroundBlurRadius = 20.0;
-    private bool _isUpdatingBackground = false; // 防止重复更新
 
         /// <summary>
         /// 当前播放的歌曲

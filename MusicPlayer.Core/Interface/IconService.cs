@@ -89,6 +89,7 @@ namespace MusicPlayer.Core.Interface
                IconKind. FolderOpen=> "\ue838",//打开文件夹
               IconKind.MusicInfo=> "\ue90b",//播放队列
                 IconKind.LocaleLanguage => "\uf2b7",//语言设置 
+                IconKind.Update => "\uf67b",//更新 	f67b
                 _ => ""
             };
         }

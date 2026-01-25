@@ -16,12 +16,12 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
-            <TextBlock  Text="歌单列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
+            <TextBlock  Text="音乐库" FontSize="24" FontWeight="Bold"  Margin="10"   />
         </StackPanel>
 
 
 
-        <Grid Grid.Row="1" Height="150" Margin="15"  x:Name="DropArea" AllowDrop="True" 
+        <Grid Grid.Row="1" Height="150" Margin="15,10"  x:Name="DropArea" AllowDrop="True" 
               DragEnter="DropArea_DragEnter" DragOver="DropArea_DragOver" Drop="DropArea_Drop">
 
             <Rectangle Stroke="Black" StrokeThickness="1" StrokeDashArray="4 2"
@@ -65,8 +65,13 @@ Text="将文件夹拖到此处，将自动识别文件导入到默认列表"/>
                 </ui:Button>
 
             </StackPanel>
-            <!--直接将ListView放置在Grid单元格中，不使用StackPanel作为中间容器-->
-            <ui:ListView x:Name="PlaylistListBox"  Grid.Row="1"
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ui:ListView x:Name="PlaylistListBox"   Grid.Column="0"
                              ItemsSource="{Binding MusicGroups}" 
                              SelectedItem="{Binding SelectedPlaylist, Mode=TwoWay}"
                              Background="Transparent" BorderThickness="0" AlternationCount="2"  
@@ -79,70 +84,126 @@ VirtualizingStackPanel.VirtualizationMode="Recycling"
 VirtualizingStackPanel.ScrollUnit="Pixel"
 VirtualizingStackPanel.CacheLength="5,5"
 VirtualizingStackPanel.CacheLengthUnit="Item"
-Helper:PlaylistScrollBehavior.IsEnabled="True" 
-SelectionMode="Single"
-Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
-Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
-  Helper:PlaylistInteractionBehavior.IsEnabled="True"
-Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
+SelectionMode="Single" >
 
-                <ui:ListView.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <!-- 优化虚拟化性能的设置 -->
-                        <Setter Property="Padding" Value="5,10"/>
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <ui:ListView.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <!-- 优化虚拟化性能的设置 -->
+                            <Setter Property="Padding" Value="5,10"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="ItemBorder" Margin="0,0,15,0" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#80FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="False">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#4DFFFFFF" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:ListView.ItemContainerStyle>
+                    <ui:ListView.ItemTemplate>
+                        <DataTemplate >
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="ItemBorder" Margin="0,0,15,0" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
+                                <!-- 歌单信息 -->
+                                <StackPanel Grid.Column="1"  VerticalAlignment="Center">
 
-                        
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{Binding Description}" FontSize="12"     Opacity="0.7"   />
 
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#80FFFFFF"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="False">
-                                <Setter Property="Background" Value="Transparent"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#4DFFFFFF" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ui:ListView.ItemContainerStyle>
-                <ui:ListView.ItemTemplate>
-                    <DataTemplate >
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                                </StackPanel>
 
-                            <!-- 歌单封面 -->
-                            <Border Grid.Column="0"  Width="40" Height="40" CornerRadius="8" Background="#1AFFFFFF" Margin="0,0,8,0">
-                                <Grid>
-                                  
-                                </Grid>
-                            </Border>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <ui:Button ToolTip="修改歌单信息" Command="{Binding DataContext.UpdatePlaylistCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Helper:CustomIcon Kind="Update"/>
+                                        <ui:Button.Style>
+                                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Name}" Value="收藏列表">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:Button.Style>
+                                    </ui:Button>
+                                    <ui:Button ToolTip="删除歌单" Command="{Binding DataContext.DeletePlaylistCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Helper:CustomIcon Kind="Delete" Foreground="Red"/>
+                                        <ui:Button.Style>
+                                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Name}" Value="收藏列表">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:Button.Style>
+                                    </ui:Button>
+                                </StackPanel>
 
-                            <!-- 歌单信息 -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
-                                <TextBlock Text="{Binding Description}" FontSize="12"     Opacity="0.7"   />
-                            </StackPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ui:ListView.ItemTemplate>
-            </ui:ListView>
+                                <!-- 歌曲计数 -->
+                                <StackPanel  Grid.Column="3"    Orientation="Horizontal" MinWidth="80" VerticalAlignment="Center"  >
+                                    <ui:TextBlock Text="共" FontSize="14" VerticalAlignment="Center"  Opacity="0.7"/>
+                                    <ui:TextBlock Text="{Binding SongCount}" FontSize="14" VerticalAlignment="Center"  Margin="2,0"/>
+                                    <ui:TextBlock Text="首" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
+                                </StackPanel>
+
+
+                                <StackPanel Grid.Column="0"   >
+                                    <Grid>
+                                        <!-- 播放按钮 点击则播放垓歌单里面的歌曲 要实现按钮的icon转换，参考：AlbumControl中专辑卡片的播放按钮实现-->
+                                        <ui:Button   HorizontalAlignment="Center"   VerticalAlignment="Center" 
+                                   CornerRadius="8"  Width="40" Height="40" Margin="5,0"
+                                    Command="{Binding DataContext.PlayAlbumCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding Name}"  >
+                                            <Helper:CustomIcon Width="16" Height="16">
+                                                <Helper:CustomIcon.Style>
+                                                    <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                                        <!-- 默认显示播放图标 -->
+                                                        <Setter Property="Kind" Value="Play"/>
+                                                        <Style.Triggers>
+                                                            <!-- 播放时显示暂停图标 -->
+                                                            <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                                                <Setter Property="Kind" Value="Pause"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Helper:CustomIcon.Style>
+                                            </Helper:CustomIcon>
+                                        </ui:Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ui:ListView.ItemTemplate>
+                </ui:ListView>
+
+                <Border Grid.Column="1" >
+                    
+                </Border>
+            </Grid>
+         
 
 
           

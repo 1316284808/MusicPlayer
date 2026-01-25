@@ -30,30 +30,9 @@
 
 
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
-            <TextBlock  Text="默认列表" FontSize="24" FontWeight="Bold"  Margin="10"   />
+            <TextBlock  Text="全部歌曲" FontSize="24" FontWeight="Bold"  Margin="10"   />
             </StackPanel>
-        <StackPanel  Grid.Row="1" Orientation="Horizontal">
-            <ui:Button    ToolTip="播放全部"  
- HorizontalAlignment="Left"
- Width="auto" 
-Padding="5" Margin="5"  >
-                <StackPanel Orientation="Horizontal">
-                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
-                    <Separator Margin="2" />
-                    <ui:TextBlock Text="播放全部"/>
-                </StackPanel>
-            </ui:Button>
-            <ui:Button    ToolTip="随机播放"   
- HorizontalAlignment="Left"
- Width="auto" 
-Padding="5" Margin="5"  >
-                <StackPanel Orientation="Horizontal">
-                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle"  />
-                    <Separator Margin="2" />
-                    <ui:TextBlock Text="随机播放"/>
-                </StackPanel>
-            </ui:Button>
-        </StackPanel>
+        
        
 
 
@@ -144,12 +123,11 @@ Padding="5" Margin="5"  >
                            Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
                     <ui:ListView.ContextMenu>
                         <ContextMenu>
-                            <MenuItem   Header="加入收藏"   Command="{Binding ToggleSongHeartCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
-                                <MenuItem.Icon>
-                                    <Helper:CustomIcon Kind="Heart"  Foreground="Red" />
-                                </MenuItem.Icon>
-                            </MenuItem>
+                          
                             <MenuItem Header="添加到" ItemsSource="{Binding PlacementTarget.DataContext.AllPlaylists, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                <MenuItem.Icon>
+                                    <Helper:CustomIcon Kind="HeartFill"  Foreground="Red" />
+                                </MenuItem.Icon>
                                 <MenuItem.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
                                         <Setter Property="Header" Value="{Binding Name}" />

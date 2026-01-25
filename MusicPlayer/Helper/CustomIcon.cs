@@ -108,7 +108,7 @@ namespace MusicPlayer.Helper
                 }
                 
                 textBlock.FontSize = IconSize;
-                textBlock.FontWeight = FontWeights.SemiBold;
+                textBlock.FontWeight = FontWeights.Bold;
                 textBlock.FontFamily = new FontFamily("Segoe Fluent Icons");
                 textBlock.HorizontalAlignment = HorizontalAlignment.Center;
                 textBlock.VerticalAlignment = VerticalAlignment.Center;

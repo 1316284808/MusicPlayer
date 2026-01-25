@@ -106,7 +106,11 @@ namespace MusicPlayer.Helper
                     var filteredPlaylist = GetFilteredPlaylist(viewModel);
                     if (filteredPlaylist is INotifyCollectionChanged filteredCollection)
                     {
-                        filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
+                        // 获取或创建该UI元素的状态
+                        var state = GetOrCreateElementState(scrollViewer);
+                        
+                        // 创建唯一的事件处理器
+                        NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
                             // 延迟一小段时间，确保UI更新完成后再加载封面
                             System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
                                 // 只加载可视区域的封面
@@ -115,6 +119,16 @@ namespace MusicPlayer.Helper
                                 await LoadVisibleSongCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
                             }), System.Windows.Threading.DispatcherPriority.Background);
                         };
+                        
+                        // 移除旧的事件处理器（如果存在）
+                        if (state.CollectionChangedHandler != null)
+                        {
+                            filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
+                        }
+                        
+                        // 添加新的事件处理器
+                        filteredCollection.CollectionChanged += handler;
+                        state.CollectionChangedHandler = handler;
                     }
                     
                     // 初始加载时也加载一次封面
@@ -139,7 +153,47 @@ namespace MusicPlayer.Helper
         {
             try
             {
+                // 移除滚动事件处理器
                 scrollViewer.ScrollChanged -= OnScrollChanged;
+                
+                // 获取并清理该UI元素的状态
+                if (_elementStates.TryGetValue(scrollViewer, out var state))
+                {
+                    // 移除CollectionChanged事件处理器
+                    var viewModel = GetViewModel(scrollViewer);
+                    if (viewModel == null)
+                    {
+                        var listBox = FindVisualParent<System.Windows.Controls.ListBox>(scrollViewer);
+                        if (listBox?.DataContext != null)
+                        {
+                            viewModel = listBox.DataContext;
+                        }
+                    }
+                    
+                    if (viewModel != null)
+                    {
+                        var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                        if (filteredPlaylist is INotifyCollectionChanged filteredCollection && state.CollectionChangedHandler != null)
+                        {
+                            filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
+                        }
+                    }
+                    
+                    // 停止并销毁计时器
+                    if (state.ScrollThrottleTimer != null)
+                    {
+                        state.ScrollThrottleTimer.Stop();
+                        state.ScrollThrottleTimer = null;
+                    }
+                    
+                    // 清理所有引用，以便垃圾回收
+                    state.PendingScrollViewer = null;
+                    state.PendingViewModel = null;
+                    state.CollectionChangedHandler = null;
+                    
+                    // 从状态字典中移除该元素
+                    _elementStates.Remove(scrollViewer);
+                }
              }
             catch (Exception ex)
             {
@@ -178,7 +232,43 @@ namespace MusicPlayer.Helper
                 var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
                 if (scrollViewer != null)
                 {
+                    // 移除滚动事件处理器
                     scrollViewer.ScrollChanged -= OnScrollChanged;
+                    
+                    // 获取并清理该UI元素的状态
+                    if (_elementStates.TryGetValue(scrollViewer, out var state))
+                    {
+                        // 移除CollectionChanged事件处理器
+                        var viewModel = GetViewModel(listBox);
+                        if (viewModel == null && listBox.DataContext != null)
+                        {
+                            viewModel = listBox.DataContext;
+                        }
+                        
+                        if (viewModel != null)
+                        {
+                            var filteredPlaylist = GetFilteredPlaylist(viewModel);
+                            if (filteredPlaylist is INotifyCollectionChanged filteredCollection && state.CollectionChangedHandler != null)
+                            {
+                                filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
+                            }
+                        }
+                        
+                        // 停止并销毁计时器
+                        if (state.ScrollThrottleTimer != null)
+                        {
+                            state.ScrollThrottleTimer.Stop();
+                            state.ScrollThrottleTimer = null;
+                        }
+                        
+                        // 清理所有引用，以便垃圾回收
+                        state.PendingScrollViewer = null;
+                        state.PendingViewModel = null;
+                        state.CollectionChangedHandler = null;
+                        
+                        // 从状态字典中移除该元素
+                        _elementStates.Remove(scrollViewer);
+                    }
                 }
                 
                 // 移除ListBox事件
@@ -262,7 +352,11 @@ namespace MusicPlayer.Helper
                 // 监听FilteredPlaylist集合的变化
                 if (filteredPlaylist is INotifyCollectionChanged filteredCollection)
                 {
-                    filteredCollection.CollectionChanged += (collectionSender, collectionE) => {
+                    // 获取或创建该UI元素的状态
+                    var state = GetOrCreateElementState(scrollViewer);
+                    
+                    // 创建唯一的事件处理器
+                    NotifyCollectionChangedEventHandler handler = (collectionSender, collectionE) => {
                         // 延迟一小段时间，确保UI更新完成后再加载封面
                             System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(async () => {
                                 var viewport = new Rect(0, 0, scrollViewer.ViewportWidth, scrollViewer.ViewportHeight);
@@ -270,6 +364,16 @@ namespace MusicPlayer.Helper
                                 await LoadVisibleSongCoversAsync(viewModel, scrollViewer, viewport, scrollOffset);
                             }), System.Windows.Threading.DispatcherPriority.Background);
                     };
+                    
+                    // 移除旧的事件处理器（如果存在）
+                    if (state.CollectionChangedHandler != null)
+                    {
+                        filteredCollection.CollectionChanged -= state.CollectionChangedHandler;
+                    }
+                    
+                    // 添加新的事件处理器
+                    filteredCollection.CollectionChanged += handler;
+                    state.CollectionChangedHandler = handler;
                 }
                 
                 // 初始加载时也加载一次封面
@@ -285,12 +389,32 @@ namespace MusicPlayer.Helper
             }
         }
 
-        // 节流计时器，用于限制滚动事件处理频率
-        private static System.Windows.Threading.DispatcherTimer? _scrollThrottleTimer;
-        private static ScrollViewer? _pendingScrollViewer;
-        private static object? _pendingViewModel;
-        private static Rect _pendingViewport;
-        private static System.Windows.Point _pendingScrollOffset;
+        // 为每个UI元素存储独立的状态信息
+        private static readonly Dictionary<object, BehaviorState> _elementStates = new();
+        
+        // 状态类，存储每个UI元素的独立状态
+        private class BehaviorState
+        {
+            public System.Windows.Threading.DispatcherTimer? ScrollThrottleTimer { get; set; }
+            public ScrollViewer? PendingScrollViewer { get; set; }
+            public object? PendingViewModel { get; set; }
+            public Rect PendingViewport { get; set; }
+            public System.Windows.Point PendingScrollOffset { get; set; }
+            public NotifyCollectionChangedEventHandler? CollectionChangedHandler { get; set; }
+        }
+        
+        /// <summary>
+        /// 获取或创建UI元素的状态
+        /// </summary>
+        private static BehaviorState GetOrCreateElementState(object element)
+        {
+            if (!_elementStates.TryGetValue(element, out var state))
+            {
+                state = new BehaviorState();
+                _elementStates[element] = state;
+            }
+            return state;
+        }
         
         private static void OnScrollChanged(object sender, ScrollChangedEventArgs e)
         {
@@ -298,6 +422,9 @@ namespace MusicPlayer.Helper
             {
                 if (sender is ScrollViewer scrollViewer)
                 {
+                    // 获取或创建该UI元素的状态
+                    var state = GetOrCreateElementState(scrollViewer);
+                    
                     // 尝试从附加属性获取ViewModel
                     var viewModel = GetViewModel(scrollViewer);
                     
@@ -318,24 +445,24 @@ namespace MusicPlayer.Helper
                     var scrollOffset = new System.Windows.Point(scrollViewer.HorizontalOffset, scrollViewer.VerticalOffset);
                     
                     // 使用节流机制，限制处理频率
-                    if (_scrollThrottleTimer == null)
+                    if (state.ScrollThrottleTimer == null)
                     {
-                        _scrollThrottleTimer = new System.Windows.Threading.DispatcherTimer();
-                        _scrollThrottleTimer.Interval = System.TimeSpan.FromMilliseconds(50); // 50ms节流
-                        _scrollThrottleTimer.Tick += OnScrollThrottleTimerTick;
+                        state.ScrollThrottleTimer = new System.Windows.Threading.DispatcherTimer();
+                        state.ScrollThrottleTimer.Interval = System.TimeSpan.FromMilliseconds(50); // 50ms节流
+                        state.ScrollThrottleTimer.Tick += (timerSender, timerE) => OnScrollThrottleTimerTick(scrollViewer, timerSender, timerE);
                     }
                     
                     // 取消现有计时器
-                    _scrollThrottleTimer.Stop();
+                    state.ScrollThrottleTimer.Stop();
                     
-                    // 保存当前状态
-                    _pendingScrollViewer = scrollViewer;
-                    _pendingViewModel = viewModel;
-                    _pendingViewport = viewport;
-                    _pendingScrollOffset = scrollOffset;
+                    // 保存当前状态到元素的独立状态中
+                    state.PendingScrollViewer = scrollViewer;
+                    state.PendingViewModel = viewModel;
+                    state.PendingViewport = viewport;
+                    state.PendingScrollOffset = scrollOffset;
                     
                     // 重新启动计时器
-                    _scrollThrottleTimer.Start();
+                    state.ScrollThrottleTimer.Start();
                 }
             }
             catch (Exception ex)
@@ -344,28 +471,32 @@ namespace MusicPlayer.Helper
             }
         }
         
-        private static void OnScrollThrottleTimerTick(object? sender, EventArgs e)
+        private static void OnScrollThrottleTimerTick(object element, object? sender, EventArgs e)
         {
             try
             {
+                // 获取该UI元素的状态
+                if (!_elementStates.TryGetValue(element, out var state)) return;
+                
                 // 停止计时器
-                if (_scrollThrottleTimer != null)
+                if (state.ScrollThrottleTimer != null)
                 {
-                    _scrollThrottleTimer.Stop();
+                    state.ScrollThrottleTimer.Stop();
                 }
                 
                 // 检查是否有挂起的滚动事件
-                if (_pendingScrollViewer != null && _pendingViewModel != null)
+                if (state.PendingScrollViewer != null && state.PendingViewModel != null)
                 {
                     // 异步处理可视区域封面加载
                     Task.Run(async () => {
-                        await LoadVisibleSongCoversAsync(_pendingViewModel, _pendingScrollViewer, _pendingViewport, _pendingScrollOffset);
+                        await LoadVisibleSongCoversAsync(state.PendingViewModel, state.PendingScrollViewer, state.PendingViewport, state.PendingScrollOffset);
                     });
 
                     // 异步处理清理
                     Task.Run(async () => {
-                        await CleanupInvisibleSongCovers(_pendingViewModel, _pendingScrollViewer, _pendingViewport, _pendingScrollOffset);
+                        await CleanupInvisibleSongCovers(state.PendingViewModel, state.PendingScrollViewer, state.PendingViewport, state.PendingScrollOffset);
                     });
+                   
                 }
             }
             catch (Exception ex)

@@ -28,41 +28,11 @@
         </StackPanel>
 
         <!-- 操作区域 -->
-        <Grid Grid.Row="1" >
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- 播放全部按钮 -->
-            <StackPanel  Grid.Column="0" Orientation="Horizontal">
-                <ui:Button    ToolTip="播放全部"   Command="{Binding PlayAllCommand}"
- HorizontalAlignment="Left"
- Width="auto" 
-Padding="5" Margin="5"  >
-                    <StackPanel Orientation="Horizontal">
-                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play"  />
-                        <Separator Margin="2" />
-                        <ui:TextBlock Text="播放全部"/>
-                    </StackPanel>
-                </ui:Button>
-                <ui:Button    ToolTip="随机播放"   Command="{Binding PlayAllCommand}"
- HorizontalAlignment="Left"
- Width="auto" 
-Padding="5" Margin="5"  >
-                    <StackPanel Orientation="Horizontal">
-                        <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle"  />
-                        <Separator Margin="2" />
-                        <ui:TextBlock Text="随机播放"/>
-                    </StackPanel>
-                </ui:Button>
-            </StackPanel>
-
-
+        <StackPanel Grid.Row="1"  Orientation="Horizontal" HorizontalAlignment="Right">
+            
+ 
             <!-- 搜索区域 -->
-            <ui:Button Grid.Column="2" Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
+            <ui:Button   Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Helper:CustomIcon Kind="Search" />
                     <Separator Margin="2" />
@@ -85,12 +55,12 @@ Padding="5" Margin="5"  >
                 </StackPanel>
             </ui:Button>
 
-            <StackPanel Grid.Column="3"    Orientation="Horizontal" MinWidth="80" VerticalAlignment="Center" HorizontalAlignment="Right">
+            <StackPanel      Orientation="Horizontal" MinWidth="80" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <ui:TextBlock Text="共" FontSize="14" VerticalAlignment="Center"  Opacity="0.7"/>
                 <ui:TextBlock Text="{Binding SongCount}" FontSize="14" VerticalAlignment="Center"  Margin="2,0"/>
                 <ui:TextBlock Text="首" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
             </StackPanel> 
-        </Grid>
+        </StackPanel>
 
         <!-- 歌曲列表区域 -->
         <Border Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 

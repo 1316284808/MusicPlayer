@@ -39,16 +39,6 @@ namespace MusicPlayer.Core.Interface
         /// </summary>
         void RestorePlayerState(IPlayerStateService playerState);
         
-        /// <summary>
-        /// 自动持久化配置
-        /// </summary>
-        bool AutoSaveEnabled { get; set; }
-        
-        /// <summary>
-        /// 自动保存间隔（毫秒）
-        /// </summary>
-        int AutoSaveIntervalMs { get; set; }
-        
         // 配置更新方法 - 保持现有接口兼容性
         void UpdateVolume(float volume);
         void UpdatePlayMode(PlayMode playMode);
@@ -96,11 +86,6 @@ namespace MusicPlayer.Core.Interface
         /// 配置加载完成事件
         /// </summary>
         event Action<PlayerConfiguration>? ConfigurationLoaded;
-        
-        /// <summary>
-        /// 配置保存完成事件
-        /// </summary>
-        event Action<PlayerConfiguration>? ConfigurationSaved;
         
         /// <summary>
         /// 配置变更事件
