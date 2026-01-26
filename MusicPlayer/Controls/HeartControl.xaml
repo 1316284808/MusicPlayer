@@ -26,7 +26,7 @@
 
             <Rectangle Stroke="Black" StrokeThickness="1" StrokeDashArray="4 2"
       RadiusX="8" RadiusY="8" />
-            <Border Background="#4DFFFFFF" CornerRadius="8">
+            <Border Background="Transparent" CornerRadius="8">
             <StackPanel Orientation="Vertical"   VerticalAlignment="Center">
 
 

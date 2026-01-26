@@ -35,9 +35,9 @@ namespace MusicPlayer.Services.Providers
             if (context.Type != PlaybackContextType.Favorites)
                 throw new ArgumentException($"Invalid context type. Expected {PlaybackContextType.Favorites}, but got {context.Type}");
 
-            // 获取所有未删除且已收藏的歌曲
-            return _cacheService.GetPlaylist()
-                .Where(song => !song.IsDeleted && song.Heart)
+            // 从收藏列表歌单获取歌曲
+            return _cacheService.GetSongsByPlaylistIdAsync(1).Result
+                .Where(song => !song.IsDeleted)
                 .ToList();
         }
     }

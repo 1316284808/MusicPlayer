@@ -254,7 +254,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaylistViewModel>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IPlaylistCacheService>());
+                    provider.GetRequiredService<IPlaylistCacheService>(),
+                    provider.GetRequiredService<INotificationService>());
                 System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
@@ -292,7 +293,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<ICustomPlaylistService>(),
                     provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<INotificationService>()));
+                    provider.GetRequiredService<INotificationService>(),
+                    provider.GetRequiredService<IPlaylistCacheService>()));
 
             
             // SettingsPageViewModel - 单例模式

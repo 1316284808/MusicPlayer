@@ -32,6 +32,7 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaylistViewModel _playlistViewModel;
         private readonly IPlaybackContextService _playbackContextService;
         private readonly IPlaylistCacheService _playlistCacheService;
+        private readonly INotificationService _notificationService;
         private bool _isUserDragging = false; // 标记用户是否正在拖拽进度条
         private double _dragPosition = 0.0; // 拖动过程中的临时位置
         private bool _isVolumeFlyoutOpen = false; // 音量弹出层打开状态
@@ -353,7 +354,13 @@ namespace MusicPlayer.ViewModels
         // 当前歌曲收藏状态
         public bool IsCurrentSongFavorited
         {
-            get => _currentSong?.Heart ?? false;
+            get 
+            {
+                if (_currentSong == null) return false;
+                // 检查当前歌曲是否在收藏列表中
+                var favoritesPlaylistSongs = _playlistCacheService.GetSongsByPlaylistIdAsync(1).Result;
+                return favoritesPlaylistSongs.Any(s => s.Id == _currentSong.Id);
+            }
         }
 
         // 当前播放列表项
@@ -393,7 +400,7 @@ namespace MusicPlayer.ViewModels
 
         private readonly NavigationService _navigationService;
 
-        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService, IPlaylistViewModel playlistViewModel, IPlaybackContextService playbackContextService, IPlaylistCacheService playlistCacheService)
+        public ControlBarViewModel(IMessagingService messagingService, IPlayerStateService playerStateService, NavigationService navigationService, IConfigurationService configurationService, IPlaylistDataService playlistDataService, IPlaylistViewModel playlistViewModel, IPlaybackContextService playbackContextService, IPlaylistCacheService playlistCacheService, INotificationService notificationService)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 创建新实例，ID: {GetHashCode()}");
@@ -407,6 +414,7 @@ namespace MusicPlayer.ViewModels
             _playlistViewModel = playlistViewModel;
             _playbackContextService = playbackContextService;
             _playlistCacheService = playlistCacheService;
+            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             
             // 初始化当前上下文播放队列
             // 使用Task.Run处理异步调用，避免构造函数阻塞
@@ -601,13 +609,9 @@ namespace MusicPlayer.ViewModels
                     var updatedSong = m.Data.FirstOrDefault(s => s.FilePath == _currentSong.FilePath);
                     if (updatedSong != null)
                     {
-                        // 只在状态确实不同时更新
-                        if (updatedSong.Heart != _currentSong.Heart)
-                        {
-                            _currentSong.Heart = updatedSong.Heart;
-                            OnPropertyChanged(nameof(IsCurrentSongFavorited));
-                            System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 收藏状态更新 - {_currentSong.Title}, 状态: {_currentSong.Heart}");
-                        }
+                        // 更新收藏状态相关属性
+                        OnPropertyChanged(nameof(IsCurrentSongFavorited));
+                        System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 收藏状态更新 - {_currentSong.Title}");
                     }
                 }
             });
@@ -757,23 +761,35 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 执行切换收藏状态命令
         /// </summary>
-        private void ExecuteToggleFavorite()
+        private async void ExecuteToggleFavorite()
         {
             try
             {
                 // 确保有当前歌曲
                 if (_currentSong != null)
                 {
+                    // 检查当前歌曲是否已在收藏列表中
+                    var favoritesPlaylistSongs = await _playlistCacheService.GetSongsByPlaylistIdAsync(1);
+                    var isCurrentlyFavorited = favoritesPlaylistSongs.Any(s => s.Id == _currentSong.Id);
+                    
                     // 切换收藏状态
-                    var newFavoriteStatus = !_currentSong.Heart;
+                    var newFavoriteStatus = !isCurrentlyFavorited;
                     
-                    // 立即更新本地状态以提供即时UI反馈
-                    _currentSong.Heart = newFavoriteStatus;
+                    if (newFavoriteStatus)
+                    {
+                        // 添加到收藏列表
+                        await _playlistCacheService.AddSongToPlaylistAsync(1, _currentSong.Id);
+                        _notificationService.ShowSuccess($"已将歌曲 '{_currentSong.Title}' 添加到收藏列表");
+                    }
+                    else
+                    {
+                        // 从收藏列表移除
+                        await _playlistCacheService.RemoveSongFromPlaylistAsync(1, _currentSong.Id);
+                        _notificationService.ShowInfo($"已将歌曲 '{_currentSong.Title}' 从收藏列表移除");
+                    }
+                    
+                    // 更新UI
                     OnPropertyChanged(nameof(IsCurrentSongFavorited));
-                    
-                    // 发送更新歌曲收藏状态消息
-                    _messagingService.Send<UpdateSongFavoriteStatusMessage, bool>(
-                        new UpdateSongFavoriteStatusMessage(_currentSong, newFavoriteStatus));
                     
                     System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 切换歌曲收藏状态 - {_currentSong.Title}, 新状态: {newFavoriteStatus}");
                 }

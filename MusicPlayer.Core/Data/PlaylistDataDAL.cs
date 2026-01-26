@@ -140,7 +140,7 @@ namespace MusicPlayer.Core.Data
                 var collection = GetCollection<Song>("Songs");
                 bool updated = collection.Update(song);
                 
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 更新歌曲状态: {song.Title}, Heart: {song.Heart}, IsDeleted: {song.IsDeleted}");
+                System.Diagnostics.Debug.WriteLine($"PlaylistDataDAL: 更新歌曲状态: {song.Title}, IsDeleted: {song.IsDeleted}");
                 return updated ? 1 : 0;
             }
             catch (Exception ex)

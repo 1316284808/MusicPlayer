@@ -574,7 +574,7 @@ namespace MusicPlayer.Services
         /// </summary>
         /// <param name="song">要更新的歌曲</param>
         /// <param name="isFavorite">收藏状态</param>
-        public void UpdateSongFavoriteStatus(Song song, bool isFavorite)
+        public async void UpdateSongFavoriteStatus(Song song, bool isFavorite)
         {
             try
             {
@@ -586,16 +586,22 @@ namespace MusicPlayer.Services
                     
                     if (songToUpdate != null)
                     {
-                        // 更新歌曲的收藏状态
-                        songToUpdate.Heart = isFavorite;
-                        
-                        // 更新缓存中的播放列表
-                        _cacheService.UpdatePlaylist(playlist);
-                        
-                        // 异步保存歌曲状态到数据库
-                        _ = Task.Run(async () => await _cacheService.UpdateSongStatusInDatabaseAsync(songToUpdate));
-                        
-                        System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态: {song.Title}, 收藏状态: {isFavorite} (已更新缓存并异步保存到数据库)");
+                        // 异步处理歌单歌曲关联
+                        _ = Task.Run(async () => 
+                        {
+                            if (isFavorite)
+                            {
+                                // 添加到收藏列表
+                                await _cacheService.AddSongToPlaylistAsync(1, songToUpdate.Id);
+                                System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态: {song.Title}, 添加到收藏列表");
+                            }
+                            else
+                            {
+                                // 从收藏列表移除
+                                await _cacheService.RemoveSongFromPlaylistAsync(1, songToUpdate.Id);
+                                System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态: {song.Title}, 从收藏列表移除");
+                            }
+                        });
                         
                         // 发送播放列表数据变化消息，通知UI更新
                         _messagingService.Send(new PlaylistDataChangedMessage(
@@ -658,10 +664,6 @@ namespace MusicPlayer.Services
         #endregion
 
         #region 私有方法
-
-        // 注意：LoadFromJsonAsyncInternal 方法已被移除
-        // 现在数据初始化在程序启动时由 ServiceCoordinator.InitializePlaylistAsyncSynchronously() 处理
-        // 这样可以确保数据在用户操作前就已经加载完成，避免竞态条件
 
         /// <summary>
         /// 排序歌曲列表

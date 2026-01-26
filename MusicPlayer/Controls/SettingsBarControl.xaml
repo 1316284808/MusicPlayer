@@ -70,7 +70,7 @@
 
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#4DFFFFFF"/>
+                                <Setter Property="Background" Value="Transparent"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="False">
                                 <Setter Property="Background" Value="Transparent"/>

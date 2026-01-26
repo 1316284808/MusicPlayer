@@ -3,9 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
+using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages; // 引入新的消息类型
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -45,6 +47,7 @@ namespace MusicPlayer.ViewModels
         private readonly ICustomPlaylistService _customPlaylistService;
         private readonly IPlaybackContextService _playbackContextService;
         private readonly INotificationService _notificationService;
+        private readonly IPlaylistCacheService _playlistCacheService;
         
         // 所有歌单列表
         private readonly ObservableCollection<Playlist> _allPlaylists = new();
@@ -272,7 +275,7 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null, INotificationService? notificationService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null, INotificationService? notificationService = null, IPlaylistCacheService? playlistCacheService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
@@ -280,6 +283,7 @@ namespace MusicPlayer.ViewModels
             _customPlaylistService = customPlaylistService ?? throw new ArgumentNullException(nameof(customPlaylistService));
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _playlistCacheService = playlistCacheService ?? throw new ArgumentNullException(nameof(playlistCacheService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -435,16 +439,29 @@ namespace MusicPlayer.ViewModels
             // 当前歌曲变化消息
             _messagingService.Register<CurrentSongChangedMessage>(this, (r, m) =>
             {
-                CurrentSong = m.Value;
-                
-                // 更新选中项
                 if (m.Value != null)
                 {
-                    CurrentPlaylistItem = m.Value;
+                    // 在FilteredPlaylist中查找具有相同ID的歌曲对象
+                    var matchingSong = _filteredPlaylist.FirstOrDefault(song => song.Id == m.Value.Id);
+                    
+                    if (matchingSong != null)
+                    {
+                        CurrentSong = matchingSong;
+                        CurrentPlaylistItem = matchingSong;
+                        System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 找到匹配的歌曲，更新选中项: {matchingSong.Title}");
+                    }
+                    else
+                    {
+                        CurrentSong = m.Value;
+                        CurrentPlaylistItem = null;
+                        System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 未找到匹配的歌曲，清空选中项: {m.Value.Title}");
+                    }
                 }
                 else
                 {
+                    CurrentSong = null;
                     CurrentPlaylistItem = null;
+                    System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 没有当前播放歌曲，清空选中项");
                 }
             });
 
@@ -598,13 +615,25 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 执行切换歌曲收藏状态操作
         /// </summary>
-        private void ExecuteToggleSongHeart(Song? song)
+        private async void ExecuteToggleSongHeart(Song? song)
         {
             if (song != null)
             {
-                song.Heart = !song.Heart;
-                // 发送消息更新持久化存储
-                _messagingService.Send(new UpdateSongFavoriteStatusMessage(song, song.Heart));
+                // 检查歌曲是否已在收藏列表中
+                var favoritesPlaylistSongs = await _playlistCacheService.GetSongsByPlaylistIdAsync(1);
+                var isCurrentlyFavorited = favoritesPlaylistSongs.Any(s => s.Id == song.Id);
+                
+                // 切换收藏状态
+                if (!isCurrentlyFavorited)
+                {
+                    // 添加到收藏列表
+                    await _playlistCacheService.AddSongToPlaylistAsync(1, song.Id);
+                }
+                else
+                {
+                    // 从收藏列表移除
+                    await _playlistCacheService.RemoveSongFromPlaylistAsync(1, song.Id);
+                }
             }
         }
 
@@ -656,11 +685,14 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         private void ExecuteScrollToCurrentSong()
         {
-            if (CurrentSong != null && _filteredPlaylist.Contains(CurrentSong))
+            // 直接从PlaylistDataService获取最新的当前歌曲，确保使用最新数据
+            var currentSong = _playlistDataService.CurrentSong;
+            
+            if (currentSong != null && _filteredPlaylist.Contains(currentSong))
             {
                 // 发送滚动到当前播放歌曲的消息
-                _messagingService.Send(new ScrollToCurrentSongMessage(CurrentSong));
-                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 发送滚动到当前歌曲的消息: {CurrentSong.Title}");
+                _messagingService.Send(new ScrollToCurrentSongMessage(currentSong));
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 发送滚动到当前歌曲的消息: {currentSong.Title}");
             }
             else
             {

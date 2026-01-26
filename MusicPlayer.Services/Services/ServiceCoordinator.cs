@@ -58,10 +58,6 @@ namespace MusicPlayer.Services
             CacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _logger = logger;
 
-            System.Diagnostics.Debug.WriteLine("ServiceCoordinator: 开始订阅消息");
-            // 订阅关键消息以协调服务间通信
-            SubscribeToMessages();
-            
             System.Diagnostics.Debug.WriteLine("ServiceCoordinator: 构造函数执行完成");
         }
 
@@ -198,13 +194,13 @@ namespace MusicPlayer.Services
                 
                 if (completedTask == timeoutTask)
                 {
-                    System.Diagnostics.Debug.WriteLine("ServiceCoordinator: LoadFromJsonAsync 超时");
+                    System.Diagnostics.Debug.WriteLine("ServiceCoordinator: 加载播放列表数据超时");
                     throw new TimeoutException("加载播放列表数据超时");
                 }
                 else
                 {
                     await loadTask.ConfigureAwait(false);
-                    System.Diagnostics.Debug.WriteLine("ServiceCoordinator: LoadFromJsonAsync 完成");
+                    System.Diagnostics.Debug.WriteLine("ServiceCoordinator:加载播放列表数据 完成");
                 }
                 
                 // 验证数据加载结果
@@ -389,80 +385,6 @@ namespace MusicPlayer.Services
             {
                 System.Diagnostics.Debug.WriteLine($"ServiceCoordinator: 强制初始化 PlaylistDataService 失败: {ex.Message}");
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// 订阅消息以协调服务间通信
-        /// </summary>
-        private void SubscribeToMessages()
-        {
-            // 订阅播放状态变更消息，协调相关服务
-            MessagingService.Register<CurrentSongChangedMessage>(this, OnCurrentSongChanged);
-            MessagingService.Register<PlaybackStateChangedMessage>(this, OnPlaybackStateChanged);
-            
-            // 订阅播放列表变更消息
-            MessagingService.Register<PlaylistUpdatedMessage>(this, OnPlaylistUpdated);
-        }
-
-        /// <summary>
-        /// 处理当前歌曲变更消息
-        /// </summary>
-        private void OnCurrentSongChanged(object recipient, CurrentSongChangedMessage message)
-        {
-            try
-            {
-                // 协调各个服务对歌曲变更的响应
-                if (PlayerService != null)
-                {
-                    // 确保播放器状态同步
-                    var playerService = PlayerService;
-                    // 这里可以添加协调逻辑
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "处理当前歌曲变更消息时发生错误");
-            }
-        }
-
-        /// <summary>
-        /// 处理播放状态变更消息
-        /// </summary>
-        private void OnPlaybackStateChanged(object recipient, PlaybackStateChangedMessage message)
-        {
-            try
-            {
-                // 协调通知服务更新
-                if (NotificationService != null)
-                {
-                    var notificationService = NotificationService;
-                    // 这里可以添加协调逻辑
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "处理播放状态变更消息时发生错误");
-            }
-        }
-
-        /// <summary>
-        /// 处理播放列表更新消息
-        /// </summary>
-        private void OnPlaylistUpdated(object recipient, PlaylistUpdatedMessage message)
-        {
-            try
-            {
-                // 协调播放列表相关服务的响应
-                if (PlayerStateService != null)
-                {
-                    var playerStateService = PlayerStateService;
-                    // 这里可以添加协调逻辑
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "处理播放列表更新消息时发生错误");
             }
         }
 

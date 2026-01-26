@@ -147,7 +147,14 @@ namespace MusicPlayer.Navigation
                         {
                             pageType = typeof(AlbumPage);
                         }
-                        
+                        else if (e.Content is HeartPage)
+                        {
+                            pageType = typeof(HeartPage);
+                        }
+                        else if (e.Content is PlaylistDetailPage)
+                        {
+                            pageType = typeof(PlaylistDetailPage);
+                        }
                         if (pageType != null)
                         {
                             _messagingService.Send(new NavigationCompletedMessage(pageType));

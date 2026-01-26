@@ -58,10 +58,6 @@ namespace MusicPlayer.Core.Models
         [ObservableProperty]
         private DateTime _addedTime = DateTime.Now;
 
-        /// <summary>是否收藏</summary>
-        [ObservableProperty]
-        private bool _heart = false;
-
         /// <summary>是否已删除（逻辑删除，不实际删除文件）</summary>
         [ObservableProperty]
         private bool _isDeleted = false;
