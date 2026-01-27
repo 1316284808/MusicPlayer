@@ -326,6 +326,7 @@ namespace MusicPlayer.Navigation
             {
                 if (heartPage.DataContext is MusicPlayer.ViewModels.ObservableObject heartViewModel)
                 {
+                        
                     heartViewModel.Cleanup();
                 }
             }
@@ -334,6 +335,7 @@ namespace MusicPlayer.Navigation
                     disposablePage.Dispose();
                 }
                 // 3. 重置页面引用
+                
                 _mainFrame.Content = null;
                 
                 // 4. 强制垃圾回收

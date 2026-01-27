@@ -48,7 +48,7 @@ namespace MusicPlayer.Core.Audio
                 _isEnabled[i] = false; // 初始不启用
             }
             
-            System.Diagnostics.Debug.WriteLine($"EqualizerStream: 已创建{bandCount}个PeakingEQ滤波器");
+            //System.Diagnostics.Debug.WriteLine($"EqualizerStream: 已创建{bandCount}个PeakingEQ滤波器");
         }
 
         /// <summary>
@@ -164,10 +164,10 @@ namespace MusicPlayer.Core.Audio
                     // 如果增益为0dB，禁用该频段以节省CPU
                     _isEnabled[i] = Math.Abs(gainDb) > 0.01f;
                     
-                    System.Diagnostics.Debug.WriteLine($"EqualizerStream: 频段{i}增益设置为{gainDb:F1}dB，频率={GetFilterFrequency(i)}Hz");
+                    //System.Diagnostics.Debug.WriteLine($"EqualizerStream: 频段{i}增益设置为{gainDb:F1}dB，频率={GetFilterFrequency(i)}Hz");
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"EqualizerStream: 所有频段增益设置完成");
+                //System.Diagnostics.Debug.WriteLine($"EqualizerStream: 所有频段增益设置完成");
             }
         }
 

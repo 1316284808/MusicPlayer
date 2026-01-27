@@ -31,6 +31,7 @@ namespace MusicPlayer.Services
         private IWavePlayer? _waveOut;
         private AudioFileReader? _audioFileReader;
         private SpectrumAnalyzer? _spectrumAnalyzer;
+        private readonly AudioEngineManager _audioEngineManager;
         private readonly object _audioLock = new();
         private readonly DispatcherTimer _timer;
         
@@ -123,6 +124,9 @@ namespace MusicPlayer.Services
             _equalizerService = equalizerService;
             _playerStateService = playerStateService;
             _configurationService = configurationService;
+
+            // 初始化音频引擎管理器
+            _audioEngineManager = new AudioEngineManager();
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromMilliseconds(60); // 降低到60ms，减少CPU负载，提高兼容性
@@ -230,11 +234,52 @@ namespace MusicPlayer.Services
             {
                 // 重置下一首触发标志
                 _hasTriggeredNextSong = false;
-                // 释放当前歌曲的高清封面资源，避免内存泄漏
+                
+                // 释放当前歌曲的所有资源，避免内存泄漏
                 if (_playlistDataService.CurrentSong != null && _playlistDataService.CurrentSong != song)
                 {
-                    _playlistDataService.CurrentSong.OriginalAlbumArt = null;
-                    System.Diagnostics.Debug.WriteLine($"释放旧歌曲 {_playlistDataService.CurrentSong.Title} 的高清封面资源");
+                    System.Diagnostics.Debug.WriteLine($"开始释放旧歌曲 {_playlistDataService.CurrentSong.Title} 的资源");
+                    
+                    // 释放旧歌曲的高清封面资源
+                    if (_playlistDataService.CurrentSong.OriginalAlbumArt != null)
+                    {
+                        try
+                        {
+                            _playlistDataService.CurrentSong.OriginalAlbumArt.Freeze(); // 冻结BitmapImage，减少内存占用
+                            _playlistDataService.CurrentSong.OriginalAlbumArt = null;
+                            System.Diagnostics.Debug.WriteLine("已释放旧歌曲高清封面资源");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"释放旧歌曲高清封面资源时出错: {ex.Message}");
+                            _playlistDataService.CurrentSong.OriginalAlbumArt = null;
+                        }
+                    }
+                    
+                    // 释放旧歌曲的缩略图资源
+                    if (_playlistDataService.CurrentSong.AlbumArt != null)
+                    {
+                        try
+                        {
+                            _playlistDataService.CurrentSong.AlbumArt.Freeze(); // 冻结BitmapImage，减少内存占用
+                            _playlistDataService.CurrentSong.AlbumArt = null; // 释放缩略图资源
+                            System.Diagnostics.Debug.WriteLine("已释放旧歌曲缩略图资源");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"释放旧歌曲缩略图资源时出错: {ex.Message}");
+                            _playlistDataService.CurrentSong.AlbumArt = null;
+                        }
+                    }
+                    
+                    // 清空其他可能占用内存的属性
+                    _playlistDataService.CurrentSong.Title = string.Empty;
+                    _playlistDataService.CurrentSong.Artist = string.Empty;
+                    _playlistDataService.CurrentSong.Album = string.Empty;
+                    _playlistDataService.CurrentSong.FilePath = string.Empty;
+                    _playlistDataService.CurrentSong.Id = 0;
+                    
+                    System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 资源释放完成");
                 }
 
                 // 完全停止并清理当前音频资源
@@ -253,14 +298,20 @@ namespace MusicPlayer.Services
                 // 应用均衡器效果
                 var audioStreamWithEqualizer = _equalizerService.ApplyEqualizer(_spectrumAnalyzer);
 
-                   CreateAudioOutputDevice(audioStreamWithEqualizer);
+                CreateAudioOutputDevice(audioStreamWithEqualizer);
+                
+                // 更新当前加载的歌曲引用
+                _currentlyLoadedSong = song;
+                
                 // 更新播放列表数据服务的当前歌曲状态（仅当不同时才更新，避免循环调用）
                 if (_playlistDataService.CurrentSong != song)
                 {
                     _playlistDataService.CurrentSong = song;
                 } 
+                
                 // 设置音量（直接使用PlayerStateService的当前值）
                 _audioFileReader.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
+                
                 bool isUserAction = _playlistDataService.DataSource.Any();
                 if (isUserAction)
                 {
@@ -272,9 +323,17 @@ namespace MusicPlayer.Services
                     System.Diagnostics.Debug.WriteLine($"PlayerService: 应用启动加载歌曲 {song.Title}，不更新最后播放歌曲ID");
                 }
                 
-                // 加载歌词
+                // 先发送清空歌词消息，释放旧歌词资源
+                _messagingService.Send(new LyricsUpdatedMessage(new ObservableCollection<LyricLine>()));
+                
+                // 加载新歌词
                 var lyrics = _playlistService.LoadLyrics(song.FilePath);
                 _messagingService.Send(new LyricsUpdatedMessage(new ObservableCollection<LyricLine>(lyrics)));
+                
+                // 执行垃圾回收，释放未使用的资源
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                System.Diagnostics.Debug.WriteLine("PlayerService: 切歌完成后执行了垃圾回收");
 
                 // 发送最大位置信息 - 从音频文件读取器获取实际时长
                 if (_audioFileReader != null)
@@ -288,6 +347,21 @@ namespace MusicPlayer.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"歌曲加载完成: {song.Title}");
+                
+                // 同步执行一次快速内存清理
+                CleanupMemory();
+                
+                // 异步执行更全面的内存清理，避免阻塞主线程
+                Task.Run(() => {
+                    System.Diagnostics.Debug.WriteLine("开始异步执行全面内存清理");
+                    CleanupMemory();
+                    
+                    // 调用垃圾回收器
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                    System.Diagnostics.Debug.WriteLine("异步内存清理完成");
+                });
             }
         }
 
@@ -410,17 +484,44 @@ namespace MusicPlayer.Services
             }
         }
 
+        /// <summary>
+        /// 清理内存资源
+        /// </summary>
+        private void CleanupMemory()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("PlayerService: 开始清理内存资源");
+                
+                // 清理频谱数据缓冲区
+                lock (_spectrumLock)
+                {
+                    if (_spectrumDataBuffer != null)
+                    {
+                        Array.Clear(_spectrumDataBuffer, 0, _spectrumDataBuffer.Length);
+                        _spectrumDataBuffer = null;
+                        System.Diagnostics.Debug.WriteLine("PlayerService: 已清理频谱数据缓冲区");
+                    }
+                }
+                
+                // 调用垃圾回收器
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                System.Diagnostics.Debug.WriteLine("PlayerService: 已执行垃圾回收");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"清理内存资源时出错: {ex.Message}");
+            }
+        }
+
         private void StopAudio()
         {
             // 安全地停止和释放音频设备
             try
             {
-                if (_waveOut != null)
-                {
-                    _waveOut.Stop();
-                    _waveOut.Dispose();
-                    _waveOut = null;
-                }
+                _audioEngineManager.Dispose();
+                _waveOut = null;
             }
             catch (Exception ex)
             {
@@ -448,14 +549,46 @@ namespace MusicPlayer.Services
             {
                 if (_spectrumAnalyzer != null)
                 {
+                    System.Diagnostics.Debug.WriteLine("开始释放频谱分析器资源");
                     _spectrumAnalyzer.Dispose();
                     _spectrumAnalyzer = null;
+                    System.Diagnostics.Debug.WriteLine("已释放频谱分析器资源");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"释放频谱分析器时出错: {ex.Message}");
                 _spectrumAnalyzer = null; // 确保即使出错也清空引用
+            }
+            
+            // 释放均衡器流资源
+            try
+            {
+                // 通过调用ApplyEqualizer并传入null来释放当前的均衡器流
+                _equalizerService.ApplyEqualizer(null);
+                System.Diagnostics.Debug.WriteLine("StopAudio: 已释放均衡器流资源");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"释放均衡器流时出错: {ex.Message}");
+            }
+            
+            // 清理频谱数据缓冲区
+            try
+            {
+                lock (_spectrumLock)
+                {
+                    if (_spectrumDataBuffer != null)
+                    {
+                        Array.Clear(_spectrumDataBuffer, 0, _spectrumDataBuffer.Length);
+                        _spectrumDataBuffer = null;
+                        System.Diagnostics.Debug.WriteLine("已清理频谱数据缓冲区");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"清理频谱数据缓冲区时出错: {ex.Message}");
             }
             
             _timer.Stop();
@@ -467,33 +600,17 @@ namespace MusicPlayer.Services
         {
             try
             {
-                // 安全地停止和释放旧音频设备
-               
-                    if (_waveOut != null)
-                    {
-                        _waveOut.Stop();
-                        _waveOut.Dispose();
-                        _waveOut = null;
-                    }
                 var audioEngine = _playerStateService.CurrentAudioEngine;
                 System.Diagnostics.Debug.WriteLine($"PlayerService: 使用音频引擎 {audioEngine} 初始化音频输出设备");
 
                 // 如果没有提供音频流，则使用频谱分析器
                 audioStream ??= _spectrumAnalyzer;
 
-                switch (audioEngine)
-                {
-                    case AudioEngine.DirectSound:
-                        InitializeDirectSoundDevice(audioStream);
-                        break;
-                    case AudioEngine.WASAPI:
-                        InitializeWasapiDevice(audioStream);
-                        break;
-                    case AudioEngine.Auto:
-                    default:
-                        InitializeWaveOutDevice(audioStream);
-                        break;
-                }
+                // 使用音频引擎管理器创建音频设备
+                var volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
+                _waveOut = _audioEngineManager.CreateAudioOutputDevice(audioEngine, audioStream, volume);
+
+                System.Diagnostics.Debug.WriteLine($"{audioEngine}音频设备初始化成功");
             }
             catch (Exception ex)
             {
@@ -695,8 +812,11 @@ namespace MusicPlayer.Services
                     // 分离关键功能：播放进度更新优先级高于频谱分析
                     UpdatePlaybackProgress();
                     
+                    // 使用准确的播放状态检测，而不是字符串包含
+                    bool isActuallyPlaying = _waveOut != null && _waveOut.PlaybackState == PlaybackState.Playing;
+                    
                     // 如果音频已停止，重置标志位
-                    if (_waveOut == null || !_waveOut.PlaybackState.ToString().Contains("Playing"))
+                    if (!isActuallyPlaying)
                     {
                         _hasTriggeredNextSong = false;
                     }
@@ -708,6 +828,8 @@ namespace MusicPlayer.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Timer_Tick错误: {ex.Message}");
+                // 发生异常时重置标志位，确保后续播放正常
+                _hasTriggeredNextSong = false;
             }
         }
         
@@ -729,12 +851,21 @@ namespace MusicPlayer.Services
                     _messagingService.Send(new PlaybackProgressChangedMessage(position));
                     _messagingService.Send(new PlaybackProgressMessage(position));
                     
-                    // 检查播放是否结束  添加0.5秒的缓冲 
-                    if (!_hasTriggeredNextSong && position >= totalTime.TotalSeconds - 0.5)
+                    // 检查播放是否结束
+                    bool isPlaybackEnded = position >= totalTime.TotalSeconds - 0.5; // 增加缓冲时间，考虑音频缓冲区的影响
+                    bool isPlaybackStopped = _waveOut.PlaybackState != PlaybackState.Playing;
+                    
+                    // 检查是否需要触发下一首歌曲
+                    if (!_hasTriggeredNextSong && isPlaybackEnded)
                     {
                         System.Diagnostics.Debug.WriteLine($"播放即将结束: 当前时间={position}秒, 总时长={totalTime.TotalSeconds}秒");
                         _hasTriggeredNextSong = true;
                         _messagingService.Send(new NextSongMessage());
+                    }
+                    // 如果播放已停止，重置标志位
+                    else if (isPlaybackStopped)
+                    {
+                        _hasTriggeredNextSong = false;
                     }
                 }
             }
@@ -779,14 +910,8 @@ namespace MusicPlayer.Services
                 // 获取当前状态值来计算实际音量
                 var volume = _playerStateService.IsMuted ? 0.0f : message.Value;
                 
-                if (_waveOut != null)
-                {
-                    _waveOut.Volume = volume;
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("音频输出设备为 null，无法应用音量");
-                }
+                // 使用音频引擎管理器设置音量
+                _audioEngineManager.SetVolume(volume);
                 
                 if (_audioFileReader != null)
                 {
@@ -810,15 +935,9 @@ namespace MusicPlayer.Services
                 // 根据静音状态设置音量
                 var volume = message.Value ? 0.0f : _playerStateService.Volume;
                 
-                if (_waveOut != null)
-                {
-                    _waveOut.Volume = volume;
-                    System.Diagnostics.Debug.WriteLine($"静音状态下应用音量到音频输出设备: {volume}");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("音频输出设备为 null，无法应用音量");
-                }
+                // 使用音频引擎管理器设置音量
+                _audioEngineManager.SetVolume(volume);
+                System.Diagnostics.Debug.WriteLine($"静音状态下应用音量到音频输出设备: {volume}");
                 
                 if (_audioFileReader != null)
                 {
@@ -889,16 +1008,21 @@ namespace MusicPlayer.Services
                     try
                     {
                         // 停止定时器
-                        _timer?.Stop();
-                        _timer.Tick -= Timer_Tick;
+                        if (_timer != null)
+                        {
+                            _timer.Stop();
+                            _timer.Tick -= Timer_Tick;
+                        }
 
-                        // 停止音频播放
-                        _waveOut?.Stop();
-                        _waveOut?.Dispose();
-                        // 释放音频文件读取器
-                        _audioFileReader?.Dispose();
+                        // 停止音频播放并释放资源
+                        StopAudio();
+
                         // 释放频谱分析器
-                        _spectrumAnalyzer?.Dispose();
+                        if (_spectrumAnalyzer != null)
+                        {
+                            _spectrumAnalyzer.Dispose();
+                            _spectrumAnalyzer = null;
+                        }
                         
                         // 清理频谱数据缓冲区
                         lock (_spectrumLock)
@@ -909,21 +1033,28 @@ namespace MusicPlayer.Services
                                 _spectrumDataBuffer = null;
                             }
                         }
+                        
                         // 取消订阅 SMTC 事件
                         _mediaTransportService.PlayOrPauseRequested -= OnPlayOrPauseRequested;
                         _mediaTransportService.NextRequested -= OnNextRequested;
                         _mediaTransportService.PreviousRequested -= OnPreviousRequested;
-                         // 释放 SMTC 服务
+                        System.Diagnostics.Debug.WriteLine("PlayerService: 已取消所有SMTC事件订阅");
+                         
+                        // 释放 SMTC 服务
                         _mediaTransportService?.Dispose();
                         
                         // 取消订阅所有消息
                         _messagingService.Unregister(this);
+                        System.Diagnostics.Debug.WriteLine("PlayerService: 已取消所有消息订阅");
                         
                         // 重置单例标志，允许重新创建实例（线程安全）
                         lock (_initLock)
                         {
                             _isAudioEngineInitialized = false;
                         }
+                        
+                        // 重置当前加载的歌曲引用
+                        _currentlyLoadedSong = null;
                     }
                     catch (Exception ex)
                     {

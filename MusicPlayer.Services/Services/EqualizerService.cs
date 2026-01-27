@@ -116,11 +116,12 @@ namespace MusicPlayer.Services.Services
             {
                 try
                 {
-                    // 如果已经有均衡器流，先释放
+                    // 确保完全释放旧的均衡器流
                     if (_currentEqualizerStream is IDisposable disposableStream)
                     {
                         disposableStream.Dispose();
                         _currentEqualizerStream = null;
+                        System.Diagnostics.Debug.WriteLine("EqualizerService: 已释放旧的均衡器流资源");
                     }
 
                     // 检查是否为WaveStream
@@ -154,6 +155,8 @@ namespace MusicPlayer.Services.Services
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"EqualizerService: 应用均衡器时发生错误: {ex.Message}");
+                    // 确保在发生错误时，旧的均衡器流已经被释放
+                    _currentEqualizerStream = null;
                 }
             }
 
@@ -502,15 +505,22 @@ namespace MusicPlayer.Services.Services
                     _sampleBuffer = new float[bufferSize];
                 }
                 
+                // 确保读取的样本数不超过实际的缓冲区大小
+                int actualReadCount = Math.Min(samplesRequired, _sampleBuffer?.Length ?? 0);
+                
                 // 从样本提供者读取数据
-                int samplesRead = _sourceProvider.Read(_sampleBuffer, 0, samplesRequired);
+                int samplesRead = 0;
+                if (_sampleBuffer != null && actualReadCount > 0)
+                {
+                    samplesRead = _sourceProvider.Read(_sampleBuffer, 0, actualReadCount);
+                }
 
                 // 将浮点样本转换为字节数组
                 int bytesRead = 0;
                 for (int i = 0; i < samplesRead; i++)
                 {
                     int bytePos = offset + i * bytesPerSample;
-                    if (bytePos + bytesPerSample <= buffer.Length)
+                    if (bytePos + bytesPerSample <= buffer.Length && _sampleBuffer != null && i < _sampleBuffer.Length)
                     {
                         BitConverter.GetBytes(_sampleBuffer[i]).CopyTo(buffer, bytePos);
                         bytesRead += bytesPerSample;
