@@ -543,14 +543,25 @@ namespace MusicPlayer.Controls
                     if (_currentLyricLine != null)
                     {
                         ((INotifyPropertyChanged)_currentLyricLine).PropertyChanged -= OnLyricLinePropertyChanged;
+                        _currentLyricLine = null;
                     }
+                    
+                    // 清空所有WrapPanel中的TextBlock控件
+                    BottomWrapPanel.Children.Clear();
+                    TopWrapPanel.Children.Clear();
+                    BottomWrapPanel1.Children.Clear();
+                    TopWrapPanel1.Children.Clear();
+                    
+                    // 清空字符列表
+                    _charListCN.Clear();
+                    _charListEN.Clear();
+                    
+                    // 清空当前显示文本
+                    _currentDisplayTextCN = string.Empty;
+                    _currentDisplayTextEN = string.Empty;
                     
                     // 清空DataContext，解除对ViewModel的强引用
                     this.DataContext = null;
-                    
-                    // 清理资源
-                    _charListCN.Clear();
-                    _charListEN.Clear();
                 }
                 _disposed = true;
             }

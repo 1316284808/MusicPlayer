@@ -89,6 +89,9 @@ namespace MusicPlayer.Helper
                     // 初始化行为
                     listBox.Loaded += OnListBoxLoaded;
                     listBox.SelectionChanged += OnListBoxSelectionChanged;
+                    
+                    // 重置手动滚动状态
+                    SetIsManualScrolling(listBox, false);
                 }
                 else
                 {
@@ -101,7 +104,12 @@ namespace MusicPlayer.Helper
                     if (scrollViewer != null)
                     {
                         scrollViewer.ScrollChanged -= OnScrollViewerScrollChanged;
+                        // 重置滚动位置
+                        scrollViewer.ScrollToVerticalOffset(0);
                     }
+                    
+                    // 重置手动滚动状态
+                    SetIsManualScrolling(listBox, false);
                 }
             }
         }

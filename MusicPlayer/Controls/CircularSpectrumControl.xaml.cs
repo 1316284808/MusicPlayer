@@ -171,8 +171,8 @@ namespace MusicPlayer.Controls
             {
                 if (disposing)
                 {
-                    WeakReferenceMessenger.Default.UnregisterAll(this);
                     // 取消事件订阅
+                    WeakReferenceMessenger.Default.UnregisterAll(this);
                     this.IsVisibleChanged -= CircularSpectrumControl_IsVisibleChanged;
                     this.SizeChanged -= CircularSpectrumControl_SizeChanged;
 
@@ -182,6 +182,14 @@ namespace MusicPlayer.Controls
                     
                     // 清空DataContext，解除对ViewModel的强引用
                     this.DataContext = null;
+                    
+                    // 清空UI内容，释放相关资源
+                    this.Content = null;
+                    
+                    // 调用GC.Collect，确保资源被及时回收
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    System.Diagnostics.Debug.WriteLine("CircularSpectrumControl: 已释放所有资源");
                 }
                 _disposed = true;
             }

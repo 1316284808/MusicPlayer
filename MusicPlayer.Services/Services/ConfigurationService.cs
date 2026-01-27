@@ -299,7 +299,7 @@ namespace MusicPlayer.Services
                 System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateAudioEngine: 已更新CurrentConfiguration.AudioEngine为{audioEngine}");
                 
                 // 同时更新PlayerStateService，确保两者保持同步
-                if (_playerStateService != null && _playerStateService.CurrentAudioEngine != audioEngine)
+                if (_playerStateService != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateAudioEngine: 同时更新PlayerStateService.CurrentAudioEngine从 {_playerStateService.CurrentAudioEngine} 到 {audioEngine}");
                     _playerStateService.CurrentAudioEngine = audioEngine;
