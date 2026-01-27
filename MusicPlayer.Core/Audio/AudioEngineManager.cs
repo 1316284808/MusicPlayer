@@ -17,7 +17,7 @@ namespace MusicPlayer.Core.Audio
         /// 当前音频引擎
         /// </summary>
         public AudioEngine CurrentAudioEngine { get; private set; }
-        
+
         public  int DesiredLatency => 150;
         /// <summary>
         /// 创建音频输出设备
