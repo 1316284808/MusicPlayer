@@ -75,6 +75,16 @@ namespace MusicPlayer.Config
             services.AddSingleton<IPlaylistCacheService, PlaylistCacheService>();
             services.AddSingleton<IPlaylistService>(provider => new PlaylistService(
                 provider.GetRequiredService<IConfigurationService>()));
+            
+            // 播放列表状态服务 - 单例模式
+            services.AddSingleton<IPlaylistStateService, PlaylistStateService>();
+            
+            // 播放列表导航服务 - 单例模式
+            services.AddSingleton<IPlaylistNavigationService, PlaylistNavigationService>();
+            
+            // 播放列表业务服务 - 单例模式
+            services.AddSingleton<IPlaylistBusinessService, PlaylistBusinessService>();
+            
             services.AddSingleton<IPlaylistDataService>(provider => {
                 var instance = new PlaylistDataService(
                     provider.GetRequiredService<IPlaylistCacheService>(),
@@ -82,7 +92,10 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IDispatcherService>(),
                     provider.GetRequiredService<IConfigurationService>(),
-                    provider.GetRequiredService<IPlaybackContextService>());
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<IPlaylistNavigationService>(),
+                    provider.GetRequiredService<IPlaylistBusinessService>(),
+                    provider.GetRequiredService<IPlaylistStateService>());
                 System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
@@ -131,25 +144,26 @@ namespace MusicPlayer.Config
         /// </summary>
         private static IServiceCollection AddBusinessServices(this IServiceCollection services)
         {
-            // 1. 先注册ConfigurationService为单例，但不注入PlayerStateService
+            // 0. 先注册PlayerStateModel为单例，这是状态的唯一可信源
+            services.AddSingleton<PlayerStateModel>();
+            
+            // 1. 注册ConfigurationService为单例，注入PlayerStateModel
             services.AddSingleton<IConfigurationService>(provider => {
-                var instance = new ConfigurationService(null);
+                var instance = new ConfigurationService(
+                    provider.GetRequiredService<PlayerStateModel>());
                 System.Diagnostics.Debug.WriteLine($"ConfigurationService: 创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
             
-            // 2. 注册PlayerStateService为单例，它依赖于 PlaylistDataService, ConfigurationService, MessagingService 和 PlaybackContextService
+            // 2. 注册PlayerStateService为单例，它依赖于 PlaylistDataService, ConfigurationService, MessagingService, PlaybackContextService 和 PlayerStateModel
             services.AddSingleton<IPlayerStateService>(provider => {
                 var instance = new PlayerStateService(
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IConfigurationService>(),
                     provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IPlaybackContextService>());
+                    provider.GetRequiredService<IPlaybackContextService>(),
+                    provider.GetRequiredService<PlayerStateModel>());
                 System.Diagnostics.Debug.WriteLine($"PlayerStateService: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
-                
-                // 在PlayerStateService创建后，设置ConfigurationService的PlayerStateService引用
-                var configService = (ConfigurationService)provider.GetRequiredService<IConfigurationService>();
-                configService.SetPlayerStateService(instance);
                 
                 return instance;
             });
@@ -190,11 +204,9 @@ namespace MusicPlayer.Config
             services.AddSingleton<PlayerService>(provider => 
                 (PlayerService)provider.GetRequiredService<IPlayerService>());
             
-            // 4. 最后注册NotificationService为单例，使用工厂模式解决循环依赖
+            // 4. 注册NotificationService为单例
             services.AddSingleton<INotificationService>(provider => 
                 new NotificationService(
-                    () => provider.GetRequiredService<IPlayerService>(),
-                    () => provider.GetRequiredService<IPlaylistDataService>(),
                     () => provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<IUINotificationService>(),
                     provider.GetRequiredService<IDispatcherService>(),
@@ -409,7 +421,11 @@ namespace MusicPlayer.Config
                 provider.GetRequiredService<IPlayerService>(),
                 provider.GetRequiredService<IPlaylistDataService>(),
                 provider.GetRequiredService<IPlaybackContextService>()));
-            services.AddSingleton<PlaylistMessageHandler>(); 
+            services.AddSingleton<PlaylistMessageHandler>(provider => new PlaylistMessageHandler(
+                provider.GetRequiredService<IPlaylistDataService>(),
+                provider.GetRequiredService<IPlaylistService>(),
+                provider.GetRequiredService<IMessagingService>(),
+                provider.GetRequiredService<IDispatcherService>()));
             services.AddSingleton<SystemMessageHandler>(provider =>
                 new SystemMessageHandler(
                     provider.GetRequiredService<IMessagingService>(),

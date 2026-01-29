@@ -20,7 +20,7 @@ namespace MusicPlayer.Services
         private bool _disposed = false;
         private readonly object _lockObject = new();
         private readonly ConfigurationDAL _configurationDal;
-        private IPlayerStateService? _playerStateService;
+        private readonly PlayerStateModel _playerStateModel;
         
         // 事件
         public event Action<PlayerConfiguration>? ConfigurationChanged;
@@ -36,18 +36,14 @@ namespace MusicPlayer.Services
             }
         }
 
-        public ConfigurationService(IPlayerStateService? playerStateService = null)
+        public ConfigurationService(PlayerStateModel playerStateModel)
         {
             System.Diagnostics.Debug.WriteLine($"ConfigurationService: 创建新实例，ID: {GetHashCode()}, 线程ID: {Thread.CurrentThread.ManagedThreadId}");
 
-            // 设置PlayerStateService引用（可能为null，稍后通过SetPlayerStateService方法设置）
-            _playerStateService = playerStateService;
+            _playerStateModel = playerStateModel ?? throw new ArgumentNullException(nameof(playerStateModel));
 
             // 使用已定义的数据库路径
             _configurationDal = new ConfigurationDAL(Paths.AppSettingPath);
-            
-            // 保存PlayerStateService引用，用于同步状态
-            _playerStateService = playerStateService;
 
             // 订阅配置变化事件，用于更新Song类的静态属性
             ConfigurationChanged += OnConfigurationChanged;
@@ -55,11 +51,8 @@ namespace MusicPlayer.Services
             // 加载配置
             CurrentConfiguration = LoadConfiguration();
             
-            // 如果提供了PlayerStateService，将配置恢复到PlayerState
-            if (_playerStateService != null)
-            {
-                RestorePlayerState(_playerStateService);
-            }
+            // 将配置恢复到状态模型
+            RestorePlayerState();
         }
 
         public PlayerConfiguration LoadConfiguration()
@@ -133,12 +126,9 @@ namespace MusicPlayer.Services
         {
             try
             {
-                // 先将PlayerStateService的最新状态同步到CurrentConfiguration
-                if (_playerStateService != null)
-                {
-                    SyncStateToConfiguration(_playerStateService);
-                    System.Diagnostics.Debug.WriteLine("ConfigurationService: 已同步 PlayerState 状态到 CurrentConfiguration");
-                }
+                // 将状态模型的最新状态同步到CurrentConfiguration
+                SyncStateToConfiguration();
+                System.Diagnostics.Debug.WriteLine("ConfigurationService: 已同步 PlayerStateModel 状态到 CurrentConfiguration");
                 
                 // 然后保存CurrentConfiguration
                 SaveConfiguration(CurrentConfiguration);
@@ -298,11 +288,11 @@ namespace MusicPlayer.Services
                 _isModified = true;
                 System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateAudioEngine: 已更新CurrentConfiguration.AudioEngine为{audioEngine}");
                 
-                // 同时更新PlayerStateService，确保两者保持同步
-                if (_playerStateService != null)
+                // 同时更新PlayerStateModel，确保两者保持同步
+                if (_playerStateModel.AudioEngine != audioEngine)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateAudioEngine: 同时更新PlayerStateService.CurrentAudioEngine从 {_playerStateService.CurrentAudioEngine} 到 {audioEngine}");
-                    _playerStateService.CurrentAudioEngine = audioEngine;
+                    System.Diagnostics.Debug.WriteLine($"ConfigurationService.UpdateAudioEngine: 同时更新PlayerStateModel.AudioEngine从 {_playerStateModel.AudioEngine} 到 {audioEngine}");
+                    _playerStateModel.AudioEngine = audioEngine;
                 }
             }
             else
@@ -484,17 +474,11 @@ namespace MusicPlayer.Services
         }
         
         /// <summary>
-        /// 同步PlayerState状态到配置（内存同步，不持久化）
+        /// 同步PlayerStateModel状态到配置（内存同步，不持久化）
         /// 使用批量更新方式，避免多次触发属性变更事件
         /// </summary>
-        public void SyncStateToConfiguration(IPlayerStateService playerState)
+        private void SyncStateToConfiguration()
         {
-            if (playerState == null)
-            {
-                System.Diagnostics.Debug.WriteLine("ConfigurationService: SyncStateToConfiguration - playerState为null，无法同步");
-                return;
-            }
-            
             try
             {
                 // 使用批量更新方式同步状态，减少事件触发
@@ -505,20 +489,19 @@ namespace MusicPlayer.Services
                 var oldAudioEngine = CurrentConfiguration.AudioEngine;
                 var oldLastPlayedSongId = CurrentConfiguration.LastPlayedSongId;
                 
-                // 将PlayerState的状态同步到内存中的CurrentConfiguration
-                CurrentConfiguration.Volume = playerState.Volume;
-                CurrentConfiguration.PlayMode = playerState.CurrentPlayMode;
-                CurrentConfiguration.CurrentPosition = playerState.CurrentPosition;
-                CurrentConfiguration.CurrentSongPath = playerState.CurrentSong?.FilePath;
+                // 将状态模型的状态同步到内存中的CurrentConfiguration
+                CurrentConfiguration.Volume = _playerStateModel.Volume;
+                CurrentConfiguration.PlayMode = _playerStateModel.PlayMode;
+                CurrentConfiguration.CurrentPosition = _playerStateModel.CurrentPosition;
+                CurrentConfiguration.CurrentSongPath = _playerStateModel.CurrentSong?.FilePath;
                 
                 // 记录AudioEngine同步前的值
-           
-                CurrentConfiguration.AudioEngine = playerState.CurrentAudioEngine;
-                System.Diagnostics.Debug.WriteLine($"ConfigurationService.SyncStateToConfiguration: AudioEngine从 {oldAudioEngine} 同步到 {playerState.CurrentAudioEngine} (来自PlayerStateService)");
+                CurrentConfiguration.AudioEngine = _playerStateModel.AudioEngine;
+                System.Diagnostics.Debug.WriteLine($"ConfigurationService.SyncStateToConfiguration: AudioEngine从 {oldAudioEngine} 同步到 {_playerStateModel.AudioEngine} (来自PlayerStateModel)");
                 
                 // 同步最后播放的歌曲ID
-                // 只有当PlayerState中的歌曲ID确实不同时才更新
-                var currentSongId = playerState.CurrentSong?.Id ?? -1;
+                // 只有当状态模型中的歌曲ID确实不同时才更新
+                var currentSongId = _playerStateModel.CurrentSong?.Id ?? -1;
                 if (CurrentConfiguration.LastPlayedSongId != currentSongId)
                 {
                     CurrentConfiguration.LastPlayedSongId = currentSongId;
@@ -571,36 +554,22 @@ namespace MusicPlayer.Services
         /// 从配置恢复到PlayerState（应用启动时调用）
         /// </summary>
         /// <summary>
-        /// 设置PlayerStateService引用（用于解决循环依赖）
+        /// 从配置恢复到PlayerStateModel
         /// </summary>
-        /// <param name="playerStateService">PlayerStateService实例</param>
-        public void SetPlayerStateService(IPlayerStateService playerStateService)
+        private void RestorePlayerState()
         {
-            _playerStateService = playerStateService;
-            System.Diagnostics.Debug.WriteLine($"ConfigurationService: 设置PlayerStateService引用，ID: {_playerStateService?.GetHashCode()}");
-        }
-
-        public void RestorePlayerState(IPlayerStateService playerState)
-        {
-            if (playerState == null)
-            {
-                System.Diagnostics.Debug.WriteLine("ConfigurationService: RestorePlayerState - playerState为null，无法恢复");
-                return;
-            }
-            
             try
             {
                 var config = CurrentConfiguration;
                 if (config != null)
                 {
-                    // 将配置恢复到PlayerState
-                    playerState.RestoreFromConfiguration(config);
-                    System.Diagnostics.Debug.WriteLine("ConfigurationService: 配置已恢复到PlayerState");
+                    _playerStateModel.RestoreFromConfiguration(config);
+                    System.Diagnostics.Debug.WriteLine("ConfigurationService: 配置已恢复到PlayerStateModel");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ConfigurationService: 恢复PlayerState失败: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ConfigurationService: 恢复PlayerStateModel失败: {ex.Message}");
             }
         }
 

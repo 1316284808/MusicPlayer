@@ -1,28 +1,23 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
-using CommunityToolkit.Mvvm.Messaging;
 using MusicPlayer.Services.Messages;
- 
-using System.IO;
 using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Services
 {
 /// <summary>
-/// 播放列表数据服务实现 - 数据访问层
-/// 负责整个应用程序的播放列表数据管理和持久化
+/// 播放列表数据服务实现 - 数据访问协调器
+/// 职责：协调播放列表数据的加载、保存和持久化操作
 /// 
-/// 数据流设计：
-/// 1. 初始化时：从PlaylistCacheService获取已加载的数据
-/// 2. 运行时：通过DataSource临时获取数据，使用后立即清空
-/// 3. 操作：所有数据操作通过PlaylistCacheService进行
-/// 
-/// 注意：不应维护本地缓存，应始终使用PlaylistCacheService作为唯一数据源
+/// 重构后：
+/// - 消息处理 → PlaylistMessageHandler
+/// - 导航逻辑 → PlaylistNavigationService  
+/// - 业务逻辑 → PlaylistBusinessService
+/// - 状态管理 → PlaylistStateService
+/// - 数据访问协调 → PlaylistDataService (本类)
 /// </summary>
     public class PlaylistDataService : IPlaylistDataService, IDisposable
     {
@@ -31,10 +26,10 @@ namespace MusicPlayer.Services
         private readonly IMessagingService _messagingService;
         private readonly IDispatcherService _dispatcherService;
         private readonly IConfigurationService _configurationService;
-        private readonly IPlaybackContextService _playbackContextService;
+        private readonly IPlaylistNavigationService _navigationService;
+        private readonly IPlaylistBusinessService _businessService;
+        private readonly IPlaylistStateService _stateService;
 
-        private Song? _currentSong;
-        private SortRule _currentSortRule = SortRule.ByAddedTime;
         private readonly object _lock = new object();
         
         // 临时数据缓存，使用后立即清空
@@ -67,53 +62,14 @@ namespace MusicPlayer.Services
 
         public SortRule CurrentSortRule 
         { 
-            get 
-            {
-                lock (_lock)
-                {
-                    return _currentSortRule;
-                }
-            }
-            set 
-            {
-                lock (_lock)
-                {
-                    if (_currentSortRule != value)
-                    {
-                        _currentSortRule = value;
-                    }
-                }
-            }
+            get => _stateService.CurrentSortRule;
+            set => _stateService.CurrentSortRule = value;
         }
 
         public Song? CurrentSong
         {
-            get
-            {
-                lock (_lock)
-                {
-                    return _currentSong;
-                }
-            }
-            set
-            {
-                lock (_lock)
-                {
-                    if (_currentSong != value)
-                    {
-                        var oldSong = _currentSong;
-                        _currentSong = value;
-                        
-                        System.Diagnostics.Debug.WriteLine($"PlaylistDataService: CurrentSong 更新 - 旧歌曲: {oldSong?.Title}, 新歌曲: {value?.Title}");
-                        
-                        // 在UI线程上发送消息
-                        _dispatcherService.Invoke(() =>
-                        {
-                            _messagingService.Send(new CurrentSongChangedMessage(value));
-                        });
-                    }
-                }
-            }
+            get => _stateService.CurrentSong;
+            set => _stateService.CurrentSong = value;
         }
 
         public PlaylistDataService(
@@ -122,7 +78,10 @@ namespace MusicPlayer.Services
             IMessagingService messagingService,
             IDispatcherService dispatcherService,
             IConfigurationService configurationService,
-            IPlaybackContextService playbackContextService)
+            IPlaybackContextService playbackContextService,
+            IPlaylistNavigationService navigationService,
+            IPlaylistBusinessService businessService,
+            IPlaylistStateService stateService)
         {
             System.Diagnostics.Debug.WriteLine("PlaylistDataService: 构造函数开始执行");
             
@@ -131,41 +90,15 @@ namespace MusicPlayer.Services
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _dispatcherService = dispatcherService ?? throw new ArgumentNullException(nameof(dispatcherService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
-            _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+            _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
+            _stateService = stateService ?? throw new ArgumentNullException(nameof(stateService));
 
-            // 获取当前排序规则
-            _currentSortRule = _configurationService.CurrentConfiguration.SortRule;
+            // 初始化状态
+            _stateService.CurrentSortRule = _configurationService.CurrentConfiguration.SortRule;
             
             System.Diagnostics.Debug.WriteLine("PlaylistDataService: 构造函数执行完成");
             System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 播放列表数据库路径: {Paths.PlaylistDatabasePath}");
-
-            // 注册消息处理器
-            System.Diagnostics.Debug.WriteLine("PlaylistDataService: 准备注册消息处理器");
-            RegisterMessageHandlers();
-            System.Diagnostics.Debug.WriteLine("PlaylistDataService: 消息处理器注册完成");
-            
-            System.Diagnostics.Debug.WriteLine("PlaylistDataService: 构造函数完全执行完成");
-        }
-
-        /// <summary>
-        /// 注册消息处理器
-        /// </summary>
-        private void RegisterMessageHandlers()
-        {
-            _messagingService.Register<AddFilesMessage>(this, async (receiver, message) =>
-            {
-                await HandleAddFilesMessage(message);
-            });
-
-            _messagingService.Register<SortPlaylistMessage>(this, async (receiver, message) =>
-            {
-                await HandleSortPlaylistMessage(message);
-            });
-
-            _messagingService.Register<ClearPlaylistMessage>(this, async (receiver, message) =>
-            {
-                await HandleClearPlaylistMessage();
-            });
         }
 
         /// <summary>
@@ -191,7 +124,7 @@ namespace MusicPlayer.Services
                     await _cacheService.InitializeCacheAsync();
                 }
                 // 应用排序规则
-                var sortedPlaylist = _cacheService.GetSortedPlaylist(_currentSortRule);
+                var sortedPlaylist = _cacheService.GetSortedPlaylist(_stateService.CurrentSortRule);
                 
                 // 更新缓存中的排序后的数据
                 _cacheService.UpdatePlaylist(sortedPlaylist);
@@ -340,10 +273,7 @@ namespace MusicPlayer.Services
                 await _cacheService.InitializeCacheAsync();
 
                 // 清除当前歌曲
-                lock (_lock)
-                {
-                    _currentSong = null;
-                }
+                _stateService.SetCurrentSongWithoutNotification(null);
 
                 System.Diagnostics.Debug.WriteLine("PlaylistDataService: 清空并保存完成");
 
@@ -370,7 +300,7 @@ namespace MusicPlayer.Services
         /// </summary>
         public void SetCurrentSong(Song? song)
         {
-            CurrentSong = song;
+            _stateService.CurrentSong = song;
         }
         
         /// <summary>
@@ -378,10 +308,7 @@ namespace MusicPlayer.Services
         /// </summary>
         public void SetCurrentSongWithoutNotification(Song? song)
         {
-            lock (_lock)
-            {
-                _currentSong = song;
-            }
+            _stateService.SetCurrentSongWithoutNotification(song);
         }
 
         
@@ -391,306 +318,67 @@ namespace MusicPlayer.Services
         /// </summary>
         public int GetSongIndex(Song song)
         {
-            lock (_lock)
-            {
-                var playlist = _cacheService.GetPlaylist();
-                return playlist.IndexOf(song);
-            }
+            return _navigationService.GetSongIndex(song);
         }
 
         /// <summary>
         /// 获取下一首歌曲
-        /// 重构后从缓存服务获取播放列表
+        /// 重构后委托给PlaylistNavigationService
         /// </summary>
         public Song? GetNextSong(PlayMode playMode = PlayMode.RepeatAll)
         {
-            lock (_lock)
-            {
-                // 获取当前播放上下文
-                var context = _playbackContextService.CurrentPlaybackContext;
-                var currentSong = CurrentSong;
-                
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong 开始 - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}");
-                
-                // 如果当前歌曲为空，返回null
-                if (currentSong == null) 
-                {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 当前歌曲为空，返回null");
-                    return null;
-                }
-
-                // 获取对应的提供者
-                try
-                {
-                    var provider = _playbackContextService.GetProvider(context.Type);
-                    
-                    // 使用提供者获取下一首歌曲
-                    var nextSong = provider.GetNextSong(context, currentSong, playMode);
-                    
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}, 下一首: {nextSong?.Title}");
-                    
-                    return nextSong;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetNextSong - 异常: {ex.Message}");
-                    return null;
-                }
-            }
+            return _navigationService.GetNextSong(playMode, CurrentSong);
         }
 
         /// <summary>
         /// 获取上一首歌曲
-        /// 重构后从缓存服务获取播放列表
+        /// 重构后委托给PlaylistNavigationService
         /// </summary>
         public Song? GetPreviousSong(PlayMode playMode = PlayMode.RepeatAll)
         {
-            lock (_lock)
-            {
-                // 获取当前播放上下文
-                var context = _playbackContextService.CurrentPlaybackContext;
-                var currentSong = CurrentSong;
-                
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong 开始 - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}");
-                
-                // 如果当前歌曲为空，返回null
-                if (currentSong == null) 
-                {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 当前歌曲为空，返回null");
-                    return null;
-                }
-
-                // 获取对应的提供者
-                try
-                {
-                    var provider = _playbackContextService.GetProvider(context.Type);
-                    
-                    // 使用提供者获取上一首歌曲
-                    var previousSong = provider.GetPreviousSong(context, currentSong, playMode);
-                    
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 播放上下文: {context}, 播放模式: {playMode}, 当前歌曲: {currentSong?.Title}, 上一首: {previousSong?.Title}");
-                    
-                    return previousSong;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"PlaylistDataService: GetPreviousSong - 异常: {ex.Message}");
-                    return null;
-                }
-            }
+            return _navigationService.GetPreviousSong(playMode, CurrentSong);
         }
 
-        #region 新增方法实现
+        #region 业务逻辑委托
 
         /// <summary>
-        /// 设置排序规则
+        /// 设置排序规则（委托给PlaylistBusinessService）
         /// </summary>
-        public void SetSortRule(SortRule sortRule)
-        {
-            lock (_lock)
-            {
-                if (_currentSortRule != sortRule)
-                {
-                    _currentSortRule = sortRule;
-                    
-                    // 保存配置
-                    _configurationService.CurrentConfiguration.SortRule = sortRule;
-                    _configurationService.SaveCurrentConfiguration();
-                    
-                    // 异步保存并重新加载
-                    _ = Task.Run(async () => await SaveAndReloadAsync(sortRule));
-                }
-            }
-        }
+        public void SetSortRule(SortRule sortRule) => _ = _businessService.SetSortRuleAsync(sortRule);
 
         /// <summary>
-        /// 应用过滤器
+        /// 应用过滤器（委托给PlaylistBusinessService）
         /// </summary>
-        public void ApplyFilter(string filterText)
-        {
-            // 过滤功能在UI层面实现，这里只需更新配置
-            _configurationService.CurrentConfiguration.FilterText = filterText;
-            _configurationService.SaveCurrentConfiguration();
-            
-            // 获取当前播放列表
-            var currentPlaylist = _cacheService.GetPlaylist();
-            
-            // 发送过滤更新消息
-            _dispatcherService.Invoke(() =>
-            {
-                _messagingService.Send(new PlaylistDataChangedMessage(
-                    DataChangeType.Filter, 
-                    CurrentSortRule,
-                     new List<Song>(currentPlaylist), 
-                    CurrentSong));
-            });
-        }
+        public void ApplyFilter(string filterText) => _businessService.ApplyFilter(filterText);
 
         /// <summary>
-        /// 移除歌曲
+        /// 移除歌曲（委托给PlaylistBusinessService）
         /// </summary>
-        public void RemoveSong(Song song)
-        {
-            lock (_lock)
-            {
-                var playlist = _cacheService.GetPlaylist();
-                if (playlist.Contains(song))
-                {
-                    // 使用缓存服务移除歌曲
-                    _cacheService.RemoveSongs(new[] { song.FilePath });
-                    
-                    // 如果移除的是当前播放歌曲，清空当前歌曲
-                    if (_currentSong == song)
-                    {
-                        _currentSong = null;
-                    }
-                    
-                    // 异步保存并重新加载
-                    _ = Task.Run(async () => await SaveAndReloadAsync());
-                }
-            }
-        }
+        public void RemoveSong(Song song) => _businessService.RemoveSong(song);
 
         /// <summary>
-        /// 清空播放列表
+        /// 清空播放列表（委托给PlaylistBusinessService）
         /// </summary>
-        public void ClearPlaylist()
-        {
-            // 直接调用清空并重新加载的方法
-            _ = Task.Run(async () => await ClearAndReloadAsync());
-        }
+        public void ClearPlaylist() => _ = _businessService.ClearPlaylistAsync();
 
         /// <summary>
-        /// 添加歌曲（直接添加，不重新加载）
+        /// 添加歌曲（委托给PlaylistBusinessService）
         /// </summary>
-        public void AddSongs(IEnumerable<Song> songs)
-        {
-            // 直接调用添加并重新加载的方法
-            _ = Task.Run(async () => await AddSongsAndReloadAsync(songs));
-        }
+        public void AddSongs(IEnumerable<Song> songs) => _ = _businessService.AddSongsAsync(songs);
 
         /// <summary>
-        /// 更新歌曲收藏状态
+        /// 更新歌曲收藏状态（委托给PlaylistBusinessService）
         /// </summary>
-        /// <param name="song">要更新的歌曲</param>
-        /// <param name="isFavorite">收藏状态</param>
-        public async void UpdateSongFavoriteStatus(Song song, bool isFavorite)
-        {
-            try
-            {
-                lock (_lock)
-                {
-                    // 从缓存中获取歌曲
-                    var playlist = _cacheService.GetPlaylist();
-                    var songToUpdate = playlist.FirstOrDefault(s => s.FilePath == song.FilePath);
-                    
-                    if (songToUpdate != null)
-                    {
-                        // 异步处理歌单歌曲关联
-                        _ = Task.Run(async () => 
-                        {
-                            if (isFavorite)
-                            {
-                                // 添加到收藏列表
-                                await _cacheService.AddSongToPlaylistAsync(1, songToUpdate.Id);
-                                System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态: {song.Title}, 添加到收藏列表");
-                            }
-                            else
-                            {
-                                // 从收藏列表移除
-                                await _cacheService.RemoveSongFromPlaylistAsync(1, songToUpdate.Id);
-                                System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态: {song.Title}, 从收藏列表移除");
-                            }
-                        });
-                        
-                        // 发送播放列表数据变化消息，通知UI更新
-                        _messagingService.Send(new PlaylistDataChangedMessage(
-                            DataChangeType.SongUpdated, 
-                            _currentSortRule, 
-                            new List<Song>(playlist), 
-                            _currentSong));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"更新歌曲收藏状态失败: {ex.Message}");
-            }
-        }
+        public async void UpdateSongFavoriteStatus(Song song, bool isFavorite) => _ = _businessService.UpdateSongFavoriteStatusAsync(song, isFavorite);
 
         /// <summary>
-        /// 更新歌曲删除状态
+        /// 更新歌曲删除状态（委托给PlaylistBusinessService）
         /// </summary>
-        /// <param name="song">要更新的歌曲</param>
-        /// <param name="isDeleted">删除状态</param>
-        public void UpdateSongDeletionStatus(Song song, bool isDeleted)
-        {
-            try
-            {
-                lock (_lock)
-                {
-                    // 从缓存中获取歌曲
-                    var playlist = _cacheService.GetPlaylist();
-                    var songToUpdate = playlist.FirstOrDefault(s => s.FilePath == song.FilePath);
-                    
-                    if (songToUpdate != null)
-                    {
-                        // 更新歌曲的删除状态
-                        songToUpdate.IsDeleted = isDeleted;
-                        
-                        // 更新缓存中的播放列表
-                        _cacheService.UpdatePlaylist(playlist);
-                        
-                        // 异步保存歌曲状态到数据库
-                        _ = Task.Run(async () => await _cacheService.UpdateSongStatusInDatabaseAsync(songToUpdate));
-                        
-                        System.Diagnostics.Debug.WriteLine($"更新歌曲删除状态: {song.Title}, 删除状态: {isDeleted} (已更新缓存并异步保存到数据库)");
-                        
-                        // 发送播放列表数据变化消息，通知UI更新
-                        _messagingService.Send(new PlaylistDataChangedMessage(
-                            DataChangeType.SongUpdated, 
-                            _currentSortRule, 
-                            new List<Song>(playlist), 
-                            _currentSong));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"更新歌曲删除状态失败: {ex.Message}");
-            }
-        }
+        public void UpdateSongDeletionStatus(Song song, bool isDeleted) => _ = _businessService.UpdateSongDeletionStatusAsync(song, isDeleted);
 
         #endregion
 
         #region 私有方法
-
-        /// <summary>
-        /// 排序歌曲列表
-        /// </summary>
-        private List<Song> SortSongs(List<Song> songs, SortRule sortRule)
-        {
-            if (songs.Count <= 1) return songs;
-
-            try
-            {
-                return sortRule switch
-                {
-                    SortRule.ByAddedTime => songs.OrderByDescending(s => s.AddedTime).ToList(),
-                    SortRule.ByTitle => songs.OrderBy(s => s.Title ?? "", StringComparer.OrdinalIgnoreCase).ToList(),
-                    SortRule.ByArtist => songs.OrderBy(s => s.Artist ?? "", StringComparer.OrdinalIgnoreCase).ToList(),
-                    SortRule.ByAlbum => songs.OrderBy(s => s.Album ?? "", StringComparer.OrdinalIgnoreCase).ThenBy(s => s.Title, StringComparer.OrdinalIgnoreCase).ToList(),
-                    SortRule.ByDuration => songs.OrderBy(s => s.Duration).ToList(),
-                    SortRule.ByFileSize => songs.OrderBy(s => s.FileSize).ToList(),
-                    _ => songs.OrderByDescending(s => s.AddedTime).ToList()
-                };
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"PlaylistDataService: 排序失败: {ex.Message}");
-                return songs;
-            }
-        }
 
         /// <summary>
         /// 重新定位当前播放歌曲
@@ -702,14 +390,15 @@ namespace MusicPlayer.Services
             
             lock (_lock)
             {
-                if (_currentSong != null)
+                var currentSong = _stateService.CurrentSong;
+                if (currentSong != null)
                 {
                     var playlist = _cacheService.GetPlaylist();
-                    var currentIndex = playlist.IndexOf(_currentSong);
+                    var currentIndex = playlist.IndexOf(currentSong);
                     if (currentIndex == -1)
                     {
                         // 当前歌曲不在列表中，清空当前歌曲
-                        _currentSong = null;
+                        _stateService.SetCurrentSongWithoutNotification(null);
                         shouldSendUpdate = true;
                         songToUpdate = null;
                     }
@@ -806,5 +495,9 @@ namespace MusicPlayer.Services
         {
             _playlistService?.Dispose();
         }
+
+        #region 消息处理器（已迁移到PlaylistMessageHandler）
+        // 消息处理逻辑已迁移到 PlaylistMessageHandler
+        #endregion
     }
 }

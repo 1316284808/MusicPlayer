@@ -29,16 +29,6 @@ namespace MusicPlayer.Core.Interface
         /// </summary>
         void SaveCurrentConfiguration();
         
-        /// <summary>
-        /// 同步PlayerState状态到配置（内存同步，不持久化）
-        /// </summary>
-        void SyncStateToConfiguration(IPlayerStateService playerState);
-        
-        /// <summary>
-        /// 从配置恢复到PlayerState（应用启动时调用）
-        /// </summary>
-        void RestorePlayerState(IPlayerStateService playerState);
-        
         // 配置更新方法 - 保持现有接口兼容性
         void UpdateVolume(float volume);
         void UpdatePlayMode(PlayMode playMode);

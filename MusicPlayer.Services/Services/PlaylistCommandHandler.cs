@@ -10,20 +10,7 @@ using MusicPlayer.Services.Messages;
 
 namespace MusicPlayer.Services
 {
-    /// <summary>
-    /// 播放列表命令处理器 - 处理复杂的命令逻辑
-    /// 实现命令处理器模式，将复杂逻辑从ViewModel中提取出来
-    /// </summary>
-    public interface IPlaylistCommandHandler
-    {
-        Task<bool> HandleAddMusicCommand();
-        void HandlePlaySelectedSongCommand(Song? song);
-        void HandleDeleteSelectedSongCommand(Song? song);
-        void HandleClearPlaylistCommand();
-        void HandleTogglePlaylistCommand();
-        void HandleNavigateToSettingsCommand();
-    }
-
+   
     /// <summary>
     /// 播放列表命令处理器实现
     /// </summary>

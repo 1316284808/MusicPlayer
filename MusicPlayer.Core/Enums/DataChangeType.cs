@@ -11,6 +11,7 @@ namespace MusicPlayer.Core.Enums
         Clear,
         Filter,
         Update,
-        SongUpdated
+        SongUpdated,
+        RemoveSongs
     }
 }

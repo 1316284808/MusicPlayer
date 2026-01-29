@@ -19,6 +19,7 @@ namespace MusicPlayer.Services
         private readonly IConfigurationService _configurationService;
         private readonly IMessagingService _messagingService;
         private readonly IPlaybackContextService _playbackContextService;
+        private readonly PlayerStateModel _stateModel;
         private readonly object _lockObject = new();
         private bool _disposed = false;
         private bool _isRestoringFromPersistence = false; // 标记是否正在从持久化恢复状态
@@ -28,16 +29,6 @@ namespace MusicPlayer.Services
         private readonly Dictionary<string, object> _pendingUpdates = new();
         private readonly HashSet<string> _changedProperties = new();
         
-        // 播放状态
-        private double _currentPosition;
-        private double _maxPosition;
-        private float _volume = 0.5f;
-        private bool _isPlaying;
-        private bool _isMuted;
-        private PlayMode _currentPlayMode = PlayMode.RepeatAll;
-        private AudioEngine _currentAudioEngine = AudioEngine.Auto;
-        private float[] _spectrumData = new float[32];
-        private Song? _currentSong;
         private DateTime _lastSpectrumMessageTime = DateTime.MinValue;
         private PlaybackContext _currentPlaybackContext;
         
@@ -47,28 +38,25 @@ namespace MusicPlayer.Services
         // 播放状态属性
         public Song? CurrentSong
         {
-            get => _currentSong;
+            get => _stateModel.CurrentSong;
             private set
             {
-                if (_currentSong != value)
+                if (_stateModel.CurrentSong != value)
                 {
-                    _currentSong = value;
-                   OnPropertyChanged();
-                    // 注意：不再发送CurrentSongChangedMessage，避免循环
-                    // 消息应该由PlaylistDataService发送，这里是消费者
-                    // _messagingService.Send(new CurrentSongChangedMessage(value));
+                    _stateModel.CurrentSong = value;
+                   OnPropertyChanged(); 
                  }
             }
         }
         
         public bool IsPlaying
         {
-            get => _isPlaying;
+            get => _stateModel.IsPlaying;
             set
             {
-                if (_isPlaying != value)
+                if (_stateModel.IsPlaying != value)
                 {
-                    _isPlaying = value;
+                    _stateModel.IsPlaying = value;
                     OnPropertyChanged();
                     _messagingService.Send(new PlaybackStateChangedMessage(value));
                 }
@@ -77,12 +65,12 @@ namespace MusicPlayer.Services
         
         public bool IsMuted
         {
-            get => _isMuted;
+            get => _stateModel.IsMuted;
             set
             {
-                if (_isMuted != value)
+                if (_stateModel.IsMuted != value)
                 {
-                    _isMuted = value;
+                    _stateModel.IsMuted = value;
                     OnPropertyChanged();
                     _messagingService.Send(new MuteStateChangedMessage(value));
                 }
@@ -91,20 +79,20 @@ namespace MusicPlayer.Services
         
         public float Volume
         {
-            get => _volume;
+            get => _stateModel.Volume;
             set
             {
-                if (Math.Abs(_volume - value) > 0.001f)
+                if (Math.Abs(_stateModel.Volume - value) > 0.001f)
                 {
-                    _volume = Math.Clamp(value, 0.0f, 1.0f);
+                    _stateModel.Volume = Math.Clamp(value, 0.0f, 1.0f);
                    OnPropertyChanged();
                     
                     // 非恢复状态时才发送消息和保存配置
                     if (!_isRestoringFromPersistence)
                     {
-                        _messagingService.Send(new VolumeChangedMessage(_volume));
+                        _messagingService.Send(new VolumeChangedMessage(_stateModel.Volume));
                         // 注释掉直接保存配置，改为在应用退出时同步保存
-                        // _configurationService?.UpdateVolume(_volume);
+                        // _configurationService?.UpdateVolume(_stateModel.Volume);
                     }
                 }
             }
@@ -114,70 +102,62 @@ namespace MusicPlayer.Services
         
         public double CurrentPosition
         {
-            get => _currentPosition;
+            get => _stateModel.CurrentPosition;
             set
             {
                 // 在用户拖动时，我们需要确保新值被接受，即使差异很小
-                var oldValue = _currentPosition;
-                _currentPosition = Math.Clamp(value, 0.0, _maxPosition);
+                var oldValue = _stateModel.CurrentPosition;
+                _stateModel.CurrentPosition = Math.Clamp(value, 0.0, _stateModel.MaxPosition);
                 
                 // 只有当值确实发生了变化时才通知
-                if (Math.Abs(oldValue - _currentPosition) > 0.001)
+                if (Math.Abs(oldValue - _stateModel.CurrentPosition) > 0.001)
                 {
                     OnPropertyChanged();
-                    _messagingService.Send(new PlaybackProgressChangedMessage(_currentPosition));
+                    _messagingService.Send(new PlaybackProgressChangedMessage(_stateModel.CurrentPosition));
                 }
             }
         }
-        
-        /// <summary>
-        /// 设置用户拖动状态
-        /// </summary>
-        public void SetUserDragging(bool isDragging)
-        {
-            _isUserDragging = isDragging;
-         }
         
         /// <summary>
         /// 用户拖动时设置位置
         /// </summary>
         public void SetPositionByUser(double position)
         {
-            var oldValue = _currentPosition;
-            _currentPosition = Math.Clamp(position, 0.0, _maxPosition);
+            var oldValue = _stateModel.CurrentPosition;
+            _stateModel.CurrentPosition = Math.Clamp(position, 0.0, _stateModel.MaxPosition);
            // 立即通知UI更新
             OnPropertyChanged();
-            _messagingService.Send(new PlaybackProgressChangedMessage(_currentPosition));
+            _messagingService.Send(new PlaybackProgressChangedMessage(_stateModel.CurrentPosition));
         }
         
         public double MaxPosition
         {
-            get => _maxPosition;
+            get => _stateModel.MaxPosition;
             set
             {
-                if (Math.Abs(_maxPosition - value) > 0.1)
+                if (Math.Abs(_stateModel.MaxPosition - value) > 0.1)
                 {
-                    _maxPosition = Math.Max(0, value);
+                    _stateModel.MaxPosition = Math.Max(0, value);
                     OnPropertyChanged();
-                    _messagingService.Send(new MaxPositionChangedMessage(_maxPosition));
+                    _messagingService.Send(new MaxPositionChangedMessage(_stateModel.MaxPosition));
                 }
             }
         }
         
         public PlayMode CurrentPlayMode
         {
-            get => _currentPlayMode;
+            get => _stateModel.PlayMode;
             set
             {
-                if (_currentPlayMode != value)
+                if (_stateModel.PlayMode != value)
                 {
-                    _currentPlayMode = value;
+                    _stateModel.PlayMode = value;
                     OnPropertyChanged();
                     
                     // 非恢复状态时才发送消息
                     if (!_isRestoringFromPersistence)
                     {
-                        _messagingService.Send(new PlayModeChangedMessage(_currentPlayMode));
+                        _messagingService.Send(new PlayModeChangedMessage(_stateModel.PlayMode));
                     }
                 }
             }
@@ -185,20 +165,20 @@ namespace MusicPlayer.Services
         
         public AudioEngine CurrentAudioEngine
         {
-            get => _currentAudioEngine;
+            get => _stateModel.AudioEngine;
             set
             {
-                if (_currentAudioEngine != value)
+                if (_stateModel.AudioEngine != value)
                 {
-                    var oldEngine = _currentAudioEngine;
-                    _currentAudioEngine = value;
+                    var oldEngine = _stateModel.AudioEngine;
+                    _stateModel.AudioEngine = value;
                     OnPropertyChanged();
-                    StateChanged?.Invoke(nameof(CurrentAudioEngine), _currentAudioEngine);
+                    StateChanged?.Invoke(nameof(CurrentAudioEngine), _stateModel.AudioEngine);
                     
                     // 非恢复状态时才执行特殊逻辑
                     if (!_isRestoringFromPersistence)
                     {
-                        System.Diagnostics.Debug.WriteLine($"PlayerStateService: 音频引擎从 {oldEngine} 切换到 {_currentAudioEngine}");
+                        System.Diagnostics.Debug.WriteLine($"PlayerStateService: 音频引擎从 {oldEngine} 切换到 {_stateModel.AudioEngine}");
                         // 可以在这里添加音频引擎变更的消息处理
                     }
                 }
@@ -222,7 +202,7 @@ namespace MusicPlayer.Services
         
         public float[] SpectrumData
         {
-            get => _spectrumData;
+            get => _stateModel.SpectrumData;
             private set
             {//如果频谱禁用，就发送空数组1
                 if (_configurationService.CurrentConfiguration.IsSpectrumEnabled)
@@ -230,15 +210,8 @@ namespace MusicPlayer.Services
 
                     if (value != null)
                     {
-                        if (value.Length != _spectrumData.Length)
-                        {
-                            // 调整数组大小
-                            _spectrumData = new float[value.Length];
-                        }
-
-                        // 复制数据到内部数组
-                        int copyLength = Math.Min(value.Length, _spectrumData.Length);
-                        Array.Copy(value, _spectrumData, copyLength);
+                        // 更新状态模型
+                        _stateModel.SpectrumData = value;
 
                         OnPropertyChanged();
                         var now = DateTime.Now;
@@ -246,8 +219,9 @@ namespace MusicPlayer.Services
                         {
                             _lastSpectrumMessageTime = now;
                             // 发送内部数组的副本，而不是引用
+                            var copyLength = Math.Min(value.Length, _stateModel.SpectrumData.Length);
                             var spectrumCopy = new float[copyLength];
-                            Array.Copy(_spectrumData, spectrumCopy, copyLength); 
+                            Array.Copy(_stateModel.SpectrumData, spectrumCopy, copyLength); 
                             _messagingService.Send(new SpectrumDataUpdatedMessage(spectrumCopy));
                         }
 
@@ -272,7 +246,8 @@ namespace MusicPlayer.Services
             IPlaylistDataService playlistDataService, 
             IConfigurationService configurationService, 
             IMessagingService messagingService,
-            IPlaybackContextService playbackContextService)
+            IPlaybackContextService playbackContextService,
+            PlayerStateModel stateModel)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"PlayerStateService: 创建新实例，ID: {GetHashCode()}, 线程ID: {Thread.CurrentThread.ManagedThreadId}");
@@ -280,8 +255,9 @@ namespace MusicPlayer.Services
             _configurationService = configurationService;
             _messagingService = messagingService;
             _playbackContextService = playbackContextService;
+            _stateModel = stateModel ?? throw new ArgumentNullException(nameof(stateModel));
             
-            // 加载配置
+            // 加载配置到状态模型
             LoadConfiguration();
             
             // 订阅播放列表数据服务的当前歌曲变化事件
@@ -296,10 +272,10 @@ namespace MusicPlayer.Services
             // 订阅播放状态变化消息，同步状态
             _messagingService.Register<PlaybackStateChangedMessage>(this, (r, m) =>
             {
-                // 避免循环引用 - 直接设置内部字段，不触发事件
-                if (_isPlaying != m.Value)
+                // 避免循环引用 - 直接设置状态模型，不触发事件
+                if (_stateModel.IsPlaying != m.Value)
                 {
-                    _isPlaying = m.Value;
+                    _stateModel.IsPlaying = m.Value;
                     OnPropertyChanged(nameof(IsPlaying));
                     // 不再发送消息，避免循环
                 }
@@ -314,10 +290,10 @@ namespace MusicPlayer.Services
                     return;
                 }
                 
-                // 直接设置内部字段，不触发事件，避免循环
-                if (Math.Abs(_currentPosition - m.Value) > 0.01)
+                // 直接设置状态模型，不触发事件，避免循环
+                if (Math.Abs(_stateModel.CurrentPosition - m.Value) > 0.01)
                 { 
-                    _currentPosition = Math.Clamp(m.Value, 0.0, _maxPosition);
+                    _stateModel.CurrentPosition = Math.Clamp(m.Value, 0.0, _stateModel.MaxPosition);
                     OnPropertyChanged(nameof(CurrentPosition));
                       
                 }
@@ -326,8 +302,8 @@ namespace MusicPlayer.Services
             // 订阅最大位置变化消息，同步状态
             _messagingService.Register<MaxPositionChangedMessage>(this, (r, m) =>
             {
-                // 直接设置内部字段，不触发事件，避免循环
-                _maxPosition = Math.Max(0, m.Value);
+                // 直接设置状态模型，不触发事件，避免循环
+                _stateModel.MaxPosition = Math.Max(0, m.Value);
                 OnPropertyChanged(nameof(MaxPosition));
                
             });
@@ -360,7 +336,7 @@ namespace MusicPlayer.Services
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"PlayerStateService: 切歌中，跳过配置文件中的音量值 {configuration.Volume}，保持当前音量 {_volume}");
+                System.Diagnostics.Debug.WriteLine($"PlayerStateService: 切歌中，跳过配置文件中的音量值 {configuration.Volume}，保持当前音量 {_stateModel.Volume}");
             }
             CurrentPlayMode = configuration.PlayMode;
         }
@@ -368,16 +344,16 @@ namespace MusicPlayer.Services
         private void OnPlaylistCurrentSongChanged(object recipient, CurrentSongChangedMessage message)
         {
             // 避免循环 - 直接设置内部字段，不通过属性
-            if (_currentSong != message.Value)
+            if (_stateModel.CurrentSong  != message.Value)
             {
-                _currentSong = message.Value;
+                _stateModel.CurrentSong  = message.Value;
                 OnPropertyChanged(nameof(CurrentSong));
                 
                 // 每次歌曲变化都重置播放进度到0，包括同一首歌的情况
                 if (message.Value != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"PlayerStateService: 歌曲切换到 {message.Value.Title}，重置播放进度到0");
-                    _currentPosition = 0.0;
+                    _stateModel.CurrentPosition  = 0.0;
                     OnPropertyChanged(nameof(CurrentPosition));
                     _messagingService.Send(new PlaybackProgressChangedMessage(0.0));
                 }
@@ -388,7 +364,7 @@ namespace MusicPlayer.Services
                 if (message.Value != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"PlayerStateService: 重新加载歌曲 {message.Value.Title}，重置播放进度到0");
-                    _currentPosition = 0.0;
+                    _stateModel.CurrentPosition  = 0.0;
                     OnPropertyChanged(nameof(CurrentPosition));
                     _messagingService.Send(new PlaybackProgressChangedMessage(0.0));
                 }
@@ -476,27 +452,22 @@ namespace MusicPlayer.Services
             _isRestoringFromPersistence = true;
             try
             {
-                // 直接设置内部字段，不触发事件
-                _volume = Math.Clamp(configuration.Volume, 0f, 1f);
-                _currentPlayMode = configuration.PlayMode;
-                _currentAudioEngine = configuration.AudioEngine;
+                // 使用状态模型恢复配置，不触发事件
+                _stateModel.RestoreFromConfiguration(configuration);
                 
                 // 确保播放模式在有效范围内
-                if (!Enum.IsDefined(typeof(PlayMode), _currentPlayMode))
+                if (!Enum.IsDefined(typeof(PlayMode), _stateModel.PlayMode))
                 {
-                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: 无效的播放模式 {_currentPlayMode}，使用默认模式 RepeatAll");
-                    _currentPlayMode = PlayMode.RepeatAll;
+                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: 无效的播放模式 {_stateModel.PlayMode}，使用默认模式 RepeatAll");
+                    _stateModel.PlayMode = PlayMode.RepeatAll;
                 }
                 
                 // 确保音频引擎在有效范围内
-                if (!Enum.IsDefined(typeof(AudioEngine), _currentAudioEngine))
+                if (!Enum.IsDefined(typeof(AudioEngine), _stateModel.AudioEngine))
                 {
-                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: 无效的音频引擎 {_currentAudioEngine}，使用默认引擎 Auto");
-                    _currentAudioEngine = AudioEngine.Auto;
+                    System.Diagnostics.Debug.WriteLine($"PlayerStateService: 无效的音频引擎 {_stateModel.AudioEngine}，使用默认引擎 Auto");
+                    _stateModel.AudioEngine = AudioEngine.Auto;
                 }
-                
-                _currentPosition = configuration.CurrentPosition;
-                _isMuted = false; // 默认不静音，从持久化恢复时不保存静音状态
                 
                 // 通知UI更新，但不触发消息或持久化
                 OnPropertyChanged(nameof(Volume));
@@ -505,7 +476,7 @@ namespace MusicPlayer.Services
                 OnPropertyChanged(nameof(CurrentPosition));
                 OnPropertyChanged(nameof(IsMuted));
                 
-                System.Diagnostics.Debug.WriteLine($"PlayerStateService: 从配置恢复状态完成，播放模式: {_currentPlayMode}, 音量: {_volume}");
+                System.Diagnostics.Debug.WriteLine($"PlayerStateService: 从配置恢复状态完成，播放模式: {_stateModel.PlayMode}, 音量: {_stateModel.Volume}");
             }
             finally
             {
@@ -526,17 +497,10 @@ namespace MusicPlayer.Services
                 return;
             }
             
-            // 将当前状态同步到内存中的 PlayerConfiguration
-            configuration.Volume = _volume;
-            configuration.PlayMode = _currentPlayMode;
-            configuration.AudioEngine = _currentAudioEngine;
-            configuration.CurrentPosition = _currentPosition;
-            configuration.CurrentSongPath = _currentSong?.FilePath;
+            // 使用状态模型同步到配置
+            _stateModel.SyncToConfiguration(configuration);
             
-            // 更新最后修改时间
-            configuration.LastSaved = DateTime.Now;
-            
-            System.Diagnostics.Debug.WriteLine($"PlayerStateService: 状态已同步到内存配置，播放模式: {_currentPlayMode}, 音量: {_volume}");
+            System.Diagnostics.Debug.WriteLine($"PlayerStateService: 状态已同步到内存配置，播放模式: {_stateModel.PlayMode}, 音量: {_stateModel.Volume}");
         }
 
         protected virtual void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
@@ -678,7 +642,7 @@ namespace MusicPlayer.Services
         /// </summary>
         IStateUpdater IStateUpdater.SetPosition(double position)
         {
-            _pendingUpdates[nameof(CurrentPosition)] = Math.Clamp(position, 0.0, _maxPosition);
+            _pendingUpdates[nameof(CurrentPosition)] = Math.Clamp(position, 0.0, _stateModel.MaxPosition);
             return this;
         }
         
@@ -723,45 +687,45 @@ namespace MusicPlayer.Services
                 switch (kvp.Key)
                 {
                     case nameof(IsPlaying):
-                        _isPlaying = (bool)kvp.Value;
+                        _stateModel.IsPlaying = (bool)kvp.Value;
                         _changedProperties.Add(nameof(IsPlaying));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new PlaybackStateChangedMessage(_isPlaying));
+                            _messagingService.Send(new PlaybackStateChangedMessage(_stateModel.IsPlaying));
                         break;
                         
                     case nameof(Volume):
-                        _volume = (float)kvp.Value;
+                        _stateModel.Volume = (float)kvp.Value;
                         _changedProperties.Add(nameof(Volume));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new VolumeChangedMessage(_volume));
+                            _messagingService.Send(new VolumeChangedMessage(_stateModel.Volume));
                         break;
                         
                     case nameof(IsMuted):
-                        _isMuted = (bool)kvp.Value;
+                        _stateModel.IsMuted = (bool)kvp.Value;
                         _changedProperties.Add(nameof(IsMuted));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new MuteStateChangedMessage(_isMuted));
+                            _messagingService.Send(new MuteStateChangedMessage(_stateModel.IsMuted));
                         break;
                         
                     case nameof(CurrentPosition):
-                        _currentPosition = (double)kvp.Value;
+                        _stateModel.CurrentPosition = (double)kvp.Value;
                         _changedProperties.Add(nameof(CurrentPosition));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new PlaybackProgressChangedMessage(_currentPosition));
+                            _messagingService.Send(new PlaybackProgressChangedMessage(_stateModel.CurrentPosition ));
                         break;
                         
                     case nameof(MaxPosition):
-                        _maxPosition = (double)kvp.Value;
+                        _stateModel.MaxPosition = (double)kvp.Value;
                         _changedProperties.Add(nameof(MaxPosition));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new MaxPositionChangedMessage(_maxPosition));
+                            _messagingService.Send(new MaxPositionChangedMessage(_stateModel.MaxPosition));
                         break;
                         
                     case nameof(CurrentPlayMode):
-                        _currentPlayMode = (PlayMode)kvp.Value;
+                          _stateModel.PlayMode = (PlayMode)kvp.Value;
                         _changedProperties.Add(nameof(CurrentPlayMode));
                         if (!_isRestoringFromPersistence)
-                            _messagingService.Send(new PlayModeChangedMessage(_currentPlayMode));
+                            _messagingService.Send(new PlayModeChangedMessage( _stateModel.PlayMode ));
                         break;
                 }
             }

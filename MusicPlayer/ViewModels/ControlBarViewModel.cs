@@ -113,12 +113,6 @@ namespace MusicPlayer.ViewModels
                     _isUserDragging = value;
                     System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 拖拽状态变更为 {_isUserDragging}");
 
-                    // 通知PlayerStateService用户拖动状态变化
-                    if (_playerStateService is PlayerStateService playerStateService)
-                    {
-                        playerStateService.SetUserDragging(_isUserDragging);
-                    }
-
                     // 如果结束拖动，将临时位置应用到实际播放位置
                     if (!_isUserDragging)
                     {

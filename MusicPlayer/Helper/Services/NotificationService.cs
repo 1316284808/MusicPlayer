@@ -11,8 +11,6 @@ namespace MusicPlayer.Services
     /// </summary>
     public class NotificationService : INotificationService
     {
-        private readonly Func<IPlayerService> _playerServiceFactory;
-        private readonly Func<IPlaylistDataService> _playlistDataServiceFactory;
         private readonly Func<IMessagingService> _messagingServiceFactory;
         private readonly IUINotificationService _uiNotificationService;
         private readonly IDispatcherService _dispatcherService;
@@ -22,24 +20,18 @@ namespace MusicPlayer.Services
         /// <summary>
         /// 初始化通知服务
         /// </summary>
-        /// <param name="playerServiceFactory">播放服务工厂</param>
-        /// <param name="playlistDataServiceFactory">播放列表数据服务工厂</param>
         /// <param name="messagingServiceFactory">消息服务工厂</param>
         /// <param name="uiNotificationService">UI通知服务</param>
         /// <param name="dispatcherService">调度器服务</param>
         /// <param name="systemTrayService">系统托盘服务</param>
         /// <param name="logger">日志记录器</param>
         public NotificationService(
-            Func<IPlayerService> playerServiceFactory,
-            Func<IPlaylistDataService> playlistDataServiceFactory,
             Func<IMessagingService> messagingServiceFactory,
             IUINotificationService uiNotificationService,
             IDispatcherService dispatcherService,
             ISystemTrayService systemTrayService,
             ILogger<NotificationService> logger)
         {
-            _playerServiceFactory = playerServiceFactory ?? throw new ArgumentNullException(nameof(playerServiceFactory));
-            _playlistDataServiceFactory = playlistDataServiceFactory ?? throw new ArgumentNullException(nameof(playlistDataServiceFactory));
             _messagingServiceFactory = messagingServiceFactory ?? throw new ArgumentNullException(nameof(messagingServiceFactory));
             _uiNotificationService = uiNotificationService ?? throw new ArgumentNullException(nameof(uiNotificationService));
             _dispatcherService = dispatcherService ?? throw new ArgumentNullException(nameof(dispatcherService));

@@ -34,6 +34,11 @@ namespace MusicPlayer.Core.Interface
         /// 当前播放位置（秒）
         /// </summary>
         double CurrentPosition { get; set; }
+    
+        /// <summary>
+        /// 用户拖动时设置位置
+        /// </summary>
+        void SetPositionByUser(double position);
         
         /// <summary>
         /// 最大播放位置（秒）
