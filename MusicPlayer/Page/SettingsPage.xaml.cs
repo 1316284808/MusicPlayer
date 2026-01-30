@@ -11,14 +11,17 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class SettingsPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly ISettingsPageViewModel _settingsPageViewModel;
         private bool _disposed;
         private bool _isLoadedRegistered = false;
         private bool _isUnloadedRegistered = false;
         
         public SettingsPage() { }
+        
         public SettingsPage(ISettingsPageViewModel viewModel)
         {
             InitializeComponent();
+            _settingsPageViewModel = viewModel;
             DataContext = viewModel;
             this.WindowSettingsControl.DataContext = viewModel.WindowSettingsViewModel;
             this.PlaylistSettingControl.DataContext = viewModel.PlaylistSettingViewModel;
@@ -112,6 +115,12 @@ namespace MusicPlayer.Page
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"取消注册导航消息失败: {ex.Message}");
+            }
+            
+            // 释放ViewModel
+            if (_settingsPageViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
             }
             
             // 确保所有事件处理器都被取消注册

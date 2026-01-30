@@ -92,10 +92,14 @@
 - **依赖注入**: Microsoft.Extensions.DependencyInjection 10.0.0
 - **日志系统**: Serilog 4.2.0 + Serilog.Sinks.File 6.0.0 + Serilog.Sinks.Async 2.1.0
 - **系统托盘**: Hardcodet.NotifyIcon.Wpf 2.0.1
-- [网格布局（VirtualizingWrapPanel）](https://github.com/sbaeumlisberger/VirtualizingWrapPanel)  
+- **混色文本**:[TextHighlighterTest] (https://github.com/TwilightLemon/TextHighlighterTest)
+  （注：项目TextHighlighterTest采用MIT协议，在使用过程中基于该开源项目官方源码（commit:[2cbcf10]）有修改部分源码，感谢开源）
+- **网格布局**:（VirtualizingWrapPanel）(https://github.com/sbaeumlisberger/VirtualizingWrapPanel)  
   （注：截至 2026-01-18，NuGet 上尚未提供支持  .NET 8 的 VirtualizingWrapPanel 2.4.1 版本。因此，本项目基于其官方源码（commit: [f5bd4c5f]）编译为程序集直接引用。  
   **未对原始代码做任何修改**，仅用于启用虚拟化网格布局功能。  
   一旦官方发布兼容的 NuGet 包，将立即切换回标准 NuGet 引用方式。）
+ 
+
 
 ### 架构模式
 - **设计模式**: MVVM (Model-View-ViewModel)
@@ -345,6 +349,11 @@ MusicPlayer/
 - [WPF-UI](https://github.com/lepoco/wpfui) - 现代化 WPF UI 框架
 - [NAudio](https://github.com/naudio/NAudio) - .NET 音频处理库
 - [TagLib-Sharp](https://github.com/mono/taglib-sharp) - 多媒体元数据库
+- [TextHighlighterTest](https://github.com/TwilightLemon/TextHighlighterTest)-混色文本控件
+- [VirtualizingWrapPanel](https://github.com/sbaeumlisberger/VirtualizingWrapPanel)-网格布局  
+ 
+ 
+
 
 ## 📚 参考项目
 

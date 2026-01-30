@@ -139,8 +139,7 @@ namespace MusicPlayer.Controls
                     }
                 }
                 
-                // 注意：不要直接调用Items.Clear()，因为ItemsSource正在使用
-                // 歌词的清理应该通过更新ItemsSource绑定的数据源来实现
+                
                 
                 // 调用UpdateLayout确保UI更新
                 LyricsListBox.UpdateLayout();

@@ -5,6 +5,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
              xmlns:tb="http://www.hardcodet.net/taskbar"
+              xmlns:Helper="clr-namespace:MusicPlayer.Helper"
              DispatcherUnhandledException="App_DispatcherUnhandledException"
            
             >
@@ -38,13 +39,54 @@
             
             <!-- 系统托盘菜单资源 -->
             <ContextMenu x:Key="SysTrayMenu">
-                <MenuItem Header="显示主窗口" Command="{Binding ShowMainWindowCommand}" />
+                <MenuItem   Command="{Binding ShowMainWindowCommand}" >
+                    <MenuItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Helper:CustomIcon Kind="BackHome"/>
+                            <Separator Margin="2"/>
+                            <ui:TextBlock Text="显示主窗口" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
                 <Separator /> 
-                <MenuItem Header="上一曲" Command="{Binding PreviousTrackCommand}" />
-                <MenuItem Header="播放/暂停" Command="{Binding TogglePlayPauseCommand}" />
-                <MenuItem Header="下一曲" Command="{Binding NextTrackCommand}" />
+                <MenuItem   Command="{Binding PreviousTrackCommand}" >
+                    <MenuItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Helper:CustomIcon Kind="Previous"/>
+                            <Separator Margin="2"/>
+                            <ui:TextBlock Text="上一曲" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <MenuItem  Command="{Binding TogglePlayPauseCommand}" >
+                        <MenuItem.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Helper:CustomIcon Kind="Play"/>
+                                <Separator Margin="2"/>
+                                <ui:TextBlock Text="播放/暂停" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </MenuItem.Header>
+                </MenuItem>
+                <MenuItem  Command="{Binding NextTrackCommand}" >
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                            <Helper:CustomIcon Kind="Next"/>
+                                    <Separator Margin="2"/>
+                                    <ui:TextBlock Text="下一曲" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                </MenuItem>
                 <Separator />
-                <MenuItem Header="退出" Command="{Binding ExitApplicationCommand}" /> 
+                            
+                <MenuItem  Command="{Binding ExitApplicationCommand}" >
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Helper:CustomIcon Kind="Close" Foreground="Red"/>
+                                        <Separator Margin="2"/>
+                            <ui:TextBlock Text="退出" FontWeight="SemiBold" Foreground="Red"/>
+                                    </StackPanel>
+                                </MenuItem.Header>
+                </MenuItem>
             </ContextMenu>
             
             <!-- 系统托盘图标 -->

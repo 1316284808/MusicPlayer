@@ -21,21 +21,32 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class HeartPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly IHeartViewModel _heartViewModel;
         private bool _disposed = false;
+        
         public HeartPage(IHeartViewModel viewModel)
         {
             InitializeComponent();
+            _heartViewModel = viewModel;
             this.DataContext = viewModel;
         }
+        
         public HeartPage()
         {
             InitializeComponent();
         }
+        
         public void Dispose()
         {
             if (_disposed)
             {
                 return;
+            }
+
+            // 释放ViewModel
+            if (_heartViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
             }
 
             this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
