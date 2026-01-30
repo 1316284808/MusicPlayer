@@ -16,9 +16,9 @@
         WindowBackdropType="Auto"
         WindowCornerPreference="Round"
         ExtendsContentIntoTitleBar="True"
-        WindowStartupLocation="CenterScreen"
-        mc:Ignorable="d">
-    <Border Background="Transparent">
+        WindowStartupLocation="CenterOwner"
+        mc:Ignorable="d"> 
+    <Border Background="Transparent" >
         <Border.Effect>
             <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
         </Border.Effect>

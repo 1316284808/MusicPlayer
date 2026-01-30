@@ -9,6 +9,7 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class SingerPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly ISingerViewModel _singerViewModel;
         private bool _disposed;
         private bool _isUnloadedRegistered = false;
 
@@ -20,6 +21,7 @@ namespace MusicPlayer.Page
         public SingerPage(ISingerViewModel singerViewModel)
         {
             InitializeComponent();
+            _singerViewModel = singerViewModel;
             DataContext = singerViewModel;
             this.SingerControl.DataContext = singerViewModel;
             Unloaded += SingerPage_Unloaded;
@@ -44,6 +46,12 @@ namespace MusicPlayer.Page
             {
                 Unloaded -= SingerPage_Unloaded;
                 _isUnloadedRegistered = false;
+            }
+            
+            // 释放ViewModel
+            if (_singerViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
             }
             
             SingerControl.Dispose();

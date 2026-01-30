@@ -16,6 +16,7 @@ using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Enums;
 using System.Linq;
 using MusicPlayer.Navigation;
+using MusicPlayer.Services.Coordinators;
 
 namespace MusicPlayer.Config
 {
@@ -140,7 +141,7 @@ namespace MusicPlayer.Config
         /// <summary>
         /// 注册业务服务 
         /// 全部使用单例模式，确保实例唯一性
-        /// 注册顺序很重要，确保依赖关系正确
+        /// 注册顺序很重要，确保依赖关系正确 这里是个毒点，还没特别好的解决方案
         /// </summary>
         private static IServiceCollection AddBusinessServices(this IServiceCollection services)
         {
@@ -245,8 +246,19 @@ namespace MusicPlayer.Config
                 System.Diagnostics.Debug.WriteLine($"ServiceInitializationManager: 创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
+
+            // 2. 注册领域协调器
+            // 播放协调器 - 单例模式
+            services.AddSingleton<IPlaybackCoordinator, PlaybackCoordinator>();
+            services.AddSingleton<PlaybackCoordinator>(provider =>
+                (PlaybackCoordinator)provider.GetRequiredService<IPlaybackCoordinator>());
+
+            // 播放列表协调器 - 单例模式
+            services.AddSingleton<IPlaylistCoordinator, PlaylistCoordinator>();
+            services.AddSingleton<PlaylistCoordinator>(provider =>
+                (PlaylistCoordinator)provider.GetRequiredService<IPlaylistCoordinator>());
             
-            // 2. 服务协调器 - 使用单例模式，确保实例唯一性
+            // 3. 服务协调器 - 使用单例模式，确保实例唯一性
             // 使用工厂方法确保只创建一个实例
             services.AddSingleton<IServiceCoordinator>(provider => {
                 var instance = new ServiceCoordinator(
@@ -273,7 +285,8 @@ namespace MusicPlayer.Config
         /// </summary>
         private static IServiceCollection AddViewModels(this IServiceCollection services)
         { 
-            // 所有ViewModel注册为单例模式，确保实例唯一性
+            
+            // 这些ViewModel对应始终显示的UI组件
             services.AddSingleton<IControlBarViewModel>(provider => {
                 var instance = new ControlBarViewModel(
                     provider.GetRequiredService<IMessagingService>(),
@@ -295,87 +308,43 @@ namespace MusicPlayer.Config
                 System.Diagnostics.Debug.WriteLine($"TitleBarViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
                 return instance;
             });
+            // 播放列表页面
+            services.AddTransient<IPlaylistViewModel, PlaylistViewModel>();
             
-            services.AddSingleton<ICenterContentViewModel>(provider => {
-                var instance = new CenterContentViewModel(
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IConfigurationService>());
-                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 通过工厂创建单例实例，ID: {instance.GetHashCode()}");
-                return instance;
-            });
+            // 专辑页面
+            services.AddTransient<IAlbumViewModel, AlbumViewModel>();
+            
+            // 歌手页面
+            services.AddTransient<ISingerViewModel, SingerViewModel>();
+            
+            // 播放列表详情页面
+            services.AddTransient<IPlaylistDetailViewModel, PlaylistDetailViewModel>();
+            
+            // 收藏页面
+            services.AddTransient<IHeartViewModel, HeartViewModel>();
+            
+            // 设置页面（包含多个子ViewModel）
+            services.AddTransient<ISettingsPageViewModel, SettingsPageViewModel>();
+            services.AddTransient<ISoundSettingsViewModel, SoundSettingsViewModel>();
+            services.AddTransient<IWindowSettingsViewModel, WindowSettingsViewModel>();
+            
+            // 播放器页面
+            services.AddTransient<ICenterContentViewModel, CenterContentViewModel>();
+            
+            // 频谱分析器（全局组件，但只在PlayerPage显示）
+            // 频谱数据是全局播放器的状态，保持单例
+            services.AddSingleton<ISpectrumAnalyzerViewModel, SpectrumAnalyzerViewModel>();
+            services.AddSingleton<ISpectrumAnalyzerManager, SpectrumAnalyzerManager>(); 
             
             // 注册歌词视图模型工厂，用于创建新的歌词视图模型实例
             services.AddSingleton<ILyricsViewModelFactory, LyricsViewModelFactory>();
-            //  频谱
-            services.AddSingleton<ISpectrumAnalyzerViewModel, SpectrumAnalyzerViewModel>();
-            services.AddSingleton<ISpectrumAnalyzerManager, SpectrumAnalyzerManager>(); 
-            // WindowSettingsViewModel 也改为单例模式
-            services.AddSingleton<IWindowSettingsViewModel, WindowSettingsViewModel>();
             
-            // SoundSettingsViewModel - 单例模式
-            services.AddSingleton<ISoundSettingsViewModel, SoundSettingsViewModel>();
-            
-            services.AddSingleton<IPlaylistViewModel>(provider => 
-                new PlaylistViewModel(
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IConfigurationService>(),
-                    provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<ICustomPlaylistService>(),
-                    provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<INotificationService>(),
-                    provider.GetRequiredService<IPlaylistCacheService>()));
-
-            
-            // SettingsPageViewModel - 单例模式
-            services.AddSingleton<ISettingsPageViewModel, SettingsPageViewModel>(provider => 
-                new SettingsPageViewModel(
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IWindowSettingsViewModel>(),
-                    provider.GetRequiredService<PlaylistSettingViewModel>(),
-                    provider.GetRequiredService<ISoundSettingsViewModel>()));
-            
-            // SettingsBarViewModel - 单例模式
+            // SettingsBarViewModel - 单例模式（简单的消息处理）
             services.AddSingleton<ISettingsBarViewModel, SettingsBarViewModel>(provider => 
                 new SettingsBarViewModel(
                     provider.GetRequiredService<IMessagingService>()));
             
-            // AlbumViewModel - 单例模式
-            services.AddSingleton<IAlbumViewModel>(provider => 
-                new AlbumViewModel(
-                    provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<Navigation.NavigationService>()));
-            
-            // SingerViewModel - 单例模式
-            services.AddSingleton<ISingerViewModel>(provider => 
-                new SingerViewModel(
-                    provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<Navigation.NavigationService>())); 
-            
-            // HeartViewModel - 单例模式
-            services.AddSingleton<IHeartViewModel>(provider => 
-                new HeartViewModel(
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<IDialogService>(),
-                    provider.GetRequiredService<IPlaylistCacheService>(),
-                    provider.GetRequiredService<IPlaylistService>(),
-                    provider.GetRequiredService<INotificationService>())); 
-           
-            // PlaylistDetailViewModel - 单例模式
-            services.AddSingleton<IPlaylistDetailViewModel>(provider => 
-                new PlaylistDetailViewModel(
-                    provider.GetRequiredService<IMessagingService>(),
-                    provider.GetRequiredService<IPlaylistDataService>(),
-                    provider.GetRequiredService<IPlaybackContextService>(),
-                    provider.GetRequiredService<ICustomPlaylistService>(),
-                    provider.GetRequiredService<IPlaylistCacheService>()));
-           
-            // PlaylistSettingViewModel - 单例模式
+            // PlaylistSettingViewModel - 单例模式（设置相关的业务逻辑）
             services.AddSingleton<PlaylistSettingViewModel>(provider => 
                 new PlaylistSettingViewModel(
                     provider.GetRequiredService<IMessagingService>(),
@@ -390,11 +359,10 @@ namespace MusicPlayer.Config
                 new MainViewModel( 
                     provider.GetRequiredService<IControlBarViewModel>(),
                     provider.GetRequiredService<ITitleBarViewModel>(),
-                    provider.GetRequiredService<ICenterContentViewModel>(),
-                    provider.GetRequiredService<IPlaylistViewModel>(),
                     provider.GetRequiredService<IServiceCoordinator>(),
                     provider.GetRequiredService<WindowManagerService>(),
-                    provider.GetRequiredService<IMessagingService>()));
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider));
 
             return services;
         }
@@ -426,7 +394,6 @@ namespace MusicPlayer.Config
 
         /// <summary>
         /// 添加消息服务 - 全部使用单例模式
-        /// 注意：核心消息服务已在AddInfrastructureServices中注册
         /// </summary>
         /// <param name="services">服务集合</param>
         /// <returns>服务集合</returns>
@@ -438,7 +405,9 @@ namespace MusicPlayer.Config
                 provider.GetRequiredService<IPlayerStateService>(),
                 provider.GetRequiredService<IPlayerService>(),
                 provider.GetRequiredService<IPlaylistDataService>(),
-                provider.GetRequiredService<IPlaybackContextService>()));
+                provider.GetRequiredService<IPlaybackContextService>(),
+                provider.GetRequiredService<IPlaybackCoordinator>(),
+                provider.GetService<ILogger<PlayerControlMessageHandler>>()));
             services.AddSingleton<PlaylistMessageHandler>(provider => new PlaylistMessageHandler(
                 provider.GetRequiredService<IPlaylistDataService>(),
                 provider.GetRequiredService<IPlaylistService>(),

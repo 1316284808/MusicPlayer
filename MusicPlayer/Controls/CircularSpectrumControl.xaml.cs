@@ -11,10 +11,7 @@ namespace MusicPlayer.Controls
 {
     /// <summary>
     /// 圆形频谱分析器控件
-    /// 使用MVVM模式，将频谱数据处理委托给ViewModel和转换器
-    /// 通过ItemsControl和附加行为实现频谱显示
-    /// 与全局单例SpectrumAnalyzerViewModel协作，通过SpectrumAnalyzerManager统一管理资源
-    /// </summary>
+     /// </summary>
     public partial class CircularSpectrumControl : UserControl, IDisposable
     {
         private ISpectrumAnalyzerViewModel? _spectrumViewModel;

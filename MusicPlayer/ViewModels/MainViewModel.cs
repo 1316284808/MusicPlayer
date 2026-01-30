@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicPlayer.ViewModels
 {
@@ -21,31 +22,32 @@ namespace MusicPlayer.ViewModels
         private readonly IServiceCoordinator _serviceCoordinator;
         private readonly WindowManagerService _windowManagerService;
         private readonly IMessagingService _messagingService;
+        private readonly IServiceProvider _serviceProvider;
       
         public IControlBarViewModel ControlBarViewModel { get; private set; }
         public ITitleBarViewModel TitleBarViewModel { get; private set; }
-        public IPlaylistViewModel PlaylistViewModel { get; private set; }
-        public ICenterContentViewModel CenterContentViewModel { get; private set; }
+        
+        // Transient ViewModel不再直接持有，通过ServiceProvider获取
+        public IPlaylistViewModel PlaylistViewModel => _serviceProvider.GetRequiredService<IPlaylistViewModel>();
+        public ICenterContentViewModel CenterContentViewModel => _serviceProvider.GetRequiredService<ICenterContentViewModel>();
 
     public MainViewModel(
         IControlBarViewModel controlBarViewModel,
         ITitleBarViewModel titleBarViewModel,
-        ICenterContentViewModel centerContentViewModel,
-        IPlaylistViewModel playlistViewModel,
         IServiceCoordinator serviceCoordinator,
         WindowManagerService windowManagerService,
-        IMessagingService messagingService)
+        IMessagingService messagingService,
+        IServiceProvider serviceProvider)
     {
         // 注入服务
         _serviceCoordinator = serviceCoordinator ?? throw new ArgumentNullException(nameof(serviceCoordinator));
         _windowManagerService = windowManagerService ?? throw new ArgumentNullException(nameof(windowManagerService));
         _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         
-        // 使用依赖注入的子ViewModel
+        // 使用依赖注入的子ViewModel（单例）
         ControlBarViewModel = controlBarViewModel ?? throw new ArgumentNullException(nameof(controlBarViewModel));
         TitleBarViewModel = titleBarViewModel ?? throw new ArgumentNullException(nameof(titleBarViewModel));
-        CenterContentViewModel = centerContentViewModel ?? throw new ArgumentNullException(nameof(centerContentViewModel));
-        PlaylistViewModel = playlistViewModel ?? throw new ArgumentNullException(nameof(playlistViewModel));
       
         // 初始化命令
         ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
@@ -111,26 +113,9 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Cleanup()
         {
-            // 清理子ViewModel
-            if (ControlBarViewModel is ObservableObject controlBarViewModel)
-            {
-                controlBarViewModel.Cleanup();
-            }
-            
-            if (TitleBarViewModel is ObservableObject titleBarViewModel)
-            {
-                titleBarViewModel.Cleanup();
-            }
-            
-            if (PlaylistViewModel is ObservableObject playlistViewModel)
-            {
-                playlistViewModel.Cleanup();
-            }
-            
-            if (CenterContentViewModel is ObservableObject centerContentViewModel)
-            {
-                centerContentViewModel.Cleanup();
-            }
+            // MainViewModel是Singleton，不应该持有Transient ViewModel的引用
+            // 也不应该在Cleanup中调用它们的Cleanup，因为这会导致Transient ViewModel无法释放
+            // 清理逻辑应该由各个Page在Dispose时自行处理
         }
     }
 

@@ -889,9 +889,7 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             // 取消注册所有消息处理器
-            //_messagingService.Unregister(this);
-
- 
+            _messagingService.Unregister(this);
         }
 
 

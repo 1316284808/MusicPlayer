@@ -25,17 +25,19 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class PlayerPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly ICenterContentViewModel _centerContentViewModel;
         private bool _disposed;
 
         public PlayerPage()
         {
             InitializeComponent();
         }
-        public PlayerPage(IMainViewModel mainViewModel)
+        
+        public PlayerPage(ICenterContentViewModel centerContentViewModel)
         {
             InitializeComponent();
-            DataContext = mainViewModel;
-            this.CenterContentControl.DataContext = mainViewModel.CenterContentViewModel;
+            _centerContentViewModel = centerContentViewModel;
+            this.CenterContentControl.DataContext = centerContentViewModel;
             // 使用命名方法代替匿名方法，以便能够取消订阅
             Unloaded += PlayerPage_Unloaded;
         }
@@ -56,6 +58,12 @@ namespace MusicPlayer.Page
             // 取消Unloaded事件订阅
             Unloaded -= PlayerPage_Unloaded;
             
+            // 释放ViewModel
+            if (_centerContentViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
+            }
+            
             // 释放CenterContentControl资源
             if (CenterContentControl != null)
             {
@@ -70,7 +78,5 @@ namespace MusicPlayer.Page
             
             _disposed = true;
         }
-
-
     }
 }
