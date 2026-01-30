@@ -26,9 +26,10 @@ namespace MusicPlayer;
         public IMainViewModel ViewModel => _mainViewModel;
         private readonly WindowManagerService _windowManagerService;
         private readonly NavigationService _navigationService;
-        private readonly IServiceCoordinator _serviceCoordinator;
+        private readonly IConfigurationService _configurationService;
+        private readonly IMessagingService _messagingService;
+        private readonly INotificationService _notificationService;
         //private readonly IBackgroundViewModel _backgroundViewModel;
-        private readonly ISettingsPageViewModel _settingsPageViewModel;
         private readonly IPlaylistViewModel _playlistViewModel;
         private readonly IControlBarViewModel _controlBarViewModel;
     private readonly ISettingsBarViewModel _settingsBarViewModel; 
@@ -37,9 +38,10 @@ namespace MusicPlayer;
     public MainWindow(
         IMainViewModel mainViewModel,
         NavigationService navigationService,
-        IServiceCoordinator serviceCoordinator,
+        IConfigurationService configurationService,
+        IMessagingService messagingService,
+        INotificationService notificationService,
         //IBackgroundViewModel backgroundViewModel,
-        ISettingsPageViewModel settingsPageViewModel,
         IPlaylistViewModel playlistViewModel,
         IControlBarViewModel controlBarViewModel,
         ITitleBarViewModel titleBarViewModel,
@@ -50,12 +52,13 @@ namespace MusicPlayer;
         
         _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
-        _serviceCoordinator = serviceCoordinator ?? throw new ArgumentNullException(nameof(serviceCoordinator));
+        _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+        _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         //_backgroundViewModel = backgroundViewModel ?? throw new ArgumentNullException(nameof(backgroundViewModel));
         _playlistViewModel = playlistViewModel ?? throw new ArgumentNullException(nameof(playlistViewModel));
         _controlBarViewModel = controlBarViewModel ?? throw new ArgumentNullException(nameof(controlBarViewModel));
         _titleBarViewModel = titleBarViewModel ?? throw new ArgumentNullException(nameof(titleBarViewModel));
-        _settingsPageViewModel= settingsPageViewModel ?? throw new ArgumentNullException(nameof(settingsPageViewModel));
         _settingsBarViewModel = settingsBarViewModel ?? throw new ArgumentNullException(nameof(settingsBarViewModel));
         // 初始化窗口管理服务（使用依赖注入的单例实例）- 确保在ViewModel初始化前设置窗口
         _windowManagerService = windowManagerService ?? throw new ArgumentNullException(nameof(windowManagerService));
@@ -119,7 +122,7 @@ namespace MusicPlayer;
             base.OnClosing(e);
             
             // 检查配置中的关闭行为
-            var closeBehavior = _serviceCoordinator.ConfigurationService.CurrentConfiguration.CloseBehavior;
+            var closeBehavior = _configurationService.CurrentConfiguration.CloseBehavior;
             
             // 如果配置为最小化到托盘
             if (closeBehavior)
@@ -164,7 +167,7 @@ namespace MusicPlayer;
         _windowManagerService.Unregister();
         
         // 如果系统托盘未启用，确保完全退出应用程序
-        if (!_serviceCoordinator.ConfigurationService.CurrentConfiguration.CloseBehavior)
+        if (!_configurationService.CurrentConfiguration.CloseBehavior)
         {
             System.Diagnostics.Debug.WriteLine("系统托盘未启用，确保完全退出应用程序");
             Application.Current.Shutdown();
@@ -210,7 +213,7 @@ namespace MusicPlayer;
     private void RegisterNavigationMessageHandler()
     {
         // 注册导航到设置页面的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToSettingsMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToSettingsMessage>(this, (r, m) =>
         {
             try
             {
@@ -223,7 +226,7 @@ namespace MusicPlayer;
         });
         
         // 注册导航到主页的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToHomeMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToHomeMessage>(this, (r, m) =>
         {
             try
             {
@@ -236,7 +239,7 @@ namespace MusicPlayer;
         });
         
         // 注册导航到歌手页面的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToSingerPageMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToSingerPageMessage>(this, (r, m) =>
         {
             try
             {
@@ -249,7 +252,7 @@ namespace MusicPlayer;
         });
         
         // 注册导航到专辑页面的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToAlbumPageMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToAlbumPageMessage>(this, (r, m) =>
         {
             try
             {
@@ -262,7 +265,7 @@ namespace MusicPlayer;
         });
         
         // 注册导航到歌单页面的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToHeartMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToHeartMessage>(this, (r, m) =>
         {
             try
             {
@@ -275,7 +278,7 @@ namespace MusicPlayer;
         });
         
         // 注册导航到歌单详情页面的消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToPlaylistDetailMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToPlaylistDetailMessage>(this, (r, m) =>
         {
             try
             {
@@ -288,7 +291,7 @@ namespace MusicPlayer;
         });
         
         // 注册返回上一页的消息处理器
-        _serviceCoordinator.MessagingService.Register<GoBackMessage>(this, (r, m) =>
+        _messagingService.Register<GoBackMessage>(this, (r, m) =>
         {
             try
             {
@@ -301,7 +304,7 @@ namespace MusicPlayer;
         });
         
         // 注册显示桌面歌词的消息处理器
-        _serviceCoordinator.MessagingService.Register<ShowLyricsMessage>(this, (r, m) =>
+        _messagingService.Register<ShowLyricsMessage>(this, (r, m) =>
         {
             try
             {
@@ -316,7 +319,7 @@ namespace MusicPlayer;
         });
         
         // 注册通用页面导航消息处理器
-        _serviceCoordinator.MessagingService.Register<NavigateToPageMessage>(this, (r, m) =>
+        _messagingService.Register<NavigateToPageMessage>(this, (r, m) =>
         {
             try
             {
@@ -329,7 +332,7 @@ namespace MusicPlayer;
         });
         
         // 注册主题切换消息处理器
-        _serviceCoordinator.MessagingService.Register<ThemeChangedMessage>(this, (r, m) =>
+        _messagingService.Register<ThemeChangedMessage>(this, (r, m) =>
         {
             try
             {
@@ -350,7 +353,7 @@ namespace MusicPlayer;
     private void InitializeSystemTray()
     {
         // 初始化通知系统（包括系统托盘）
-        _serviceCoordinator.NotificationService.Initialize();
+        _notificationService.Initialize();
     }
     
     /// <summary>
@@ -391,24 +394,24 @@ namespace MusicPlayer;
         this.TitleBarControl.DataContext = _titleBarViewModel;
     }
     
-    /// <summary>
-    /// 从配置中加载主题设置
-    /// </summary>
-    private void LoadThemeFromConfiguration()
-    {
-        try
+/// <summary>
+        /// 从配置中加载主题设置
+        /// </summary>
+        private void LoadThemeFromConfiguration()
         {
-            var theme = _serviceCoordinator.ConfigurationService.CurrentConfiguration.Theme;
-            UpdateWindowBackdrop(theme);
-            System.Diagnostics.Debug.WriteLine($"从配置中加载主题: {theme}");
+            try
+            {
+                var theme = _configurationService.CurrentConfiguration.Theme;
+                UpdateWindowBackdrop(theme);
+                System.Diagnostics.Debug.WriteLine($"从配置中加载主题: {theme}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载主题失败: {ex.Message}");
+                // 使用默认主题
+                UpdateWindowBackdrop(MusicPlayer.Core.Enums.Theme.Mica);
+            }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"加载主题失败: {ex.Message}");
-            // 使用默认主题
-            UpdateWindowBackdrop(MusicPlayer.Core.Enums.Theme.Mica);
-        }
-    }
 
 
 

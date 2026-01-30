@@ -52,9 +52,10 @@ namespace MusicPlayer;
                 var mainWindow = new MainWindow(
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IMainViewModel>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Navigation.NavigationService>(_serviceProvider!),
-                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IServiceCoordinator>(_serviceProvider!),
+                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IConfigurationService>(_serviceProvider!),
+                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IMessagingService>(_serviceProvider!),
+                    Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<INotificationService>(_serviceProvider!),
                     //Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IBackgroundViewModel>(_serviceProvider!),
-                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService <ISettingsPageViewModel>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IPlaylistViewModel>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IControlBarViewModel>(_serviceProvider!),
                     Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ITitleBarViewModel>(_serviceProvider!),

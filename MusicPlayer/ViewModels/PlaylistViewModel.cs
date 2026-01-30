@@ -495,9 +495,22 @@ namespace MusicPlayer.ViewModels
         {
             if (song != null)
             {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 开始删除歌曲 {song.Title}");
+                
                 // 发送更新删除状态的消息，而不是真正删除
-                _messagingService.Send(new UpdateSongDeletionStatusMessage(song, true));
-                _notificationService.ShowSuccess($"成功删除歌曲[{song.Title}]");
+                var result = _messagingService.Send<UpdateSongDeletionStatusMessage, bool>(
+                    new UpdateSongDeletionStatusMessage(song, true));
+                
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 删除歌曲结果 {result}");
+                
+                if (result)
+                {
+                    _notificationService.ShowSuccess($"成功删除歌曲[{song.Title}]");
+                }
+                else
+                {
+                    _notificationService.ShowError( "无法更新歌曲删除状态");
+                }
             }
         }
 

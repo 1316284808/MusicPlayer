@@ -145,6 +145,8 @@ namespace MusicPlayer.Services.Handlers
                 // 调用PlaylistDataService的更新方法
                 _playlistDataService.UpdateSongDeletionStatus(message.Song, message.IsDeleted);
                 
+                Debug.WriteLine($"PlaylistMessageHandler: 更新歌曲删除状态成功");
+                
                 // 回复成功
                 message.Reply(true);
             }

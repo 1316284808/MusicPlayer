@@ -230,10 +230,27 @@ namespace MusicPlayer.Config
             // 导航服务 - 单例模式
             services.AddSingleton<NavigationService>();
             
-            // 服务协调器 - 使用单例模式，确保实例唯一性
+            // 1. 注册初始化管理器
+            services.AddSingleton<ServiceInitializationManager>(provider =>
+            {
+                var instance = new ServiceInitializationManager(
+                    provider.GetRequiredService<IPlayerService>(),
+                    provider.GetRequiredService<IPlayerStateService>(),
+                    provider.GetRequiredService<IMessagingService>(),
+                    provider.GetRequiredService<IConfigurationService>(),
+                    provider.GetRequiredService<IPlaylistDataService>(),
+                    provider.GetRequiredService<IPlaylistCacheService>(),
+                    provider.GetService<ILogger<ServiceInitializationManager>>());
+
+                System.Diagnostics.Debug.WriteLine($"ServiceInitializationManager: 创建单例实例，ID: {instance.GetHashCode()}");
+                return instance;
+            });
+            
+            // 2. 服务协调器 - 使用单例模式，确保实例唯一性
             // 使用工厂方法确保只创建一个实例
             services.AddSingleton<IServiceCoordinator>(provider => {
                 var instance = new ServiceCoordinator(
+                    provider.GetRequiredService<ServiceInitializationManager>(),
                     provider.GetRequiredService<IPlayerService>(),
                     provider.GetRequiredService<IPlayerStateService>(),
                     provider.GetRequiredService<INotificationService>(),
@@ -376,7 +393,8 @@ namespace MusicPlayer.Config
                     provider.GetRequiredService<ICenterContentViewModel>(),
                     provider.GetRequiredService<IPlaylistViewModel>(),
                     provider.GetRequiredService<IServiceCoordinator>(),
-                    provider.GetRequiredService<WindowManagerService>()));
+                    provider.GetRequiredService<WindowManagerService>(),
+                    provider.GetRequiredService<IMessagingService>()));
 
             return services;
         }

@@ -20,6 +20,7 @@ namespace MusicPlayer.ViewModels
     {
         private readonly IServiceCoordinator _serviceCoordinator;
         private readonly WindowManagerService _windowManagerService;
+        private readonly IMessagingService _messagingService;
       
         public IControlBarViewModel ControlBarViewModel { get; private set; }
         public ITitleBarViewModel TitleBarViewModel { get; private set; }
@@ -32,11 +33,13 @@ namespace MusicPlayer.ViewModels
         ICenterContentViewModel centerContentViewModel,
         IPlaylistViewModel playlistViewModel,
         IServiceCoordinator serviceCoordinator,
-        WindowManagerService windowManagerService)
+        WindowManagerService windowManagerService,
+        IMessagingService messagingService)
     {
         // 注入服务
         _serviceCoordinator = serviceCoordinator ?? throw new ArgumentNullException(nameof(serviceCoordinator));
         _windowManagerService = windowManagerService ?? throw new ArgumentNullException(nameof(windowManagerService));
+        _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
         
         // 使用依赖注入的子ViewModel
         ControlBarViewModel = controlBarViewModel ?? throw new ArgumentNullException(nameof(controlBarViewModel));
@@ -71,7 +74,7 @@ namespace MusicPlayer.ViewModels
     /// </summary>
     private void TogglePlayPause()
     {
-        _serviceCoordinator.MessagingService.Send(new PlayPauseMessage());
+        _messagingService.Send(new PlayPauseMessage());
     }
     
     /// <summary>
@@ -79,7 +82,7 @@ namespace MusicPlayer.ViewModels
     /// </summary>
     private void PreviousTrack()
     {
-        _serviceCoordinator.MessagingService.Send(new PreviousSongMessage());
+        _messagingService.Send(new PreviousSongMessage());
     }
     
     /// <summary>
@@ -87,7 +90,7 @@ namespace MusicPlayer.ViewModels
     /// </summary>
     private void NextTrack()
     {
-        _serviceCoordinator.MessagingService.Send(new NextSongMessage());
+        _messagingService.Send(new NextSongMessage());
     }
     
     /// <summary>
