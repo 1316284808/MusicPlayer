@@ -26,9 +26,7 @@ namespace MusicPlayer
         private readonly IMessagingService _messagingService;
 
         // 配置项：一键修改，无需改逻辑
-        private readonly int _fontSize = 28;                                 // 字体大小
-        private readonly SolidColorBrush _blackBrush = Brushes.Black;          // 底层黑色
-        private readonly SolidColorBrush _blueBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF0078D7"));    // 顶层蓝色
+        private readonly int _fontSize = 28;      
         private readonly int _charSpacing = 0;                                 // 字符间距，防止粘连
 
         // 歌词显示控件
@@ -152,7 +150,43 @@ namespace MusicPlayer
         }
 
         /// <summary>
-        /// 更新歌词进度，驱动逐字填充效果
+        /// 为文本创建字符级的HighlightTextBlock控件
+        /// </summary>
+        private void CreateCharTextBlocks(string text, WrapPanel container, List<Helper.HighlightTextBlock> charList)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            
+            // 遍历每个字符
+            foreach (char c in text)
+            {
+                // 创建单个字符的HighlightTextBlock
+                var highlightBlock = new Helper.HighlightTextBlock
+                {
+                   
+
+
+                    Text = c.ToString(),
+                    FontSize = _fontSize,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = _blackBrush,  // 底色（未高亮时的颜色）
+                    HighlightColor = _blueColor, // 高光颜色（混合后的颜色）
+                    HighlightPos = 0,              // 初始无光
+                    HighlightWidth = 0,          // 高光宽度
+                    UseAdditive = true,            // 加法混合模式（发光效果）
+                    TextAlignment = TextAlignment.Left,
+                    TextWrapping = TextWrapping.NoWrap,  // 每个字符内部不换行
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(0, 0, _charSpacing, 0)  // 字符间距
+                };
+                
+                // 添加到WrapPanel和字符列表
+                container.Children.Add(highlightBlock);
+                charList.Add(highlightBlock);
+            }
+        }
+
+        /// <summary>
+        /// 更新歌词进度，按字符顺序逐行填充
         /// </summary>
         private void UpdateLyricProgress()
         {
