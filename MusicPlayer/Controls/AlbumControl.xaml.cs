@@ -24,29 +24,6 @@ namespace MusicPlayer.Controls
             });
         }
 
-        private void Border_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Border border)
-            {
-                // 获取专辑信息
-                var albumInfo = border.DataContext as MusicPlayer.Core.Models.AlbumInfo;
-                if (albumInfo != null)
-                {
-                    // 获取父级ViewModel
-                    var viewModel = this.DataContext as MusicPlayer.ViewModels.AlbumViewModel;
-                    if (viewModel != null)
-                    {
-                        // 调用导航命令
-                        var navigateCommand = viewModel.GetType().GetProperty("NavigateToAlbumDetailCommand")?.GetValue(viewModel) as System.Windows.Input.ICommand;
-                        if (navigateCommand != null && navigateCommand.CanExecute(albumInfo.Name))
-                        {
-                            navigateCommand.Execute(albumInfo.Name);
-                        }
-                    }
-                }
-            }
-        }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

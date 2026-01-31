@@ -17,10 +17,12 @@ namespace MusicPlayer.ViewModels
     /// 使用PlayerStateService作为播放状态的唯一可信源，保持架构一致性
     /// 已优化：支持专辑封面懒加载
     /// </summary>
-    public class CenterContentViewModel : ObservableObject, ICenterContentViewModel
+    public class CenterContentViewModel : ObservableObject, ICenterContentViewModel, IDisposable
     {
         private readonly IMessagingService _messagingService;
         private readonly IConfigurationService _configurationService;
+        private readonly IPlayerStateService _playerStateService;
+        private readonly IPlaylistService _playlistService;
 
         // 状态属性通过消息同步
         private Core.Models.Song? _currentSong;
@@ -35,14 +37,14 @@ namespace MusicPlayer.ViewModels
         private Core.Models.LyricLine? _currentLyricLine;
 
         // 歌词对齐方式
-        private System.Windows.HorizontalAlignment _lyricTextAlignment = System.Windows.HorizontalAlignment.Right;
+        private System.Windows.TextAlignment _lyricTextAlignment = System.Windows.TextAlignment.Right;
         // 是否启用歌词翻译
         private bool _isLyricTranslationEnabled = true;
 
         /// <summary>
         /// 歌词对齐方式
         /// </summary>
-        public System.Windows.HorizontalAlignment LyricTextAlignment
+        public System.Windows.TextAlignment LyricTextAlignment
         {
             get => _lyricTextAlignment;
             set
@@ -67,11 +69,11 @@ namespace MusicPlayer.ViewModels
             {
                 switch (LyricTextAlignment)
                 {
-                    case System.Windows.HorizontalAlignment.Left:
+                    case System.Windows.TextAlignment.Left:
                         return "Left";
-                    case System.Windows.HorizontalAlignment.Center:
+                    case System.Windows.TextAlignment.Center:
                         return "Center";
-                    case System.Windows.HorizontalAlignment.Right:
+                    case System.Windows.TextAlignment.Right:
                         return "Right";
                     default:
                         return "Right";
@@ -380,10 +382,16 @@ namespace MusicPlayer.ViewModels
 
 
 
-        public CenterContentViewModel(IMessagingService messagingService, IConfigurationService configurationService)
+        public CenterContentViewModel(
+            IMessagingService messagingService, 
+            IConfigurationService configurationService,
+            IPlayerStateService playerStateService,
+            IPlaylistService playlistService)
         {
             _messagingService = messagingService;
             _configurationService = configurationService;
+            _playerStateService = playerStateService;
+            _playlistService = playlistService;
 
             // 从配置中初始化歌词样式
             _lyricFontSize = _configurationService.CurrentConfiguration.LyricFontSize;
@@ -410,6 +418,51 @@ namespace MusicPlayer.ViewModels
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
 
+            // 从PlayerStateService获取当前播放状态并初始化
+            InitializeFromPlayerState();
+        }
+
+        /// <summary>
+        /// 从PlayerStateService获取当前状态并初始化
+        /// </summary>
+        private void InitializeFromPlayerState()
+        {
+            try
+            {
+                // 获取当前歌曲并触发属性更新
+                var currentSong = _playerStateService.CurrentSong;
+                if (currentSong != null)
+                {
+                    CurrentSong = currentSong;
+                    
+                    // 主动加载并设置当前歌曲的歌词（防止错过LyricsUpdatedMessage）
+                    try
+                    {
+                        var lyrics = _playlistService.LoadLyrics(currentSong.FilePath);
+                        SetLyrics(new ObservableCollection<Core.Models.LyricLine>(lyrics));
+                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 主动加载歌词成功，共 {lyrics.Count} 行");
+                    }
+                    catch (Exception lyricEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 加载歌词失败: {lyricEx.Message}");
+                        SetLyrics(new ObservableCollection<Core.Models.LyricLine>());
+                    }
+                }
+
+                // 获取播放状态
+                IsPlaying = _playerStateService.IsPlaying;
+
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService初始化完成，歌曲: {currentSong?.Title ?? "无"}, 播放状态: {IsPlaying}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService初始化失败: {ex.Message}");
+            }
+        }
+
+        public void Dispose()
+        {
+            Cleanup();
         }
 
         /// <summary>
@@ -419,14 +472,14 @@ namespace MusicPlayer.ViewModels
         {
             switch (LyricTextAlignment)
             {
-                case System.Windows.HorizontalAlignment.Left:
-                    LyricTextAlignment = System.Windows.HorizontalAlignment.Center;
+                case System.Windows.TextAlignment.Left:
+                    LyricTextAlignment = System.Windows.TextAlignment.Center;
                     break;
-                case System.Windows.HorizontalAlignment.Center:
-                    LyricTextAlignment = System.Windows.HorizontalAlignment.Right;
+                case System.Windows.TextAlignment.Center:
+                    LyricTextAlignment = System.Windows.TextAlignment.Right;
                     break;
-                case System.Windows.HorizontalAlignment.Right:
-                    LyricTextAlignment = System.Windows.HorizontalAlignment.Left;
+                case System.Windows.TextAlignment.Right:
+                    LyricTextAlignment = System.Windows.TextAlignment.Left;
                     break;
             }
         }
@@ -660,23 +713,23 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             // 取消注册所有消息处理器
-            //_messagingService.Unregister(this);
+            _messagingService.Unregister(this);
             
-            //// 停止并释放计时器
-            //if (_hideSettingsTimer != null)
-            //{
-            //    _hideSettingsTimer.Stop();
-            //    _hideSettingsTimer.Elapsed -= HideSettingsTimer_Elapsed;
-            //    _hideSettingsTimer.Dispose();
-            //    _hideSettingsTimer = null;
-            //}
+            // 停止并释放计时器
+            if (_hideSettingsTimer != null)
+            {
+                _hideSettingsTimer.Stop();
+                _hideSettingsTimer.Elapsed -= HideSettingsTimer_Elapsed;
+                _hideSettingsTimer.Dispose();
+                _hideSettingsTimer = null;
+            }
             
-            //// 清理歌词数据
-            //ClearLyrics();
+            // 清理歌词数据
+            ClearLyrics();
             
-            //// 清理播放列表集合
-            //PlayedLyrics.Clear();
-            //UnplayedLyrics.Clear();
+            // 清理播放列表集合
+            PlayedLyrics.Clear();
+            UnplayedLyrics.Clear();
         }
     }
 }

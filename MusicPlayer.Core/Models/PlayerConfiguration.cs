@@ -2,6 +2,7 @@ using MusicPlayer.Core.Enums;
 using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows;
 
 namespace MusicPlayer.Core.Models
 {
@@ -30,7 +31,7 @@ namespace MusicPlayer.Core.Models
         private float[] _equalizerGains = new float[10] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f };
         private int _lastPlayedSongId = -1; // 最后播放的歌曲ID，-1表示无
         private double _lyricFontSize = 20.0; // 歌词字体大小
-        private HorizontalAlignment _lyricTextAlignment = HorizontalAlignment.Center; // 歌词文本对齐方式
+        private TextAlignment _lyricTextAlignment = TextAlignment.Center; // 歌词文本对齐方式
         private bool _isCoverCacheEnabled = true; // 是否启用封面缓存
         private string _lyricDirectory = string.Empty; // 歌词文件目录
         private bool _isLyricTranslationEnabled = true; // 是否启用歌词翻译
@@ -338,7 +339,7 @@ namespace MusicPlayer.Core.Models
         /// <summary>
         /// 歌词文本对齐方式
         /// </summary>
-        public HorizontalAlignment LyricTextAlignment
+        public TextAlignment LyricTextAlignment
         {
             get => _lyricTextAlignment;
             set
@@ -473,7 +474,7 @@ namespace MusicPlayer.Core.Models
             EqualizerGains = new float[10] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f }; // 默认平直响应
             LastPlayedSongId = -1; // 默认无最后播放歌曲
             LyricFontSize = 20.0; // 默认歌词字体大小
-            LyricTextAlignment = HorizontalAlignment.Center; // 默认歌词居中对齐
+            LyricTextAlignment = TextAlignment.Center; // 默认歌词居中对齐
             IsCoverCacheEnabled = true; // 默认启用封面缓存
             LyricDirectory = string.Empty; // 默认歌词目录为空，使用同目录下的歌词文件
             IsLyricTranslationEnabled = true; // 默认启用歌词翻译

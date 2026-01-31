@@ -440,7 +440,7 @@ namespace MusicPlayer.Services
         /// <summary>
         /// 更新歌词文本对齐方式配置
         /// </summary>
-        public void UpdateLyricTextAlignment(System.Windows.HorizontalAlignment textAlignment)
+        public void UpdateLyricTextAlignment(System.Windows.TextAlignment textAlignment)
         {
             if (CurrentConfiguration.LyricTextAlignment != textAlignment)
             {

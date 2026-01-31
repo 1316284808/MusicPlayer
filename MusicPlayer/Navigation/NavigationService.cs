@@ -59,10 +59,13 @@ namespace MusicPlayer.Navigation
                 // 添加新页面到历史记录
                 _navigationHistory.Add(pageUri);
                 _currentIndex = _navigationHistory.Count - 1;
+                
+                // 4. 创建页面和对应的Transient ViewModel
                 if (pageUri.Contains("PlaylistPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playlistPage = new PlaylistPage(mainViewModel);
+                    // 获取Transient ViewModel
+                    var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
+                    var playlistPage = new PlaylistPage(playlistViewModel);
                     _mainFrame.Navigate(playlistPage);
                 }
                 else if (pageUri.Contains("PlaylistDetailPage.xaml"))
@@ -83,8 +86,8 @@ namespace MusicPlayer.Navigation
                 }
                 else if (pageUri.Contains("PlayerPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playerPage = new PlayerPage(mainViewModel);
+                    var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
+                    var playerPage = new PlayerPage(centerContentViewModel);
                     _mainFrame.Navigate(playerPage);
                 }
                 else if (pageUri.Contains("AlbumPage.xaml"))
@@ -156,8 +159,8 @@ namespace MusicPlayer.Navigation
                 // 根据上一页URI导航
                 if (previousPage.Contains("PlaylistPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playlistPage = new PlaylistPage(mainViewModel);
+                    var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
+                    var playlistPage = new PlaylistPage(playlistViewModel);
                     _mainFrame.Navigate(playlistPage);
                 }
                 else if (previousPage.Contains("PlaylistDetailPage.xaml"))
@@ -175,8 +178,8 @@ namespace MusicPlayer.Navigation
                 }
                 else if (previousPage.Contains("PlayerPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playerPage = new PlayerPage(mainViewModel);
+                    var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
+                    var playerPage = new PlayerPage(centerContentViewModel);
                     _mainFrame.Navigate(playerPage);
                 }
                 else if (previousPage.Contains("AlbumPage.xaml"))
@@ -218,8 +221,8 @@ namespace MusicPlayer.Navigation
                 // 根据下一页URI导航
                 if (nextPage.Contains("PlaylistPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playlistPage = new PlaylistPage(mainViewModel);
+                    var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
+                    var playlistPage = new PlaylistPage(playlistViewModel);
                     _mainFrame.Navigate(playlistPage);
                 }
                 else if (nextPage.Contains("PlaylistDetailPage.xaml"))
@@ -237,8 +240,8 @@ namespace MusicPlayer.Navigation
                 }
                 else if (nextPage.Contains("PlayerPage.xaml"))
                 {
-                    var mainViewModel = _serviceProvider.GetRequiredService<IMainViewModel>();
-                    var playerPage = new PlayerPage(mainViewModel);
+                    var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
+                    var playerPage = new PlayerPage(centerContentViewModel);
                     _mainFrame.Navigate(playerPage);
                 }
                 else if (nextPage.Contains("AlbumPage.xaml"))

@@ -92,7 +92,7 @@
         <!-- 播放列表内容区域 -->
         <Border x:Name="ContentBorder" Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 
               
-                Margin="0,0,10,0"
+               
                 HorizontalAlignment="Stretch" >
             <Border.Effect>
                 <DropShadowEffect BlurRadius="8" ShadowDepth="2" Color="Black" Opacity="0.1"/>

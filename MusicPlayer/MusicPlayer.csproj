@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Helper\Shaders\TextGlow.ps" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Remove="Controls\WordByWordLyricControl.xaml" />
     <Page Remove="Styles\TreeViewStyles.xaml" />
   </ItemGroup>
@@ -54,6 +58,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Helper\Shaders\TextGlow.ps">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="resources\MusicPlayer.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>

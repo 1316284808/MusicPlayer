@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MusicPlayer.Controls"
-              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:Helper="clr-namespace:MusicPlayer.Helper"
+              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" 
+             xmlns:Helper="clr-namespace:MusicPlayer.Helper"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 

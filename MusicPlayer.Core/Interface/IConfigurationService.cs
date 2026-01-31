@@ -59,7 +59,7 @@ namespace MusicPlayer.Core.Interface
         /// <summary>
         /// 更新歌词文本对齐方式配置
         /// </summary>
-        void UpdateLyricTextAlignment(System.Windows.HorizontalAlignment textAlignment);
+        void UpdateLyricTextAlignment(System.Windows.TextAlignment textAlignment);
 
         /// <summary>
         /// 更新歌词翻译启用状态配置

@@ -9,6 +9,7 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class AlbumPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly IAlbumViewModel _albumViewModel;
         private bool _disposed = false;
         private bool _isUnloadedRegistered = false;
         
@@ -20,6 +21,7 @@ namespace MusicPlayer.Page
         public AlbumPage(IAlbumViewModel albumViewModel)
         {
             InitializeComponent();
+            _albumViewModel = albumViewModel;
             DataContext = albumViewModel;
             this.AlbumControl.DataContext = albumViewModel;
             Unloaded += AlbumPage_Unloaded;
@@ -44,6 +46,12 @@ namespace MusicPlayer.Page
             {
                 Unloaded -= AlbumPage_Unloaded;
                 _isUnloadedRegistered = false;
+            }
+            
+            // 释放ViewModel
+            if (_albumViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
             }
           
             // 先调用控件的Dispose方法，再清理数据上下文

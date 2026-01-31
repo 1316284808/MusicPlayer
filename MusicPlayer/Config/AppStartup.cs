@@ -109,10 +109,9 @@ namespace MusicPlayer.Config
         /// </summary>
         private IHost CreateHost(IServiceCollection services)
         {
-            // 注意：这里不重复配置服务，直接使用已有的服务集合
+            
             return new HostBuilder()
                 .ConfigureServices((context, hostingServices) => {
-                    // 不重复添加服务，直接使用已有的服务集合
                     foreach (var service in services)
                     {
                         hostingServices.Add(service);

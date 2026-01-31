@@ -15,7 +15,7 @@ namespace MusicPlayer.ViewModels
     /// <summary>
     /// 歌手页面视图模型
     /// </summary>
-    public class SingerViewModel : ObservableObject, ISingerViewModel
+    public class SingerViewModel : ObservableObject, ISingerViewModel, IDisposable
     {
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IPlaybackContextService _playbackContextService;
@@ -153,7 +153,7 @@ namespace MusicPlayer.ViewModels
         public override void Cleanup()
         {
             System.Diagnostics.Debug.WriteLine("SingerViewModel: Cleanup 方法被调用");
-            //_messagingService.Unregister(this);
+            _messagingService.Unregister(this);
 
             // 主动清理所有已加载的封面图像
             foreach (var singer in _singers)
@@ -161,7 +161,7 @@ namespace MusicPlayer.ViewModels
                 singer.CoverImage = null;
             }
 
-            //_singers.Clear();
+            _singers.Clear();
             _filteredSingers.Clear();
         }
 
@@ -476,6 +476,11 @@ namespace MusicPlayer.ViewModels
             
             // 如果获取失败，返回默认值
             return "#";
+        }
+        
+        public void Dispose()
+        {
+            Cleanup();
         }
     }
 }

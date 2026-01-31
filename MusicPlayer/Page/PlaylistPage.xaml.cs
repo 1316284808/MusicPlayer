@@ -9,14 +9,16 @@ namespace MusicPlayer.Page
     /// </summary>
     public partial class PlaylistPage : System.Windows.Controls.Page, IDisposable
     {
+        private readonly IPlaylistViewModel _playlistViewModel;
         private bool _disposed;
 
         public PlaylistPage() { InitializeComponent(); }
-        public PlaylistPage(IMainViewModel mainViewModel)
+        
+        public PlaylistPage(IPlaylistViewModel playlistViewModel)
         {
             InitializeComponent();
-            DataContext = mainViewModel;
-            var playlistViewModel = mainViewModel.PlaylistViewModel;
+            _playlistViewModel = playlistViewModel;
+            this.DataContext = playlistViewModel;
             this.PlaylistControl.DataContext = playlistViewModel;
             playlistViewModel.Initialize();
             // 使用命名方法代替匿名方法，以便取消订阅
@@ -38,6 +40,12 @@ namespace MusicPlayer.Page
             
             // 取消Unloaded事件订阅
             Unloaded -= PlaylistPage_Unloaded;
+            
+            // 释放ViewModel
+            if (_playlistViewModel is IDisposable disposableVm)
+            {
+                disposableVm.Dispose();
+            }
             
             // 调用PlaylistControl的Dispose方法
             PlaylistControl.Dispose();

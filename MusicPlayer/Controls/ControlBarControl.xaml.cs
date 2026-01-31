@@ -19,6 +19,7 @@ namespace MusicPlayer.Controls
             {
                 if (disposing)
                 {
+                    //全局单例，不需要释放
                     //WeakReferenceMessenger.Default.UnregisterAll(this);
                     //this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
                     //this.Content = null;     // 清空页面内容，释放UI资源

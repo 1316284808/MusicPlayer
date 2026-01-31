@@ -31,11 +31,11 @@ namespace MusicPlayer
         private readonly SolidColorBrush _blueBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF0078D7"));    // 顶层蓝色
         private readonly int _charSpacing = 0;                                 // 字符间距，防止粘连
 
-        // 存储顶层所有字符控件，顺序=填充顺序（从上到下、从左到右）
-        private List<TextBlock> _charListEN = new List<TextBlock>(); // 英文歌词字符列表
-        private List<TextBlock> _charListCN = new List<TextBlock>(); // 中文歌词字符列表
+        // 歌词显示控件
+        //private Helper.HighlightTextBlock tbLyricEN = null!;
+        //private Helper.HighlightTextBlock tbLyricCN = null!;
 
-        // 当前显示的歌词文本，用于比较是否需要更新字符面板
+        // 当前显示的歌词文本，用于比较是否需要更新
         private string _currentDisplayTextCN = string.Empty;
         private string _currentDisplayTextEN = string.Empty;
 
@@ -52,6 +52,10 @@ namespace MusicPlayer
             
             DataContext = _lyricsViewModel;
             
+            // 获取歌词控件引用（在InitializeComponent之后）
+            //tbLyricEN = (Helper.HighlightTextBlock)FindName("tbLyricEN");
+            //tbLyricCN = (Helper.HighlightTextBlock)FindName("tbLyricCN");
+            
             // 初始化ViewModel，注册消息订阅
             _lyricsViewModel.Initialize();
             
@@ -63,10 +67,6 @@ namespace MusicPlayer
 
             // 监听ViewModel的PropertyChanged事件，更新歌词显示
             ((INotifyPropertyChanged)_lyricsViewModel).PropertyChanged += OnViewModelPropertyChanged;
-
-            // 初始化双层字符面板
-            InitLyricCharsCN("");
-            InitLyricCharsEN("");
         }
 
         /// <summary>
@@ -106,169 +106,12 @@ namespace MusicPlayer
             }
         }
 
-        /// <summary>
-        /// 初始化中文双层字符面板
-        /// </summary>
-        private void InitLyricCharsCN(string lyricText)
-        {
-           
-            // 清空现有字符
-            wpBottoms.Children.Clear();
-            wpTops.Children.Clear();
-            _charListCN.Clear();
-            if (lyricText.Length <= 0) return;
-            // 将文本按换行符分割为行
-            string[] lines = lyricText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-            // 遍历每行文本
-            for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
-            {
-                string line = lines[lineIndex];
 
-                // 遍历行中的每个字符
-                foreach (char c in line)
-                {
-                    // 1. 创建底层黑色字符
-                    var blackTb = CreateCharTextBlock(c.ToString(), _blackBrush);
-                    RenderOptions.SetClearTypeHint(blackTb, ClearTypeHint.Enabled);
-                    wpBottoms.Children.Add(blackTb);
 
-                    // 2. 创建顶层蓝色字符
-                    var blueTb = CreateCharTextBlock(c.ToString(), _blueBrush);
-                    RenderOptions.SetClearTypeHint(blueTb, ClearTypeHint.Enabled);
-                    wpTops.Children.Add(blueTb);
-                    _charListCN.Add(blueTb);
-
-                    // 3. 初始化顶层字符的裁剪区域：宽度0 → 完全隐藏蓝色，只显示底层黑色
-                    blueTb.Clip = new RectangleGeometry { Rect = new Rect(0, 0, 0, double.MaxValue) };
-                }
-
-                // 如果不是最后一行，添加换行符
-                if (lineIndex < lines.Length - 1)
-                {
-                    // 1. 为底层添加换行符
-                    var blackNewLine = new TextBlock
-                    {
-                        Text = "\n",
-                        FontSize = _fontSize,
-                        SnapsToDevicePixels = true,
-                        UseLayoutRounding = true,
-                        TextAlignment = TextAlignment.Center
-                    };
-                    wpBottoms.Children.Add(blackNewLine);
-
-                    // 2. 为顶层添加换行符
-                    var blueNewLine = new TextBlock
-                    {
-                        Text = "\n",
-                        FontSize = _fontSize,
-                        SnapsToDevicePixels = true,
-                        UseLayoutRounding = true,
-                        TextAlignment = TextAlignment.Center
-                    };
-                    wpTops.Children.Add(blueNewLine);
-                    _charListCN.Add(blueNewLine);
-
-                    // 3. 初始化换行符的裁剪区域（换行符不需要裁剪效果）
-                    blueNewLine.Clip = new RectangleGeometry { Rect = new Rect(0, 0, double.MaxValue, double.MaxValue) };
-                }
-            }
-
-            // 更新当前显示文本
-            _currentDisplayTextCN = lyricText;
-        }
 
         /// <summary>
-        /// 初始化英文双层字符面板
-        /// </summary>
-        private void InitLyricCharsEN(string lyricText)
-        { 
-            // 清空现有字符
-            wpBottom.Children.Clear();
-            wpTop.Children.Clear();
-            _charListEN.Clear();
-            if (lyricText.Length <= 0) return;
-            // 将文本按换行符分割为行
-            string[] lines = lyricText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            // 遍历每行文本
-            for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
-            {
-                string line = lines[lineIndex];
-
-                // 遍历行中的每个字符
-                foreach (char c in line)
-                {
-                    // 1. 创建底层黑色字符
-                    var blackTb = CreateCharTextBlock(c.ToString(), _blackBrush);
-                    RenderOptions.SetClearTypeHint(blackTb, ClearTypeHint.Enabled);
-                    wpBottom.Children.Add(blackTb);
-
-                    // 2. 创建顶层蓝色字符
-                    var blueTb = CreateCharTextBlock(c.ToString(), _blueBrush);
-                    RenderOptions.SetClearTypeHint(blueTb, ClearTypeHint.Enabled);
-                    wpTop.HorizontalAlignment = HorizontalAlignment.Center;
-                    wpTop.Children.Add(blueTb);
-                    _charListEN.Add(blueTb);
-
-                    // 3. 初始化顶层字符的裁剪区域：宽度0 → 完全隐藏蓝色，只显示底层黑色
-                    blueTb.Clip = new RectangleGeometry { Rect = new Rect(0, 0, 0, double.MaxValue) };
-                }
-
-                // 如果不是最后一行，添加换行符
-                if (lineIndex < lines.Length - 1)
-                {
-                    // 1. 为底层添加换行符
-                    var blackNewLine = new TextBlock
-                    {
-                        Text = "\n",
-                        FontSize = _fontSize,
-                        SnapsToDevicePixels = true,
-                        UseLayoutRounding = true,
-                        TextAlignment = TextAlignment.Center
-                    };
-                    wpBottom.Children.Add(blackNewLine);
-
-                    // 2. 为顶层添加换行符
-                    var blueNewLine = new TextBlock
-                    {
-                        Text = "\n",
-                        FontSize = _fontSize,
-                        SnapsToDevicePixels = true,
-                        UseLayoutRounding = true,
-                        TextAlignment = TextAlignment.Center
-                    };
-                    wpTop.Children.Add(blueNewLine);
-                    _charListEN.Add(blueNewLine);
-
-                    // 3. 初始化换行符的裁剪区域（换行符不需要裁剪效果）
-                    blueNewLine.Clip = new RectangleGeometry { Rect = new Rect(0, 0, double.MaxValue, double.MaxValue) };
-                }
-            }
-
-            // 更新当前显示文本
-            _currentDisplayTextEN = lyricText;
-        }
-
-        /// <summary>
-        /// 创建单个字符的TextBlock，统一样式
-        /// </summary>
-        private TextBlock CreateCharTextBlock(string text, Brush brush)
-        {
-            return new TextBlock
-            {
-                Text = text,
-                FontSize = _fontSize,
-                FontWeight = FontWeights.SemiBold, 
-                Foreground = brush,
-                Margin = new Thickness(0, 0, _charSpacing, 0),
-                SnapsToDevicePixels = true,  // 强制像素对齐，杜绝模糊
-                UseLayoutRounding = true,    // 布局坐标取整，消除毛边
-            };
-        }
-
-        /// <summary>
-        /// 更新歌词字符面板
+        /// 更新歌词显示
         /// </summary>
         private void UpdateLyricChars()
         {
@@ -290,16 +133,18 @@ namespace MusicPlayer
                 }
             }
 
-            // 更新中文歌词面板
+            // 更新中文歌词
             if (newTextCN != _currentDisplayTextCN)
             {
-                InitLyricCharsCN(newTextCN);
+                tbLyricCN.Text = newTextCN;
+                _currentDisplayTextCN = newTextCN;
             }
 
-            // 更新英文歌词面板
+            // 更新英文歌词
             if (newTextEN != _currentDisplayTextEN)
             {
-                InitLyricCharsEN(newTextEN);
+                tbLyricEN.Text = newTextEN;
+                _currentDisplayTextEN = newTextEN;
             }
             
             // 立即应用当前进度
@@ -319,57 +164,11 @@ namespace MusicPlayer
             // 当前全局进度 0~1
             double totalProgress = Math.Clamp(_lyricsViewModel.CurrentLyricLine.Progress, 0d, 1d);
             
-            // 更新中文歌词高亮
-            if (_charListCN.Count > 0)
-            {
-                // 中文歌词总字符数
-                int totalCharCountCN = _charListCN.Count;
-                // 每个字符占用的进度占比
-                double perCharProgressCN = 1.0 / totalCharCountCN;
-
-                // 遍历所有中文字符，按顺序填充
-                for (int i = 0; i < totalCharCountCN; i++)
-                {
-                    var charTb = _charListCN[i];
-                    // 计算当前字符的【填充进度】：0=完全黑，1=完全蓝
-                    double currentCharFillProgress = (totalProgress / perCharProgressCN) - i;
-                    currentCharFillProgress = Math.Clamp(currentCharFillProgress, 0d, 1d);
-
-                    // 获取字符真实宽高（解决布局加载时宽高为0的问题）
-                    charTb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    double charWidth = charTb.DesiredSize.Width;
-                    double charHeight = charTb.DesiredSize.Height;
-
-                    // 单个字符内部：从左到右纯蓝覆盖纯黑，无渐变
-                    (charTb.Clip as RectangleGeometry).Rect = new Rect(0, 0, charWidth * currentCharFillProgress, charHeight);
-                }
-            }
-
-            // 更新英文歌词高亮
-            if (_charListEN.Count > 0)
-            {
-                // 英文歌词总字符数
-                int totalCharCountEN = _charListEN.Count;
-                // 每个字符占用的进度占比
-                double perCharProgressEN = 1.0 / totalCharCountEN;
-
-                // 遍历所有英文字符，按顺序填充
-                for (int i = 0; i < totalCharCountEN; i++)
-                {
-                    var charTb = _charListEN[i];
-                    // 计算当前字符的【填充进度】：0=完全黑，1=完全蓝
-                    double currentCharFillProgress = (totalProgress / perCharProgressEN) - i;
-                    currentCharFillProgress = Math.Clamp(currentCharFillProgress, 0d, 1d);
-
-                    // 获取字符真实宽高（解决布局加载时宽高为0的问题）
-                    charTb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    double charWidth = charTb.DesiredSize.Width;
-                    double charHeight = charTb.DesiredSize.Height;
-
-                    // 单个字符内部：从左到右纯蓝覆盖纯黑，无渐变
-                    (charTb.Clip as RectangleGeometry).Rect = new Rect(0, 0, charWidth * currentCharFillProgress, charHeight);
-                }
-            }
+            // 设置英文歌词高光位置（0=无光，1=完全高亮）
+            tbLyricEN.HighlightPos = totalProgress;
+            
+            // 设置中文歌词高光位置
+            tbLyricCN.HighlightPos = totalProgress;
         }
 
         /// <summary>
@@ -387,10 +186,6 @@ namespace MusicPlayer
 
             // 清理ViewModel的事件订阅
             ((INotifyPropertyChanged)_lyricsViewModel).PropertyChanged -= OnViewModelPropertyChanged;
-            
-            // 清理字符列表资源
-            _charListCN.Clear();
-            _charListEN.Clear();
             
             // 清理ViewModel资源，取消消息订阅
             _lyricsViewModel.Cleanup();

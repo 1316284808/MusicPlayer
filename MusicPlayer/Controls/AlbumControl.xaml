@@ -153,10 +153,14 @@ Helper:AlbumAlbumArtBehavior.ViewModel="{Binding }"
                            Margin="10"
                            Width="280"
                            Height="120" 
-                           Cursor="Hand"
-                           MouseLeftButtonDown="Border_MouseLeftButtonDown">
-                        
-                        <!-- 专辑卡片内容 -->
+                           Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                          Command="{Binding DataContext.NavigateToAlbumDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                          CommandParameter="{Binding Name}"/>
+                        </Border.InputBindings>
+                           
+                            <!-- 专辑卡片内容 -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"/>

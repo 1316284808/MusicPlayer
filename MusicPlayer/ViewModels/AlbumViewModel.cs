@@ -13,7 +13,7 @@ namespace MusicPlayer.ViewModels
     /// <summary>
     /// 专辑页面视图模型
     /// </summary>
-    public class AlbumViewModel : ObservableObject, IAlbumViewModel
+    public class AlbumViewModel : ObservableObject, IAlbumViewModel, IDisposable
     {
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IPlaybackContextService _playbackContextService;
@@ -364,6 +364,11 @@ namespace MusicPlayer.ViewModels
 
             _albums.Clear();
             _filteredAlbums.Clear();
+        }
+        
+        public void Dispose()
+        {
+            Cleanup();
         }
     }
 }

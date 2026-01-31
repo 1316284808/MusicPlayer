@@ -153,8 +153,12 @@ IsGridLayoutEnabled="True" />
                            Margin="10"
                            Width="280"
                            Height="120" 
-                           Cursor="Hand"
-                           MouseLeftButtonDown="Border_MouseLeftButtonDown">
+                           Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                          Command="{Binding DataContext.NavigateToSingerDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                          CommandParameter="{Binding Name}"/>
+                        </Border.InputBindings>
                         
                         <!-- 歌手卡片内容 -->
                         <Grid>

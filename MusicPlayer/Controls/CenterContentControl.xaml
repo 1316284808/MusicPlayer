@@ -9,6 +9,7 @@
             xmlns:behaviors="clr-namespace:MusicPlayer.Helper"
             xmlns:local="clr-namespace:MusicPlayer.Controls"
             xmlns:System="clr-namespace:System;assembly=mscorlib"
+            xmlns:syswindows="clr-namespace:System.Windows;assembly=PresentationCore"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="600">
 
@@ -17,10 +18,10 @@
         <converters:WindowStateToCoverSizeConverter x:Key="WindowStateToCoverSizeConverter"/>
         <converters:WindowStateToSpectrumSizeConverter x:Key="WindowStateToSpectrumSizeConverter"/>
         <converters:WindowStateToSpectrumDisplaySizeConverter x:Key="WindowStateToSpectrumDisplaySizeConverter"/>
-      
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </UserControl.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="10,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
@@ -60,20 +61,20 @@
                             <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
                                 <!-- 默认右对齐图标 -->
                                 <Setter Property="Kind" Value="Right"/>
-                                <Style.Triggers>
-                                    <!-- 左对齐 -->
-                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Left">
-                                        <Setter Property="Kind" Value="Left"/>
-                                    </DataTrigger>
-                                    <!-- 居中对齐 -->
-                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Center">
-                                        <Setter Property="Kind" Value="Center"/>
-                                    </DataTrigger>
-                                    <!-- 右对齐 -->
-                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="Right">
-                                        <Setter Property="Kind" Value="Right"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
+                            <Style.Triggers>
+                                <!-- 左对齐 -->
+                                <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Left}">
+                                    <Setter Property="Kind" Value="Left"/>
+                                </DataTrigger>
+                                <!-- 居中对齐 -->
+                                <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Center}">
+                                    <Setter Property="Kind" Value="Center"/>
+                                </DataTrigger>
+                                <!-- 右对齐 -->
+                                <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Right}">
+                                    <Setter Property="Kind" Value="Right"/>
+                                </DataTrigger>
+                            </Style.Triggers>
                             </Style>
                         </Helper:CustomIcon.Style>
                     </Helper:CustomIcon>
@@ -154,7 +155,7 @@
             <!-- Lyrics Section -->
             <Grid Grid.Column="1" HorizontalAlignment="Stretch">
                 <ListBox x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
-                BorderThickness="0" HorizontalContentAlignment="Left"
+                BorderThickness="0" HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.CanContentScroll="False"
                 ScrollViewer.VerticalScrollBarVisibility="Hidden"
@@ -163,15 +164,14 @@
                 behaviors:LyricsScrollBehavior.ScrollOnLoad="True"
                   ClipToBounds="True" VerticalContentAlignment="Stretch" >
                     <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="5,15 "/>
+                        <Style TargetType="ListBoxItem"> 
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="VerticalContentAlignment" Value="Stretch"/>
                             <Setter Property="FocusVisualStyle" Value="{x:Null}"/> 
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding= "0,10">
                                             <Border.Effect>
                                                 <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
                                             </Border.Effect>
@@ -197,16 +197,54 @@
 
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                         
-                            <local:WordByWordLyricItem 
-                                x:Name="WordByWordLyricItem"
-                                CurrentLyricLine="{Binding}" 
-                                CustomFontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                SelectedFontSize="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                IsSelected="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}"
-                                IsLyricTranslationEnabled="{Binding DataContext.IsLyricTranslationEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-                            
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- 英文歌词 -->
+                                <local:MultiLineLyricControl x:Name="LyricEN" Grid.Row="0"  
+                                    Text="{Binding TextEN}"
+                                    FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    FontWeight="SemiBold"
+                                      Foreground="Gray"
+    HighlightColor="#FF0078D7"
+                                    Progress="{Binding Progress}"
+                                    HighlightWidth="0"
+                                     TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"                        
+                                    HorizontalAlignment="Stretch"
+                                  
+                                    Visibility="{Binding TextEN, Converter={StaticResource StringToVisibilityConverter}}"
+                                    LineHeight="5"  />
+                                
+                                <!-- 中文歌词 -->
+                                <local:MultiLineLyricControl x:Name="LyricCN" Grid.Row="1" 
+                                    Text="{Binding TextCN}"
+                                    FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    FontWeight="SemiBold"
+                                      Foreground="Gray"
+    HighlightColor="#FF0078D7"
+                                    Progress="{Binding Progress}"
+                                    HighlightWidth="0"
+                                     TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"    
+                                    HorizontalAlignment="Stretch"
+                                    LineHeight="5"  />
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter TargetName="LyricCN" Property="HighlightWidth" Value="0.2"/>
+                                    <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0.2"/>
+                                    <Setter TargetName="LyricCN" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricEN" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="False">
+                                    <Setter TargetName="LyricCN" Property="HighlightWidth" Value="0"/>
+                                    <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0"/>
+                                    <Setter TargetName="LyricCN" Property="Progress" Value="0"/>
+                                    <Setter TargetName="LyricEN" Property="Progress" Value="0"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                   

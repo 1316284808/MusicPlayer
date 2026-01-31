@@ -141,6 +141,14 @@ namespace MusicPlayer.Services.Messages
     }
 
     /// <summary>
+    /// 跳转完成消息
+    /// </summary>
+    public class SeekedMessage : ValueChangedMessage<double>
+    {
+        public SeekedMessage(double value) : base(value) { }
+    }
+
+    /// <summary>
     /// 最大播放位置变化消息
     /// </summary>
     public class MaxPositionChangedMessage : ValueChangedMessage<double> 

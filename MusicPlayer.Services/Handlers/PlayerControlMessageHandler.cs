@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.Logging;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
@@ -18,6 +19,8 @@ namespace MusicPlayer.Services.Handlers
         private readonly IPlayerService _playerService;
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IPlaybackContextService _playbackContextService;
+        private readonly IPlaybackCoordinator _playbackCoordinator;
+        private readonly Microsoft.Extensions.Logging.ILogger<PlayerControlMessageHandler> _logger;
         private bool _disposed = false;
 
         public PlayerControlMessageHandler(
@@ -25,17 +28,22 @@ namespace MusicPlayer.Services.Handlers
             IPlayerStateService playerStateService,
             IPlayerService playerService,
             IPlaylistDataService playlistDataService,
-            IPlaybackContextService playbackContextService)
+            IPlaybackContextService playbackContextService,
+            IPlaybackCoordinator playbackCoordinator,
+            Microsoft.Extensions.Logging.ILogger<PlayerControlMessageHandler> logger = null)
         {
             // 添加实例ID日志，用于调试单例问题
             System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: 创建新实例，ID: {GetHashCode()}");
             System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: PlayerStateService实例ID: {playerStateService.GetHashCode()}");
+            System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: PlaybackCoordinator实例ID: {playbackCoordinator.GetHashCode()}");
             
             _messagingService = messagingService;
             _playerStateService = playerStateService;
             _playerService = playerService;
             _playlistDataService = playlistDataService;
             _playbackContextService = playbackContextService;
+            _playbackCoordinator = playbackCoordinator ?? throw new ArgumentNullException(nameof(playbackCoordinator));
+            _logger = logger;
 
             RegisterMessageHandlers();
         }
@@ -79,7 +87,7 @@ namespace MusicPlayer.Services.Handlers
 
         #region 播放控制消息处理
 
-        private void OnPlayPauseRequested(object recipient, PlayPauseMessage message)
+        private async void OnPlayPauseRequested(object recipient, PlayPauseMessage message)
         {
             try
             {
@@ -105,29 +113,20 @@ namespace MusicPlayer.Services.Handlers
                         
                         System.Diagnostics.Debug.WriteLine($"PlayerControlMessageHandler: 设置播放上下文为默认列表");
                         
-                        _playerService.LoadSong(firstSong);
-                        _playerService.StartPlayback();
+                        // 使用协调器播放
+                        await _playbackCoordinator.PlayAsync(firstSong);
                     }
                     _playlistDataService.ClearDataSource();
                 }
                 else if (isCurrentlyPlaying)
                 {
                     // 当前正在播放，则执行暂停
-                    _playerService.PausePlayback();
+                    await _playbackCoordinator.PauseAsync();
                 }
                 else
                 {
-                    // 当前已暂停，检查歌曲是否已加载
-                    // 如果当前歌曲与PlayerService中的歌曲不同，需要先加载
-                    var currentSong = _playerStateService.CurrentSong;
-                    if (_playerService.CurrentSong != currentSong && currentSong != null)
-                    {
-                        //加载歌曲
-                        _playerService.LoadSong(currentSong);
-                    }
-
-                    // 执行播放
-                    _playerService.StartPlayback();
+                    // 当前已暂停，执行恢复播放
+                    await _playbackCoordinator.ResumeAsync();
                 }
                 
                 message.Reply(true);
@@ -139,15 +138,12 @@ namespace MusicPlayer.Services.Handlers
             }
         }
 
-        private void OnStopRequested(object recipient, StopPlaybackMessage message)
+        private async void OnStopRequested(object recipient, StopPlaybackMessage message)
         {
             try
             {
-                // 通过PlayerService执行实际的停止操作
-                _playerService.StopPlayback();
-                
-                // 同时更新PlayerStateService的状态
-                _playerStateService.Stop();
+                // 使用协调器停止播放
+                await _playbackCoordinator.StopAsync();
                 message.Reply(true);
             }
             catch (Exception ex)
@@ -321,9 +317,28 @@ namespace MusicPlayer.Services.Handlers
             HandleSongSelection(message.Song, "OnSongSelectionRequested", reply => message.Reply(reply));
         }
 
-        private void OnPlaySelectedSongRequested(object recipient, PlaySelectedSongMessage message)
+        private async void OnPlaySelectedSongRequested(object recipient, PlaySelectedSongMessage message)
         {
-            HandleSongSelection(message.Value, "OnPlaySelectedSongRequested");
+            try
+            {
+                var song = message.Value;
+                if (song == null)
+                {
+                    _logger?.LogWarning("尝试播放空歌曲");
+                    return;
+                }
+
+                _logger?.LogDebug($"处理播放选中歌曲消息: {song.Title}");
+
+                // 使用协调器播放选中的歌曲
+                await _playbackCoordinator.PlayAsync(song);
+
+                _logger?.LogDebug($"播放选中歌曲成功: {song.Title}");
+            }
+            catch (Exception ex)
+            {
+                HandleError("OnPlaySelectedSongRequested", ex);
+            }
         }
 
         #endregion
@@ -395,21 +410,26 @@ namespace MusicPlayer.Services.Handlers
 
         #region 音量控制消息处理
 
-        private void OnVolumeSetRequested(object recipient, VolumeSetMessage message)
+        private async void OnVolumeSetRequested(object recipient, VolumeSetMessage message)
         {
             try
             {
+                float targetVolume;
+                
                 if (message.IsRelative)
                 {
                     // 相对音量调整
-                    var newVolume = _playerStateService.Volume + message.Volume;
-                    _playerStateService.Volume = Math.Clamp(newVolume, 0.0f, 1.0f);
+                    targetVolume = _playerStateService.Volume + message.Volume;
                 }
                 else
                 {
                     // 绝对音量设置
-                    _playerStateService.Volume = Math.Clamp(message.Volume, 0.0f, 1.0f);
+                    targetVolume = message.Volume;
                 }
+
+                // 使用协调器设置音量
+                await _playbackCoordinator.SetVolumeAsync(targetVolume);
+                
                 message.Reply(true);
             }
             catch (Exception ex)
@@ -478,13 +498,12 @@ namespace MusicPlayer.Services.Handlers
 
         #region 进度控制消息处理
 
-        private void OnSeekRequested(object recipient, SeekMessage message)
+        private async void OnSeekRequested(object recipient, SeekMessage message)
         {
             try
             {
-                // 通过PlayerService执行实际的Seek操作
-                // PlayerService.SeekToPosition 已经负责更新 PlayerStateService
-                _playerService.SeekToPosition(message.Position);
+                // 使用协调器执行跳转操作
+                await _playbackCoordinator.SeekAsync(message.Position);
                 
                 message.Reply(message.Position);
             }
@@ -538,6 +557,8 @@ namespace MusicPlayer.Services.Handlers
 
         private void HandleError(string operation, Exception ex)
         {
+            _logger?.LogError(ex, $"播放控制操作失败: {operation}");
+
             var errorInfo = new ErrorInfo
             {
                 Code = "PLAYER_CONTROL_ERROR",
