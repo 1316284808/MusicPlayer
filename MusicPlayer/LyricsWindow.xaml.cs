@@ -49,16 +49,16 @@ namespace MusicPlayer
             this.Activate(); // 尝试激活并聚焦窗口
             _lyricsViewModel = lyricsViewModel ?? throw new ArgumentNullException(nameof(lyricsViewModel));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
-            
+
             DataContext = _lyricsViewModel;
-            
+
             // 获取歌词控件引用（在InitializeComponent之后）
             //tbLyricEN = (Helper.HighlightTextBlock)FindName("tbLyricEN");
             //tbLyricCN = (Helper.HighlightTextBlock)FindName("tbLyricCN");
-            
+
             // 初始化ViewModel，注册消息订阅
             _lyricsViewModel.Initialize();
-            
+
             // 注册关闭窗口消息处理
             _messagingService.Register<Services.Messages.CloseLyricsWindowMessage>(this, (recipient, message) =>
             {
@@ -117,7 +117,7 @@ namespace MusicPlayer
         {
             string newTextCN = " ";
             string newTextEN = " ";
-            
+
             if (_lyricsViewModel.CurrentLyricLine != null)
             {
                 // 获取中文歌词
@@ -125,7 +125,7 @@ namespace MusicPlayer
                 {
                     newTextCN = _lyricsViewModel.CurrentLyricLine.TextCN;
                 }
-                
+
                 // 获取英文歌词
                 if (!string.IsNullOrEmpty(_lyricsViewModel.CurrentLyricLine.TextEN))
                 {
@@ -146,7 +146,7 @@ namespace MusicPlayer
                 tbLyricEN.Text = newTextEN;
                 _currentDisplayTextEN = newTextEN;
             }
-            
+
             // 立即应用当前进度
             UpdateLyricProgress();
         }
@@ -163,10 +163,10 @@ namespace MusicPlayer
 
             // 当前全局进度 0~1
             double totalProgress = Math.Clamp(_lyricsViewModel.CurrentLyricLine.Progress, 0d, 1d);
-            
+
             // 设置英文歌词高光位置（0=无光，1=完全高亮）
             tbLyricEN.HighlightPos = totalProgress;
-            
+
             // 设置中文歌词高光位置
             tbLyricCN.HighlightPos = totalProgress;
         }
@@ -177,7 +177,7 @@ namespace MusicPlayer
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-            
+
             // 取消当前歌词行的事件订阅
             if (_previousLyricLine != null)
             {
@@ -186,7 +186,7 @@ namespace MusicPlayer
 
             // 清理ViewModel的事件订阅
             ((INotifyPropertyChanged)_lyricsViewModel).PropertyChanged -= OnViewModelPropertyChanged;
-            
+
             // 清理ViewModel资源，取消消息订阅
             _lyricsViewModel.Cleanup();
         }

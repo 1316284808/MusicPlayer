@@ -342,5 +342,13 @@ public partial class HighlightTextBlock : UserControl
             PART_Rectangle.Clip = geometry;
             PART_Rectangle.Width = containerWidth;
             PART_Rectangle.Height = textHeight;
+
+            // 设置水平对齐
+            PART_Rectangle.HorizontalAlignment = TextAlignment switch
+            {
+                TextAlignment.Center => HorizontalAlignment.Center,
+                TextAlignment.Right => HorizontalAlignment.Right,
+                _ => HorizontalAlignment.Left
+            };
         }
 }
