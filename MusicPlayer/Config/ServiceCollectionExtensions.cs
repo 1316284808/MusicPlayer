@@ -74,7 +74,13 @@ namespace MusicPlayer.Config
         {
             // 播放列表缓存服务 - 全部使用单例模式
             services.AddSingleton<IPlaylistCacheService, PlaylistCacheService>();
+            
+            // 播放列表服务 - 单例模式（负责歌曲信息提取）
             services.AddSingleton<IPlaylistService>(provider => new PlaylistService(
+                provider.GetRequiredService<IConfigurationService>()));
+            
+            // 歌词服务 - 单例模式（负责歌词加载和解析）
+            services.AddSingleton<ILyricsService>(provider => new LyricsService(
                 provider.GetRequiredService<IConfigurationService>()));
             
             // 播放列表状态服务 - 单例模式
@@ -192,6 +198,7 @@ namespace MusicPlayer.Config
                 var instance = new PlayerService(
                     provider.GetRequiredService<IPlaylistDataService>(),
                     provider.GetRequiredService<IPlaylistService>(),
+                    provider.GetRequiredService<ILyricsService>(),
                     provider.GetRequiredService<IMessagingService>(),
                     provider.GetRequiredService<INotificationService>(),
                     provider.GetRequiredService<ISystemMediaTransportService>(),

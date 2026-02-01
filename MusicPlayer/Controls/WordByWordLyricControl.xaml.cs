@@ -25,7 +25,7 @@ namespace MusicPlayer.Controls
 
         // 当前显示的歌词文本
         private string _currentDisplayTextCN = string.Empty;
-        private string _currentDisplayTextEN = string.Empty;
+        private string _currentDisplayTextNonCN = string.Empty;
 
         // 当前歌词行对象
         private LyricLine _previousLyricLine;
@@ -199,7 +199,7 @@ namespace MusicPlayer.Controls
             }
 
             // 更新当前显示文本
-            _currentDisplayTextEN = lyricText;
+            _currentDisplayTextNonCN = lyricText;
         }
 
         /// <summary>
@@ -256,28 +256,28 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateLyricChars()
         {
-            string newTextCN = string.Empty;
-            string newTextEN = string.Empty;
+            string newTextOriginal = string.Empty;
+            string newTextTranslated = string.Empty;
             
             if (CurrentLyricLine != null)
             {
-                // 获取中文歌词
-                newTextCN = CurrentLyricLine.TextCN ?? string.Empty;
+                // 获取原文歌词
+                newTextOriginal = CurrentLyricLine.OriginalText ?? string.Empty;
                 
-                // 获取英文歌词
-                newTextEN = CurrentLyricLine.TextEN ?? string.Empty;
+                // 获取翻译歌词
+                newTextTranslated = CurrentLyricLine.TranslatedText ?? string.Empty;
             }
 
-            // 更新中文歌词面板
-            if (newTextCN != _currentDisplayTextCN)
+            // 更新原文歌词面板
+            if (newTextOriginal != _currentDisplayTextCN)
             {
-                InitLyricCharsCN(newTextCN);
+                InitLyricCharsCN(newTextOriginal);
             }
 
-            // 更新英文歌词面板
-            if (newTextEN != _currentDisplayTextEN)
+            // 更新翻译歌词面板
+            if (newTextTranslated != _currentDisplayTextNonCN)
             {
-                InitLyricCharsEN(newTextEN);
+                InitLyricCharsEN(newTextTranslated);
             }
             
             // 立即应用当前进度

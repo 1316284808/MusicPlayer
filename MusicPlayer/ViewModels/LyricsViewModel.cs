@@ -21,7 +21,7 @@ namespace MusicPlayer.ViewModels
     {
         private readonly IPlayerStateService _playerStateService;
         private readonly IMessagingService _messagingService;
-        private readonly IPlaylistService _playlistService;
+        private readonly ILyricsService _lyricsService;
         private string _currentLyrics = "暂无歌词";
         private List<LyricLine> _lyricsLines = new List<LyricLine>();
         private bool _isMouseOver = false;
@@ -76,19 +76,19 @@ namespace MusicPlayer.ViewModels
                     // 更新CurrentLyrics显示
                     if (value != null)
                     {
-                        // 组合中英文歌词，用换行符分隔
+                        // 组合原文和翻译歌词，用换行符分隔
                         string combinedText = string.Empty;
-                        if (!string.IsNullOrEmpty(value.TextCN))
+                        if (!string.IsNullOrEmpty(value.OriginalText))
                         {
-                            combinedText = value.TextCN;
+                            combinedText = value.OriginalText;
                         }
-                        if (!string.IsNullOrEmpty(value.TextEN))
+                        if (!string.IsNullOrEmpty(value.TranslatedText))
                         {
                             if (!string.IsNullOrEmpty(combinedText))
                             {
                                 combinedText += "\n";
                             }
-                            combinedText += value.TextEN;
+                            combinedText += value.TranslatedText;
                         }
                         CurrentLyrics = combinedText;
                     }
@@ -110,11 +110,11 @@ namespace MusicPlayer.ViewModels
             _messagingService.Send(new CloseLyricsWindowMessage());
         }
 
-        public LyricsViewModel(IPlayerStateService playerStateService, IMessagingService messagingService, IPlaylistService playlistService)
+        public LyricsViewModel(IPlayerStateService playerStateService, IMessagingService messagingService, ILyricsService lyricsService)
         {
             _playerStateService = playerStateService ?? throw new ArgumentNullException(nameof(playerStateService));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
-            _playlistService = playlistService ?? throw new ArgumentNullException(nameof(playlistService));
+            _lyricsService = lyricsService ?? throw new ArgumentNullException(nameof(lyricsService));
 
             // 注册消息处理器
             RegisterMessageHandlers();
@@ -198,17 +198,17 @@ namespace MusicPlayer.ViewModels
                     
                     // 构建调试信息
                     string firstLineDebug = string.Empty;
-                    if (!string.IsNullOrEmpty(_lyricsLines[0].TextCN))
+                    if (!string.IsNullOrEmpty(_lyricsLines[0].OriginalText))
                     {
-                        firstLineDebug += _lyricsLines[0].TextCN;
+                        firstLineDebug += _lyricsLines[0].OriginalText;
                     }
-                    if (!string.IsNullOrEmpty(_lyricsLines[0].TextEN))
+                    if (!string.IsNullOrEmpty(_lyricsLines[0].TranslatedText))
                     {
                         if (!string.IsNullOrEmpty(firstLineDebug))
                         {
                             firstLineDebug += "\n";
                         }
-                        firstLineDebug += _lyricsLines[0].TextEN;
+                        firstLineDebug += _lyricsLines[0].TranslatedText;
                     }
                     
                     System.Diagnostics.Debug.WriteLine($"OnLyricsUpdated: 收到 {_lyricsLines.Count} 行歌词，第一句: '{firstLineDebug}'");
@@ -257,22 +257,7 @@ namespace MusicPlayer.ViewModels
                     if (currentLine != CurrentLyricLine)
                     {
                         CurrentLyricLine = currentLine;
-                        
-                        // 构建调试信息
-                        string debugText = string.Empty;
-                        if (!string.IsNullOrEmpty(currentLine.TextCN))
-                        {
-                            debugText += currentLine.TextCN;
-                        }
-                        if (!string.IsNullOrEmpty(currentLine.TextEN))
-                        {
-                            if (!string.IsNullOrEmpty(debugText))
-                            {
-                                debugText += "\n";
-                            }
-                            debugText += currentLine.TextEN;
-                        }
-                         }
+                    }
 
                     // 计算逐字进度
                     int currentIndex = _lyricsLines.IndexOf(currentLine);
@@ -301,22 +286,7 @@ namespace MusicPlayer.ViewModels
                     if (Math.Abs(currentLine.Progress - progress) > 0.01) // 避免频繁更新
                     {
                         currentLine.Progress = progress;
-                        
-                        // 构建调试信息
-                        string debugText = string.Empty;
-                        if (!string.IsNullOrEmpty(currentLine.TextCN))
-                        {
-                            debugText += currentLine.TextCN;
-                        }
-                        if (!string.IsNullOrEmpty(currentLine.TextEN))
-                        {
-                            if (!string.IsNullOrEmpty(debugText))
-                            {
-                                debugText += "\n";
-                            }
-                            debugText += currentLine.TextEN;
-                        }
-                       }
+                    }
                 }
                 else
                 {
@@ -326,23 +296,7 @@ namespace MusicPlayer.ViewModels
                         if (_lyricsLines[0] != CurrentLyricLine)
                         {
                             CurrentLyricLine = _lyricsLines[0];
-                            
-                            // 构建调试信息
-                            string debugText = string.Empty;
-                            if (!string.IsNullOrEmpty(_lyricsLines[0].TextCN))
-                            {
-                                debugText += _lyricsLines[0].TextCN;
-                            }
-                            if (!string.IsNullOrEmpty(_lyricsLines[0].TextEN))
-                            {
-                                if (!string.IsNullOrEmpty(debugText))
-                                {
-                                    debugText += "\n";
-                                }
-                                debugText += _lyricsLines[0].TextEN;
-                            }
-                            
-                               }
+                        }
                         // 第一句歌词开始前，进度为0
                         _lyricsLines[0].Progress = 0;
                     }
@@ -376,8 +330,8 @@ namespace MusicPlayer.ViewModels
                 var currentSong = _playerStateService.CurrentSong;
                 if (currentSong != null)
                 {
-                    // 从PlaylistService获取当前歌词
-                    var lyrics = _playlistService.LoadLyrics(currentSong.FilePath);
+                    // 从歌词服务获取当前歌词
+                    var lyrics = _lyricsService.LoadLyrics(currentSong.FilePath);
                     if (lyrics != null && lyrics.Count > 0)
                     {
                         OnLyricsUpdated(new ObservableCollection<LyricLine>(lyrics));

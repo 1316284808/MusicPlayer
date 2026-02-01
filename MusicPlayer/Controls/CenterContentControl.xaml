@@ -158,6 +158,9 @@
                 BorderThickness="0" HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.CanContentScroll="False"
+                 VirtualizingPanel.IsVirtualizing="True"
+                VirtualizingPanel.VirtualizationMode="Recycling"
+                 VirtualizingPanel.CacheLength="2,2"         
                 ScrollViewer.VerticalScrollBarVisibility="Hidden"
                 behaviors:LyricsScrollBehavior.AutoScrollToCenter="True"
                 behaviors:LyricsScrollBehavior.ScrollDuration="300"
@@ -202,34 +205,35 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                
-                                <!-- 英文歌词 -->
-                                <local:MultiLineLyricControl x:Name="LyricEN" Grid.Row="0"  
-                                    Text="{Binding TextEN}"
+                                <!-- 原文歌词 -->
+                                <local:MultiLineLyricControl x:Name="LyricCN" Grid.Row="0" 
+    Text="{Binding OriginalText}"
+    FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
+    FontWeight="SemiBold"
+       Foreground="#808080"
+    HighlightColor="#3445db"
+    Progress="{Binding Progress}"
+    HighlightWidth="0"
+     TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"    
+    HorizontalAlignment="Stretch"
+    LineHeight="5"  />
+                                <!-- 翻译歌词 -->
+                                <local:MultiLineLyricControl x:Name="LyricEN" Grid.Row="1"  
+                                    Text="{Binding TranslatedText}"
                                     FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     FontWeight="SemiBold"
-                                      Foreground="Gray"
-    HighlightColor="#FF0078D7"
+                                        Foreground="#808080"
+                                        HighlightColor="#3445db"
                                     Progress="{Binding Progress}"
                                     HighlightWidth="0"
                                      TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"                        
                                     HorizontalAlignment="Stretch"
                                   
-                                    Visibility="{Binding TextEN, Converter={StaticResource StringToVisibilityConverter}}"
+                                    Visibility="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}"
                                     LineHeight="5"  />
                                 
-                                <!-- 中文歌词 -->
-                                <local:MultiLineLyricControl x:Name="LyricCN" Grid.Row="1" 
-                                    Text="{Binding TextCN}"
-                                    FontSize="{Binding DataContext.LyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    FontWeight="SemiBold"
-                                      Foreground="Gray"
-    HighlightColor="#FF0078D7"
-                                    Progress="{Binding Progress}"
-                                    HighlightWidth="0"
-                                     TextAlignment="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"    
-                                    HorizontalAlignment="Stretch"
-                                    LineHeight="5"  />
+                               
+                                
                             </Grid>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="True">
@@ -237,13 +241,52 @@
                                     <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0.2"/>
                                     <Setter TargetName="LyricCN" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                                     <Setter TargetName="LyricEN" Property="FontSize" Value="{Binding DataContext.SelectedLyricFontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricEN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="LyricEN" Property="HorizontalAlignment" Value="Stretch"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="False">
                                     <Setter TargetName="LyricCN" Property="HighlightWidth" Value="0"/>
                                     <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0"/>
                                     <Setter TargetName="LyricCN" Property="Progress" Value="0"/>
                                     <Setter TargetName="LyricEN" Property="Progress" Value="0"/>
+                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricEN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="LyricEN" Property="HorizontalAlignment" Value="Stretch"/>
                                 </DataTrigger>
+                                
+                                <!-- 歌词翻译显示控制 -->
+                                <!-- 只有原文歌词时：始终显示原文歌词 -->
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding DataContext.IsLyricTranslationEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                        <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Collapsed"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                </MultiDataTrigger>
+                                
+                                <!-- 双语歌词时：根据翻译开关控制原文歌词显示 -->
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding DataContext.IsLyricTranslationEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                                        <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding DataContext.LyricTextAlignment, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                </MultiDataTrigger>
+                                
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding DataContext.IsLyricTranslationEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                        <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Collapsed"/>
+                                </MultiDataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

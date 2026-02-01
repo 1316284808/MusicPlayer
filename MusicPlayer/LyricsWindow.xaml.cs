@@ -37,7 +37,7 @@ namespace MusicPlayer
 
         // 当前显示的歌词文本，用于比较是否需要更新
         private string _currentDisplayTextCN = string.Empty;
-        private string _currentDisplayTextEN = string.Empty;
+        private string _currentDisplayTextNonCN = string.Empty;
 
         // 当前歌词行对象，用于取消之前的事件订阅
         private LyricLine _previousLyricLine;
@@ -115,36 +115,36 @@ namespace MusicPlayer
         /// </summary>
         private void UpdateLyricChars()
         {
-            string newTextCN = " ";
-            string newTextEN = " ";
+            string newTextOriginal = " ";
+            string newTextTranslated = " ";
 
             if (_lyricsViewModel.CurrentLyricLine != null)
             {
-                // 获取中文歌词
-                if (!string.IsNullOrEmpty(_lyricsViewModel.CurrentLyricLine.TextCN))
+                // 获取原文歌词
+                if (!string.IsNullOrEmpty(_lyricsViewModel.CurrentLyricLine.OriginalText))
                 {
-                    newTextCN = _lyricsViewModel.CurrentLyricLine.TextCN;
+                    newTextOriginal = _lyricsViewModel.CurrentLyricLine.OriginalText;
                 }
 
-                // 获取英文歌词
-                if (!string.IsNullOrEmpty(_lyricsViewModel.CurrentLyricLine.TextEN))
+                // 获取翻译歌词
+                if (!string.IsNullOrEmpty(_lyricsViewModel.CurrentLyricLine.TranslatedText))
                 {
-                    newTextEN = _lyricsViewModel.CurrentLyricLine.TextEN;
+                    newTextTranslated = _lyricsViewModel.CurrentLyricLine.TranslatedText;
                 }
             }
 
-            // 更新中文歌词
-            if (newTextCN != _currentDisplayTextCN)
+            // 更新原文歌词
+            if (newTextOriginal != _currentDisplayTextCN)
             {
-                tbLyricCN.Text = newTextCN;
-                _currentDisplayTextCN = newTextCN;
+                tbLyricCN.Text = newTextOriginal;
+                _currentDisplayTextCN = newTextOriginal;
             }
 
-            // 更新英文歌词
-            if (newTextEN != _currentDisplayTextEN)
+            // 更新翻译歌词
+            if (newTextTranslated != _currentDisplayTextNonCN)
             {
-                tbLyricEN.Text = newTextEN;
-                _currentDisplayTextEN = newTextEN;
+                tbLyricEN.Text = newTextTranslated;
+                _currentDisplayTextNonCN = newTextTranslated;
             }
 
             // 立即应用当前进度

@@ -9,21 +9,21 @@ namespace MusicPlayer.ViewModels
     {
         private readonly IPlayerStateService _playerStateService;
         private readonly IMessagingService _messagingService;
-        private readonly IPlaylistService _playlistService;
+        private readonly ILyricsService _lyricsService;
 
         public LyricsViewModelFactory(
             IPlayerStateService playerStateService,
             IMessagingService messagingService,
-            IPlaylistService playlistService)
+            ILyricsService lyricsService)
         {
             _playerStateService = playerStateService ?? throw new ArgumentNullException(nameof(playerStateService));
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
-            _playlistService = playlistService ?? throw new ArgumentNullException(nameof(playlistService));
+            _lyricsService = lyricsService ?? throw new ArgumentNullException(nameof(lyricsService));
         }
 
         public ILyricsViewModel CreateLyricsViewModel()
         {
-            return new LyricsViewModel(_playerStateService, _messagingService, _playlistService);
+            return new LyricsViewModel(_playerStateService, _messagingService, _lyricsService);
         }
     }
 }

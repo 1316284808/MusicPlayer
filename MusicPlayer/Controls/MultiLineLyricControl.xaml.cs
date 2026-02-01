@@ -423,9 +423,9 @@ namespace MusicPlayer.Controls
             highlightTb.HighlightColor = HighlightColor;
             highlightTb.TextAlignment = TextAlignment;
             
-            // 设置宽度和对齐
-            highlightTb.Width = Math.Max(ActualWidth, 100);
+            // 设置对齐方式，让控件自动拉伸填充父容器
             highlightTb.HorizontalAlignment = HorizontalAlignment.Stretch;
+            highlightTb.VerticalAlignment = VerticalAlignment.Top;
             
             highlightTb.Margin = new Thickness(0);
 
@@ -449,9 +449,9 @@ namespace MusicPlayer.Controls
             highlightTb.HighlightColor = HighlightColor;
             highlightTb.TextAlignment = TextAlignment;
             
-            // 设置宽度和对齐
-            highlightTb.Width = Math.Max(ActualWidth, 100); // 确保有最小宽度
+            // 设置对齐方式，让控件自动拉伸填充父容器
             highlightTb.HorizontalAlignment = HorizontalAlignment.Stretch;
+            highlightTb.VerticalAlignment = VerticalAlignment.Top;
             
             highlightTb.Margin = new Thickness(0, topMargin, 0, 0);
 
@@ -482,8 +482,8 @@ namespace MusicPlayer.Controls
             foreach (var block in _activeLineBlocks)
             {
                 block.TextAlignment = TextAlignment;
-                block.Width = Math.Max(ActualWidth, 100);
                 block.HorizontalAlignment = HorizontalAlignment.Stretch;
+                block.VerticalAlignment = VerticalAlignment.Top;
             }
         }
 

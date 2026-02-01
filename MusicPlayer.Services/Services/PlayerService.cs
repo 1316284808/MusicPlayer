@@ -21,6 +21,7 @@ namespace MusicPlayer.Services
     {
         private readonly IPlaylistDataService _playlistDataService;
         private readonly IPlaylistService _playlistService;
+        private readonly ILyricsService _lyricsService;
         private readonly IMessagingService _messagingService;
         private readonly INotificationService _notificationService;
         private readonly ISystemMediaTransportService _mediaTransportService;
@@ -93,6 +94,7 @@ namespace MusicPlayer.Services
         public PlayerService(
             IPlaylistDataService playlistDataService, 
             IPlaylistService playlistService, 
+            ILyricsService lyricsService,
             IMessagingService messagingService, 
             INotificationService notificationService, 
             ISystemMediaTransportService mediaTransportService,
@@ -118,6 +120,7 @@ namespace MusicPlayer.Services
 
             _playlistDataService = playlistDataService;
             _playlistService = playlistService;
+            _lyricsService = lyricsService;
             _messagingService = messagingService;
             _notificationService = notificationService;
             _mediaTransportService = mediaTransportService;
@@ -327,7 +330,7 @@ namespace MusicPlayer.Services
                 _messagingService.Send(new LyricsUpdatedMessage(new ObservableCollection<LyricLine>()));
                 
                 // 加载新歌词
-                var lyrics = _playlistService.LoadLyrics(song.FilePath);
+                var lyrics = _lyricsService.LoadLyrics(song.FilePath);
                 _messagingService.Send(new LyricsUpdatedMessage(new ObservableCollection<LyricLine>(lyrics)));
                 
                 // 执行垃圾回收，释放未使用的资源

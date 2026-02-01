@@ -79,7 +79,7 @@ namespace MusicPlayer.Navigation
             {
                 From = 0,
                 To = 1,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromMilliseconds(500),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
          
             };
@@ -93,7 +93,7 @@ namespace MusicPlayer.Navigation
             {
                 From = 1,
                 To = 0,
-                Duration = TimeSpan.FromMilliseconds(300),
+                Duration = TimeSpan.FromMilliseconds(100),
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
            
             };

@@ -76,7 +76,7 @@
                 </Grid.RowDefinitions>
 
                 <!--歌词行显示区域-->
-                <controls:HighlightTextBlock Width="600" Grid.Row="0" x:Name="tbLyricEN"  
+                <controls:HighlightTextBlock Width="600" Grid.Row="1" x:Name="tbLyricEN"  
                                                  FontSize="28"
                                                  FontWeight="SemiBold"
                                                 Foreground="Gray"
@@ -90,7 +90,7 @@
                                                  Text=""
                                                  Margin="0" />
                 <!--备用歌词行，用于显示歌词翻译-->
-                <controls:HighlightTextBlock Width="600" Grid.Row="1" x:Name="tbLyricCN"  
+                <controls:HighlightTextBlock Width="600" Grid.Row="0" x:Name="tbLyricCN"  
                                                  FontSize="28"
                                                  FontWeight="SemiBold"
                                                  Foreground="Gray"

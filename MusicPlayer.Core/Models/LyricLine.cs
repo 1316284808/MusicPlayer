@@ -7,12 +7,14 @@ namespace MusicPlayer.Core.Models
     {
         [ObservableProperty]
         private TimeSpan _time;
-        // 双语歌词，中文部分
+        
+        // 原文（歌曲的原始语言）
         [ObservableProperty]
-        private string _textCN = string.Empty;
-        // 双语歌词，英文部分
+        private string _originalText = string.Empty;
+        
+        // 翻译文本
         [ObservableProperty]
-        private string _textEN = string.Empty;
+        private string _translatedText = string.Empty;
 
         [ObservableProperty]
         private double _progress = 0;

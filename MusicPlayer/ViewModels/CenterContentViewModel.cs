@@ -23,6 +23,7 @@ namespace MusicPlayer.ViewModels
         private readonly IConfigurationService _configurationService;
         private readonly IPlayerStateService _playerStateService;
         private readonly IPlaylistService _playlistService;
+        private readonly ILyricsService _lyricsService;
 
         // 状态属性通过消息同步
         private Core.Models.Song? _currentSong;
@@ -108,7 +109,7 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public double SelectedLyricFontSize
         {
-            get => LyricFontSize + 8;
+            get => LyricFontSize + 6;
         }
 
         public string LyricTranslationText => IsLyricTranslationEnabled ? "开启" : "禁用";
@@ -153,7 +154,7 @@ namespace MusicPlayer.ViewModels
         }
 
         /// <summary>
-        /// 更新所有歌曲相关属性的缓存值
+        /// 更新所有歌曲相关属性的缓存值（异步加载专辑封面）
         /// </summary>
         private void UpdateSongProperties()
         {
@@ -164,14 +165,8 @@ namespace MusicPlayer.ViewModels
                 CurrentSongArtist = _currentSong.Artist ?? string.Empty;
                 CurrentSongAlbum = _currentSong.Album ?? string.Empty;
 
-                // 确保专辑封面已加载
-                // 使用AlbumArtLoader直接加载封面
-                _currentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
-                _currentSong.OriginalAlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
-
-                // 更新封面
-                CurrentSongAlbumArt = _currentSong.AlbumArt;
-                CurrentSongOriginalAlbumArt = _currentSong.OriginalAlbumArt;
+                // 异步加载专辑封面（不阻塞UI）
+                LoadAlbumArtAsync(_currentSong);
             }
             else
             {
@@ -181,6 +176,43 @@ namespace MusicPlayer.ViewModels
                 CurrentSongAlbum = "未知专辑";
                 CurrentSongAlbumArt = null;
                 CurrentSongOriginalAlbumArt = null;
+            }
+        }
+
+        /// <summary>
+        /// 异步加载专辑封面
+        /// </summary>
+        private async void LoadAlbumArtAsync(Core.Models.Song song)
+        {
+            try
+            {
+                await Task.Run(async () => 
+                {
+                    var albumArt = await AlbumArtLoader.LoadAlbumArtAsync(song.FilePath);
+                    var originalAlbumArt = await AlbumArtLoader.LoadAlbumArtAsync(song.FilePath);
+                    
+                    // 在UI线程更新封面
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
+                    {
+                        if (song != null)
+                        {
+                            song.AlbumArt = albumArt;
+                            song.OriginalAlbumArt = originalAlbumArt;
+                            
+                            // 如果当前歌曲还是这首歌，更新ViewModel的封面属性
+                            if (CurrentSong == song)
+                            {
+                                CurrentSongAlbumArt = albumArt;
+                                CurrentSongOriginalAlbumArt = originalAlbumArt;
+                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面完成");
+                            }
+                        }
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面失败: {ex.Message}");
             }
         }
 
@@ -386,12 +418,14 @@ namespace MusicPlayer.ViewModels
             IMessagingService messagingService, 
             IConfigurationService configurationService,
             IPlayerStateService playerStateService,
-            IPlaylistService playlistService)
+            IPlaylistService playlistService,
+            ILyricsService lyricsService)
         {
             _messagingService = messagingService;
             _configurationService = configurationService;
             _playerStateService = playerStateService;
             _playlistService = playlistService;
+            _lyricsService = lyricsService;
 
             // 从配置中初始化歌词样式
             _lyricFontSize = _configurationService.CurrentConfiguration.LyricFontSize;
@@ -418,14 +452,14 @@ namespace MusicPlayer.ViewModels
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
 
-            // 从PlayerStateService获取当前播放状态并初始化
-            InitializeFromPlayerState();
+            // 从PlayerStateService获取当前播放状态并初始化（异步）
+            InitializeFromPlayerStateAsync();
         }
 
         /// <summary>
-        /// 从PlayerStateService获取当前状态并初始化
+        /// 从PlayerStateService获取当前状态并初始化（异步版本）
         /// </summary>
-        private void InitializeFromPlayerState()
+        private async void InitializeFromPlayerStateAsync()
         {
             try
             {
@@ -435,28 +469,68 @@ namespace MusicPlayer.ViewModels
                 {
                     CurrentSong = currentSong;
                     
-                    // 主动加载并设置当前歌曲的歌词（防止错过LyricsUpdatedMessage）
-                    try
+                    // 异步加载专辑封面（不阻塞UI）
+                    await Task.Run(async () => 
                     {
-                        var lyrics = _playlistService.LoadLyrics(currentSong.FilePath);
-                        SetLyrics(new ObservableCollection<Core.Models.LyricLine>(lyrics));
-                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 主动加载歌词成功，共 {lyrics.Count} 行");
-                    }
-                    catch (Exception lyricEx)
+                        try
+                        {
+                            var albumArt = await AlbumArtLoader.LoadAlbumArtAsync(currentSong.FilePath);
+                            var originalAlbumArt = await AlbumArtLoader.LoadAlbumArtAsync(currentSong.FilePath);
+                            
+                            // 在UI线程更新封面
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
+                            {
+                                if (currentSong != null)
+                                {
+                                    currentSong.AlbumArt = albumArt;
+                                    currentSong.OriginalAlbumArt = originalAlbumArt;
+                                    
+                                    // 更新ViewModel的封面属性
+                                    CurrentSongAlbumArt = albumArt;
+                                    CurrentSongOriginalAlbumArt = originalAlbumArt;
+                                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步加载专辑封面完成");
+                                }
+                            });
+                        }
+                        catch (Exception artEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步加载专辑封面失败: {artEx.Message}");
+                        }
+                    });
+
+                    // 异步加载歌词（不阻塞UI）
+                    await Task.Run(async () => 
                     {
-                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 加载歌词失败: {lyricEx.Message}");
-                        SetLyrics(new ObservableCollection<Core.Models.LyricLine>());
-                    }
+                        try
+                        {
+                            var lyrics = await _lyricsService.LoadLyricsAsync(currentSong.FilePath);
+                            
+                            // 在UI线程更新歌词
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
+                            {
+                                SetLyrics(new ObservableCollection<Core.Models.LyricLine>(lyrics));
+                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步加载歌词成功，共 {lyrics.Count} 行");
+                            });
+                        }
+                        catch (Exception lyricEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步加载歌词失败: {lyricEx.Message}");
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
+                            {
+                                SetLyrics(new ObservableCollection<Core.Models.LyricLine>());
+                            });
+                        }
+                    });
                 }
 
                 // 获取播放状态
                 IsPlaying = _playerStateService.IsPlaying;
 
-                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService初始化完成，歌曲: {currentSong?.Title ?? "无"}, 播放状态: {IsPlaying}");
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService异步初始化完成，歌曲: {currentSong?.Title ?? "无"}, 播放状态: {IsPlaying}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService初始化失败: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 从PlayerStateService异步初始化失败: {ex.Message}");
             }
         }
 

@@ -23,7 +23,7 @@ namespace MusicPlayer.Controls
         private List<TextBlock> _charListEN = new List<TextBlock>();
         // 当前显示的歌词文本
         private string _currentDisplayTextCN = string.Empty;
-        private string _currentDisplayTextEN = string.Empty;
+        private string _currentDisplayTextNonCN = string.Empty;
         // 当前歌词行对象
         private LyricLine _currentLyricLine = null;
         // 字体大小
@@ -314,7 +314,7 @@ namespace MusicPlayer.Controls
             // 处理空字符串
             if (string.IsNullOrEmpty(lyricText))
             {
-                _currentDisplayTextEN = string.Empty;
+                _currentDisplayTextNonCN = string.Empty;
                 return;
             }
 
@@ -335,7 +335,7 @@ namespace MusicPlayer.Controls
             }
 
             // 更新当前显示文本
-            _currentDisplayTextEN = lyricText;
+            _currentDisplayTextNonCN = lyricText;
         }
 
         /// <summary>
@@ -380,32 +380,32 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateLyricChars()
         {
-            string newTextCN = string.Empty;
-            string newTextEN = string.Empty;
+            string newTextOriginal = string.Empty;
+            string newTextTranslated = string.Empty;
 
             if (_currentLyricLine != null)
             {
-                newTextCN = _currentLyricLine.TextCN;
-                newTextEN = _currentLyricLine.TextEN;
+                newTextOriginal = _currentLyricLine.OriginalText;
+                newTextTranslated = _currentLyricLine.TranslatedText;
             }
 
-            // 更新中文歌词字符面板
-            if (newTextCN != _currentDisplayTextCN)
+            // 更新原文歌词字符面板
+            if (newTextOriginal != _currentDisplayTextCN)
             {
-                InitLyricCharsCN(newTextCN);
+                InitLyricCharsCN(newTextOriginal);
             }
 
-            // 更新英文歌词字符面板
-            if (newTextEN != _currentDisplayTextEN)
+            // 更新翻译歌词字符面板
+            if (newTextTranslated != _currentDisplayTextNonCN)
             {
-                InitLyricCharsEN(newTextEN);
+                InitLyricCharsEN(newTextTranslated);
             }
 
             // 控制Grid的可见性
-            CNGrid.Visibility = string.IsNullOrEmpty(newTextCN) ? Visibility.Collapsed : Visibility.Visible;
+            CNGrid.Visibility = string.IsNullOrEmpty(newTextOriginal) ? Visibility.Collapsed : Visibility.Visible;
             //禁用歌词翻译的共能必须是在双语歌词的前提下。
-            if (newTextEN.Length>0) { 
-            CNGrid.Visibility = (_isLyricTranslationEnabled && !string.IsNullOrEmpty(newTextEN)) ? Visibility.Visible : Visibility.Collapsed;
+            if (newTextTranslated.Length>0) { 
+            CNGrid.Visibility = (_isLyricTranslationEnabled && !string.IsNullOrEmpty(newTextTranslated)) ? Visibility.Visible : Visibility.Collapsed;
             }
             // 立即应用当前进度
             UpdateLyricProgress();
@@ -558,7 +558,7 @@ namespace MusicPlayer.Controls
                     
                     // 清空当前显示文本
                     _currentDisplayTextCN = string.Empty;
-                    _currentDisplayTextEN = string.Empty;
+                    _currentDisplayTextNonCN = string.Empty;
                     
                     // 清空DataContext，解除对ViewModel的强引用
                     this.DataContext = null;

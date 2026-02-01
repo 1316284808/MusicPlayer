@@ -24,6 +24,26 @@ namespace MusicPlayer.Controls
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 收到歌词更新消息，开始清理旧歌词资源");
                 CleanupLyricItems();
             });
+            
+            // 延迟初始化频谱控件（等页面基本渲染完成后再初始化）
+            this.Loaded += async (s, e) => 
+            {
+                await Task.Delay(100); // 等待100ms，让页面基本渲染完成
+                InitializeSpectrumControl();
+            };
+        }
+
+        /// <summary>
+        /// 初始化频谱控件（延迟调用，避免阻塞UI）
+        /// </summary>
+        private void InitializeSpectrumControl()
+        {
+            if (CircularSpectrum != null)
+            {
+                System.Diagnostics.Debug.WriteLine("CenterContentControl: 延迟初始化频谱控件");
+                // 如果频谱控件有需要初始化的逻辑，可以在这里调用
+                // CircularSpectrum.Initialize();
+            }
         }
 
         protected virtual void Dispose(bool disposing)
