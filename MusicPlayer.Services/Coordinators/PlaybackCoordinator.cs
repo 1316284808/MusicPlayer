@@ -141,14 +141,24 @@ namespace MusicPlayer.Services.Coordinators
                 _logger?.LogDebug($"恢复播放: {currentSong.Title}");
 
                 // 检查是否需要先加载歌曲到音频引擎
-                // 这里通过设置当前歌曲到 PlaylistDataService 来确保音频引擎已初始化
-                _playlistDataService.SetCurrentSong(currentSong);
-                
-                // 加载歌曲到音频引擎
-                _playerService.LoadSong(currentSong);
-                _logger?.LogDebug("已加载歌曲到音频引擎");
+                // 只有在音频引擎未初始化时才需要加载歌曲
+                if (!_playerService.IsAudioEngineInitialized)
+                {
+                    _logger?.LogDebug("音频引擎未初始化，需要加载歌曲");
+                    
+                    // 通过设置当前歌曲到 PlaylistDataService 来确保音频引擎已初始化
+                    _playlistDataService.SetCurrentSong(currentSong);
+                    
+                    // 加载歌曲到音频引擎
+                    _playerService.LoadSong(currentSong);
+                    _logger?.LogDebug("已加载歌曲到音频引擎");
 
-                await Task.Delay(100); // 给予音频引擎初始化时间
+                    await Task.Delay(100); // 给予音频引擎初始化时间
+                }
+                else
+                {
+                    _logger?.LogDebug("音频引擎已初始化，直接恢复播放");
+                }
 
                 StartPlaybackInternal();
                 _playerStateService.IsPlaying = true;

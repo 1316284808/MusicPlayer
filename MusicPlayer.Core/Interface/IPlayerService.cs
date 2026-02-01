@@ -51,6 +51,11 @@ namespace MusicPlayer.Core.Interface
         float[] SpectrumData { get; }
         
         /// <summary>
+        /// 音频引擎是否已初始化
+        /// </summary>
+        bool IsAudioEngineInitialized { get; }
+        
+        /// <summary>
         /// 播放状态变化事件
         /// </summary>
         event EventHandler<bool> PlaybackStateChanged;

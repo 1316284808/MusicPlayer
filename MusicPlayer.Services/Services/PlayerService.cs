@@ -90,6 +90,20 @@ namespace MusicPlayer.Services
             set => _messagingService.Send(new PlayModeChangedMessage(value));
         }
         public float[] SpectrumData => _playerStateService.SpectrumData;
+        
+        /// <summary>
+        /// 检查音频引擎是否已初始化
+        /// </summary>
+        public bool IsAudioEngineInitialized 
+        { 
+            get 
+            { 
+                lock (_audioLock)
+                {
+                    return _waveOut != null && _audioFileReader != null;
+                }
+            }
+        }
 
         public PlayerService(
             IPlaylistDataService playlistDataService, 
