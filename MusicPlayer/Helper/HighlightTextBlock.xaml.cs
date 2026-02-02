@@ -177,7 +177,14 @@ public partial class HighlightTextBlock : UserControl
     {
         if (d is HighlightTextBlock c)
         {
-            c._effect.HighlightWidth = (double)e.NewValue;
+            var newWidth = (double)e.NewValue;
+            c._effect.HighlightWidth = newWidth;
+            
+            // 如果高亮宽度为0，强制重置高亮位置为0，避免首字混色问题
+            if (newWidth <= 0)
+            {
+                c.HighlightPos = 0;
+            }
         }
     }
 

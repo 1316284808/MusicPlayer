@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Documents;
+using System.Windows.Data;
 
 namespace MusicPlayer.Controls
 {
@@ -40,6 +41,87 @@ namespace MusicPlayer.Controls
         public MultiLineLyricControl()
         {
             InitializeComponent();
+            Unloaded += MultiLineLyricControl_Unloaded;
+        }
+        
+        /// <summary>
+        /// 清理所有绑定和资源
+        /// </summary>
+        public void Cleanup()
+        {
+            try
+            {
+                // 先断开所有数据绑定，防止卸载后继续更新
+                BindingOperations.ClearAllBindings(this);
+                
+                // 移除事件订阅
+                Unloaded -= MultiLineLyricControl_Unloaded;
+                Loaded -= MultiLineLyricControl_Loaded;
+                SizeChanged -= MultiLineLyricControl_SizeChanged;
+                
+                // 清空所有活动的文本块
+                ClearAllLines();
+                
+                // 清空对象池
+                while (_textBlockPool.Count > 0)
+                {
+                    var textBlock = _textBlockPool.Dequeue();
+                    if (textBlock != null)
+                    {
+                        BindingOperations.ClearAllBindings(textBlock);
+                        textBlock.ClearValue(Helper.HighlightTextBlock.TextProperty);
+                        textBlock.ClearValue(Helper.HighlightTextBlock.FontSizeProperty);
+                        textBlock.ClearValue(Helper.HighlightTextBlock.TextAlignmentProperty);
+                        textBlock.ClearValue(Helper.HighlightTextBlock.HighlightPosProperty);
+                        textBlock.ClearValue(Helper.HighlightTextBlock.HighlightWidthProperty);
+                    }
+                }
+
+                // 清理自身的依赖属性绑定
+                BindingOperations.ClearAllBindings(this);
+                ClearValue(TextProperty);
+                ClearValue(FontSizeProperty);
+                ClearValue(FontWeightProperty);
+                ClearValue(ForegroundProperty);
+                ClearValue(HighlightColorProperty);
+                ClearValue(TextAlignmentProperty);
+                ClearValue(ProgressProperty);
+                ClearValue(HighlightWidthProperty);
+                ClearValue(LineHeightProperty);
+
+                // 清空父容器
+                if (LyricLinesPanel != null)
+                {
+                    LyricLinesPanel.Children.Clear();
+                }
+                
+                // 重置状态
+                _originalText = string.Empty;
+                _cachedText = string.Empty;
+                _cachedLines = Array.Empty<string>();
+                _cachedTextWidth = 0;
+                _cachedFontSize = 20.0;
+                
+                // 强制立即回收，防止延迟绑定
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
+            }
+            catch { }
+        }
+
+        private void MultiLineLyricControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 立即调用清理，不要等待
+                Cleanup();
+                
+                // 从视觉树中移除，防止进一步绑定更新
+                if (Parent is Panel parentPanel)
+                {
+                    parentPanel.Children.Remove(this);
+                }
+            }
+            catch { }
         }
         
         /// <summary>
@@ -47,13 +129,19 @@ namespace MusicPlayer.Controls
         /// </summary>
         private Helper.HighlightTextBlock GetTextBlockFromPool()
         {
+            Helper.HighlightTextBlock textBlock;
+            
             if (_textBlockPool.Count > 0)
             {
-                return _textBlockPool.Dequeue();
+                textBlock = _textBlockPool.Dequeue();
+                // 确保从池中取出时重置高亮状态
+                textBlock.HighlightPos = 0;
+                textBlock.HighlightWidth = 0;
+                return textBlock;
             }
             
             // 池为空时创建新实例
-            var textBlock = new Helper.HighlightTextBlock
+            textBlock = new Helper.HighlightTextBlock
             {
                 TextWrapping = TextWrapping.NoWrap
             };
@@ -71,6 +159,10 @@ namespace MusicPlayer.Controls
                 // 重置状态
                 textBlock.Text = string.Empty;
                 textBlock.Opacity = 1.0;
+                
+                // 重置高亮相关属性，避免状态残留导致混色问题
+                textBlock.HighlightPos = 0;
+                textBlock.HighlightWidth = 0;
                 
                 // 归还到池中
                 _textBlockPool.Enqueue(textBlock);
@@ -191,47 +283,77 @@ namespace MusicPlayer.Controls
 
         private static void OnTextPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is MultiLineLyricControl control)
+            if (d is MultiLineLyricControl control && control.IsLoaded)
             {
-                control.UpdateLyricLines();
+                try
+                {
+                    control.UpdateLyricLines();
+                }
+                catch { }
             }
         }
 
         private static void OnFontSizePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is MultiLineLyricControl control)
+            if (d is MultiLineLyricControl control && control.IsLoaded)
             {
-                control.UpdateFontSize();
+                try
+                {
+                    control.UpdateFontSize();
+                }
+                catch { }
             }
         }
 
         private static void OnProgressPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is MultiLineLyricControl control)
+            if (d is MultiLineLyricControl control && control.IsLoaded)
             {
-                control.UpdateHighlightProgress();
+                try
+                {
+                    control.UpdateHighlightProgress();
+                }
+                catch { }
             }
         }
 
         private static void OnTextAlignmentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is MultiLineLyricControl control)
+            if (d is MultiLineLyricControl control && control.IsLoaded)
             {
-                control.UpdateTextAlignment();
+                try
+                {
+                    control.UpdateTextAlignment();
+                }
+                catch { }
             }
         }
 
         private void MultiLineLyricControl_Loaded(object sender, RoutedEventArgs e)
         {
-            UpdateLyricLines();
+            if (IsLoaded)
+            {
+                try
+                {
+                    UpdateLyricLines();
+                }
+                catch { }
+            }
         }
 
         private void MultiLineLyricControl_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // 当宽度变化时，重新计算换行
-            if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) > 0.1)
+            if (IsLoaded)
             {
-                UpdateLyricLines();
+                // 当宽度变化时，重新计算换行
+                if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) > 0.1)
+                {
+                    try
+                    {
+                        UpdateLyricLines();
+                    }
+                    catch { }
+                }
             }
         }
 
@@ -241,6 +363,11 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateLyricLines()
         {
+            if (!IsLoaded)
+            {
+                return;
+            }
+
             _originalText = Text ?? string.Empty;
             if (string.IsNullOrWhiteSpace(_originalText))
             {
@@ -253,7 +380,11 @@ namespace MusicPlayer.Controls
                 Math.Abs(ActualWidth - _cachedTextWidth) < 0.1 && 
                 Math.Abs(FontSize - _cachedFontSize) < 0.01)
             {
-                UpdateHighlightProgress(); // 只更新进度
+                try
+                {
+                    UpdateHighlightProgress(); // 只更新进度
+                }
+                catch { }
                 return;
             }
 
@@ -422,7 +553,8 @@ namespace MusicPlayer.Controls
             highlightTb.Foreground = Foreground;
             highlightTb.HighlightColor = HighlightColor;
             highlightTb.TextAlignment = TextAlignment;
-            
+            highlightTb.HighlightWidth = 0;
+            highlightTb.HighlightPos = 0; // 确保高亮位置为0
             // 设置对齐方式，让控件自动拉伸填充父容器
             highlightTb.HorizontalAlignment = HorizontalAlignment.Stretch;
             highlightTb.VerticalAlignment = VerticalAlignment.Top;
@@ -448,6 +580,8 @@ namespace MusicPlayer.Controls
             highlightTb.Foreground = Foreground;
             highlightTb.HighlightColor = HighlightColor;
             highlightTb.TextAlignment = TextAlignment;
+            highlightTb.HighlightWidth = 0; // 初始高亮宽度为0
+            highlightTb.HighlightPos = 0; // 初始高亮位置为0
             
             // 设置对齐方式，让控件自动拉伸填充父容器
             highlightTb.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -479,12 +613,21 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateTextAlignment()
         {
-            foreach (var block in _activeLineBlocks)
+            if (!IsLoaded || _activeLineBlocks.Count == 0)
             {
-                block.TextAlignment = TextAlignment;
-                block.HorizontalAlignment = HorizontalAlignment.Stretch;
-                block.VerticalAlignment = VerticalAlignment.Top;
+                return;
             }
+
+            try
+            {
+                foreach (var block in _activeLineBlocks)
+                {
+                    block.TextAlignment = TextAlignment;
+                    block.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    block.VerticalAlignment = VerticalAlignment.Top;
+                }
+            }
+            catch { }
         }
 
         /// <summary>
@@ -492,35 +635,55 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateHighlightProgress()
         {
-            if (_activeLineBlocks.Count == 0) return;
-
-            double totalProgress = Math.Clamp(Progress, 0.0, 1.0);
-
-            // 单行情况
-            if (_activeLineBlocks.Count == 1)
+            if (!IsLoaded || _activeLineBlocks.Count == 0)
             {
-                _activeLineBlocks[0].HighlightPos = totalProgress;
-                _activeLineBlocks[0].HighlightWidth = HighlightWidth;
                 return;
             }
 
-            // 多行情况：计算每行的进度
-            double progressPerLine = 1.0 / _activeLineBlocks.Count;
-
-            for (int lineIndex = 0; lineIndex < _activeLineBlocks.Count; lineIndex++)
+            try
             {
-                var lineBlock = _activeLineBlocks[lineIndex];
-                
-                // 计算当前行的填充进度
-                // 公式: (总进度 - 前面行的进度) / 当前行的进度权重
-                double lineProgress = Math.Clamp(
-                    (totalProgress - lineIndex * progressPerLine) / progressPerLine,
-                    0.0, 1.0);
+                double totalProgress = Math.Clamp(Progress, 0.0, 1.0);
 
-                // 设置当前行的高亮位置和宽度
-                lineBlock.HighlightPos = lineProgress;
-                lineBlock.HighlightWidth = HighlightWidth;
+                // 如果高亮宽度为0，强制不显示任何高亮效果
+                // 这解决未选中行首字过早出现混色的问题
+                if (HighlightWidth <= 0)
+                {
+                    for (int lineIndex = 0; lineIndex < _activeLineBlocks.Count; lineIndex++)
+                    {
+                        var lineBlock = _activeLineBlocks[lineIndex];
+                        lineBlock.HighlightPos = 0;
+                        lineBlock.HighlightWidth = 0;
+                    }
+                    return;
+                }
+
+                // 单行情况
+                if (_activeLineBlocks.Count == 1)
+                {
+                    _activeLineBlocks[0].HighlightPos = totalProgress;
+                    _activeLineBlocks[0].HighlightWidth = HighlightWidth;
+                    return;
+                }
+
+                // 多行情况：计算每行的进度
+                double progressPerLine = 1.0 / _activeLineBlocks.Count;
+
+                for (int lineIndex = 0; lineIndex < _activeLineBlocks.Count; lineIndex++)
+                {
+                    var lineBlock = _activeLineBlocks[lineIndex];
+                    
+                    // 计算当前行的填充进度
+                    // 公式: (总进度 - 前面行的进度) / 当前行的进度权重
+                    double lineProgress = Math.Clamp(
+                        (totalProgress - lineIndex * progressPerLine) / progressPerLine,
+                        0.0, 1.0);
+
+                    // 设置当前行的高亮位置和宽度
+                    lineBlock.HighlightPos = lineProgress;
+                    lineBlock.HighlightWidth = HighlightWidth;
+                }
             }
+            catch { }
         }
 
         /// <summary>
@@ -528,18 +691,25 @@ namespace MusicPlayer.Controls
         /// </summary>
         private void UpdateFontSize()
         {
-            if (_activeLineBlocks.Count == 0) return;
-
-            foreach (var block in _activeLineBlocks)
+            if (!IsLoaded || _activeLineBlocks.Count == 0)
             {
-                block.FontSize = FontSize;
+                return;
             }
 
-            // 清除字体大小缓存，强制重新计算布局
-            _cachedFontSize = 0; // 设置为0，确保下次UpdateLyricLines会重新计算
-            
-            // 字体大小变化可能影响换行，需要重新计算
-            UpdateLyricLines();
+            try
+            {
+                foreach (var block in _activeLineBlocks)
+                {
+                    block.FontSize = FontSize;
+                }
+
+                // 清除字体大小缓存，强制重新计算布局
+                _cachedFontSize = 0; // 设置为0，确保下次UpdateLyricLines会重新计算
+                
+                // 字体大小变化可能影响换行，需要重新计算
+                UpdateLyricLines();
+            }
+            catch { }
         }
     }
 }

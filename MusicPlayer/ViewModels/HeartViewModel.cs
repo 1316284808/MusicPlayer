@@ -356,7 +356,7 @@ namespace MusicPlayer.ViewModels
                     System.Diagnostics.Debug.WriteLine($"HeartViewModel: 设置播放上下文为 {playlist.Name}");
                     
                     // 发送导航到歌单详情页面的消息
-                    _messagingService.Send<MusicPlayer.Services.Messages.NavigateToPlaylistDetailMessage, bool>(new MusicPlayer.Services.Messages.NavigateToPlaylistDetailMessage());
+                    _messagingService.Send(new MusicPlayer.Services.Messages.NavigateToPlaylistDetailMessage());
                     System.Diagnostics.Debug.WriteLine("HeartViewModel: 发送导航到歌单详情页面的消息");
                 }
                 catch (Exception ex)

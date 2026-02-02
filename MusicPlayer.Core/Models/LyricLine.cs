@@ -18,5 +18,18 @@ namespace MusicPlayer.Core.Models
 
         [ObservableProperty]
         private double _progress = 0;
+        
+        // 歌词显示设置（从 CenterContentViewModel 同步）
+        [ObservableProperty]
+        private double _lyricFontSize = 16;
+        
+        [ObservableProperty]
+        private double _selectedLyricFontSize = 22;
+        
+        [ObservableProperty]
+        private System.Windows.TextAlignment _lyricTextAlignment = System.Windows.TextAlignment.Right;
+        
+        [ObservableProperty]
+        private bool _isLyricTranslationEnabled = true;
     }
 }

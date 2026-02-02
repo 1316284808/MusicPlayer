@@ -57,6 +57,12 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(LyricAlignmentIconKind));
                     // 更新配置
                     _configurationService.UpdateLyricTextAlignment(value);
+                    
+                    // 同步到所有歌词行
+                    foreach (var lyric in Lyrics)
+                    {
+                        lyric.LyricTextAlignment = value;
+                    }
                 }
             }
         }
@@ -100,6 +106,13 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(SelectedLyricFontSize));
                     // 更新配置
                     _configurationService.UpdateLyricFontSize(value);
+                    
+                    // 同步到所有歌词行
+                    foreach (var lyric in Lyrics)
+                    {
+                        lyric.LyricFontSize = value;
+                        lyric.SelectedLyricFontSize = SelectedLyricFontSize;
+                    }
                 }
             }
         }
@@ -129,6 +142,12 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(IsLyricTranslationEnabled));
                     // 更新配置
                     _configurationService.UpdateLyricTranslationEnabled(value);
+                    
+                    // 同步到所有歌词行
+                    foreach (var lyric in Lyrics)
+                    {
+                        lyric.IsLyricTranslationEnabled = value;
+                    }
                 }
             }
         }
@@ -723,6 +742,12 @@ namespace MusicPlayer.ViewModels
             Lyrics.Clear();
             foreach (var lyric in lyrics)
             {
+                // 同步歌词显示设置
+                lyric.LyricFontSize = LyricFontSize;
+                lyric.SelectedLyricFontSize = SelectedLyricFontSize;
+                lyric.LyricTextAlignment = LyricTextAlignment;
+                lyric.IsLyricTranslationEnabled = IsLyricTranslationEnabled;
+                
                 Lyrics.Add(lyric);
             }
 

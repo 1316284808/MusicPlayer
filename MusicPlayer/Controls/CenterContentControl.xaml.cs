@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MusicPlayer.Controls
@@ -54,19 +55,28 @@ namespace MusicPlayer.Controls
                 {
                     WeakReferenceMessenger.Default.UnregisterAll(this);
                     
+                    // 清理附加行为
+                    CleanupAttachedBehaviors();
+                    
+                    // 手动清理所有MultiLineLyricControl的绑定
+                    CleanupMultiLineLyricControls();
+                    
+                    // 清理歌词项
+                    CleanupLyricItems();
+                    
+                    // 清空ListBox ItemsSource，移除所有子项（包括MultiLineLyricControl）
+                    if (LyricsListBox != null)
+                    {
+                        LyricsListBox.ItemsSource = null;
+                    }
+                    
                     // 调用CircularSpectrumControl的Dispose方法
                     if (CircularSpectrum != null)
                     {
                         CircularSpectrum.Dispose(); 
                     }
                     
-                    // 清理附加行为
-                    CleanupAttachedBehaviors();
-                    
-                    // 清理歌词项
-                    CleanupLyricItems();
-                    
-                    // 清空DataContext，解除对ViewModel的强引用
+                    // 清空DataContext，解除所有绑定
                     this.DataContext = null;
                     
                     // 清空页面内容，释放UI资源
@@ -74,6 +84,29 @@ namespace MusicPlayer.Controls
                 }
                 _disposed = true;
             }
+        }
+        
+        /// <summary>
+        /// 手动清理所有MultiLineLyricControl的绑定
+        /// </summary>
+        private void CleanupMultiLineLyricControls()
+        {
+            try
+            {
+                // 查找所有ListBoxItem
+                var listBoxItems = FindAllVisualChildren<ListBoxItem>(this);
+                foreach (var listBoxItem in listBoxItems)
+                {
+                    // 查找ListBoxItem中的所有MultiLineLyricControl
+                    var multiLineLyricControls = FindAllVisualChildren<MultiLineLyricControl>(listBoxItem);
+                    foreach (var multiLineLyricControl in multiLineLyricControls)
+                    {
+                        // 调用MultiLineLyricControl的Cleanup方法清理绑定
+                        multiLineLyricControl.Cleanup();
+                    }
+                }
+            }
+            catch { }
         }
 
         // 清理附加行为
@@ -142,6 +175,18 @@ namespace MusicPlayer.Controls
                     var listBoxItem = LyricsListBox.ItemContainerGenerator.ContainerFromIndex(i) as ListBoxItem;
                     if (listBoxItem != null)
                     {
+                        // 获取DataTemplate中的所有MultiLineLyricControl并清理绑定
+                        var lyricControls = FindAllVisualChildren<MultiLineLyricControl>(listBoxItem);
+                        foreach (var lyricControl in lyricControls)
+                        {
+                            try
+                            {
+                                // 调用Cleanup方法清理内部资源（包含绑定清理）
+                                lyricControl.Cleanup();
+                            }
+                            catch { }
+                        }
+                        
                         // 通过VisualTreeHelper获取所有WordByWordLyricItem
                         var lyricItems = FindAllVisualChildren<WordByWordLyricItem>(listBoxItem);
                         foreach (var lyricItem in lyricItems)
@@ -158,8 +203,6 @@ namespace MusicPlayer.Controls
                         listBoxItem.DataContext = null;
                     }
                 }
-                
-                
                 
                 // 调用UpdateLayout确保UI更新
                 LyricsListBox.UpdateLayout();

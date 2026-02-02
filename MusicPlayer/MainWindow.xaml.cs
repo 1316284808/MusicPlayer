@@ -244,10 +244,12 @@ namespace MusicPlayer;
             try
             {
                 _navigationService.NavigateToSinger();
+                m.Reply(true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"导航到歌手页面失败: {ex.Message}");
+                m.Reply(false);
             }
         });
         
@@ -257,10 +259,12 @@ namespace MusicPlayer;
             try
             {
                 _navigationService.NavigateToAlbum();
+                m.Reply(true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"导航到专辑页面失败: {ex.Message}");
+                m.Reply(false);
             }
         });
         
@@ -270,10 +274,12 @@ namespace MusicPlayer;
             try
             {
                 _navigationService.NavigateToHeart();
+                m.Reply(true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"导航到歌单页面失败: {ex.Message}");
+                m.Reply(false);
             }
         });
         
@@ -283,10 +289,12 @@ namespace MusicPlayer;
             try
             {
                 _navigationService.NavigateToPlaylistDetail();
+                m.Reply(true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"导航到歌单详情页面失败: {ex.Message}");
+                m.Reply(false);
             }
         });
         
@@ -296,10 +304,12 @@ namespace MusicPlayer;
             try
             {
                 _navigationService.GoBack();
+                m.Reply(true);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"返回上一页失败: {ex.Message}");
+                m.Reply(false);
             }
         });
         
