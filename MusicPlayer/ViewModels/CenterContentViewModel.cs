@@ -122,7 +122,7 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public double SelectedLyricFontSize
         {
-            get => LyricFontSize + 6;
+            get => LyricFontSize + 4;
         }
 
         public string LyricTranslationText => IsLyricTranslationEnabled ? "开启" : "禁用";

@@ -7,7 +7,8 @@
         xmlns:converters="clr-namespace:MusicPlayer.Converters"
         xmlns:config="clr-namespace:MusicPlayer.Config"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-        xmlns:controls="clr-namespace:MusicPlayer.Helper" 
+        xmlns:controls="clr-namespace:MusicPlayer.Helper"
+        xmlns:musicControls="clr-namespace:MusicPlayer.Controls" 
         Background="#01000000"
          MinHeight="60"  
          MinWidth="600"
@@ -76,33 +77,27 @@
                 </Grid.RowDefinitions>
 
                 <!--歌词行显示区域-->
-                <controls:HighlightTextBlock Width="600" Grid.Row="1" x:Name="tbLyricEN"  
-                                                 FontSize="28"
-                                                 FontWeight="SemiBold"
-                                                Foreground="Gray"
-                                                 HighlightColor="#FF0078D7"
-                                                 HighlightPos="0"
-                                                 HighlightWidth="0.8"
-                                                 UseAdditive="true"
-                                                 TextAlignment="Center"
-                                                 TextWrapping="Wrap"
-                                                 HorizontalAlignment="Center"
-                                                 Text=""
-                                                 Margin="0" />
+                <musicControls:MultiLineLyricControl x:Name="TranslatedLyric" Grid.Row="1"
+                                                     Text="{Binding CurrentLyricLine.TranslatedText, Mode=OneWay}"
+                                                     FontSize="28"
+                                                     FontWeight="SemiBold"
+                                                      Foreground="Gray" HighlightColor="#6495ED" 
+                                                     Progress="{Binding CurrentLyricLine.Progress, Mode=OneWay}"
+                                                     TextAlignment="Center"
+                                                     HorizontalAlignment="Stretch"
+                                                     LineHeight="5" />
                 <!--备用歌词行，用于显示歌词翻译-->
-                <controls:HighlightTextBlock Width="600" Grid.Row="0" x:Name="tbLyricCN"  
-                                                 FontSize="28"
-                                                 FontWeight="SemiBold"
-                                                 Foreground="Gray"
-                                                 HighlightColor="#FF0078D7"
-                                                 HighlightPos="0"
-                                                 HighlightWidth="0.8"
-                                                 UseAdditive="true" 
-                                              TextAlignment="Center"
-                                                TextWrapping="Wrap"
-                                                HorizontalAlignment="Center"
-                                               Text=""
-                                               Margin="0,10,0,0" />
+                <musicControls:MultiLineLyricControl x:Name="OriginalLyric" Grid.Row="0"
+                                                     Text="{Binding CurrentLyricLine.OriginalText, Mode=OneWay}"
+                                                     FontSize="28"
+                                                     FontWeight="SemiBold"
+                                                     Foreground="Gray" 
+                                                     HighlightColor="#FF0078D7"
+                                                     Progress="{Binding CurrentLyricLine.Progress, Mode=OneWay}"
+                                                     TextAlignment="Center"
+                                                     HorizontalAlignment="Stretch"
+                                                     LineHeight="5" 
+                                                     Margin="0,10,0,0" />
               
     </Grid>
 

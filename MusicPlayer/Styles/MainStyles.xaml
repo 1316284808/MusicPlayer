@@ -506,4 +506,32 @@
     <DropShadowEffect x:Key="MediumShadow" Color="Black" ShadowDepth="3" BlurRadius="10" Opacity="0.3"/>
     <DropShadowEffect x:Key="LightShadow" Color="Black" ShadowDepth="1" BlurRadius="5" Opacity="0.2"/>
 
+    <!-- TabItem样式 -->
+    <Style TargetType="TabItem">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="TabBorder"
+                            Height="auto"
+                            Width="auto"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            CornerRadius="8">
+                        <ContentPresenter x:Name="Content" 
+                                          Margin="10"
+                                          ContentSource="Header" 
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="TabBorder" Property="Background" Value="#80FFFFFF" />
+                            <Setter TargetName="TabBorder" Property="CornerRadius" Value="8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

@@ -192,6 +192,7 @@
                                     
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/> 
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
                                
@@ -227,10 +228,18 @@
                                 <!-- 歌曲信息 -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding Artist}" FontSize="12"     Opacity="0.7"   />
-                                </StackPanel> 
+                                   
+                                        <TextBlock Text="{Binding Artist}" FontSize="12"      Opacity="0.7"   />
+
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"  VerticalAlignment="Center">
+                                    <Separator Margin="5,0" />
+                                    <TextBlock Text="{Binding Album}" FontSize="12" Width="300" TextWrapping="Wrap"   />
+                                 </StackPanel>
+                               
                                 <!--歌曲时长，音质图标-->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,25,0">
+                                <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,25,0">
                                     <ui:TextBlock Text="{Binding TotalTimeText}"   FontSize="12"  VerticalAlignment="Center"  />
                                     <Helper:ButtonControl AudioFormat="{Binding AudioFormat}"></Helper:ButtonControl>
                                 </StackPanel>

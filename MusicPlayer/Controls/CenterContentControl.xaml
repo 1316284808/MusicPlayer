@@ -99,7 +99,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
             </Grid.ColumnDefinitions>
             
             <!-- 圆形频谱和封面容器 -->
-            <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center"  
+            <Grid Grid.Column="0"  
                   Width="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}"
                   Height="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}">
            
@@ -152,8 +152,14 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
             
             <!-- Lyrics Section -->
             <Grid Grid.Column="1" HorizontalAlignment="Stretch">
-                
-              
+                <Grid.OpacityMask>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#00000000" Offset="0"/>
+                        <GradientStop Color="#FFFFFFFF" Offset="0.4"/>
+                        <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
+                        <GradientStop Color="#00000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </Grid.OpacityMask> 
                 <ListBox  x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
                 BorderThickness="0" HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -179,7 +185,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                                 <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
                                             </Border.Effect>
                                             <ContentPresenter/>
-                                        </Border>
+                                            </Border> 
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -205,51 +211,49 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <!-- 原文歌词 -->
-                                <local:MultiLineLyricControl x:Name="LyricCN" Grid.Row="0" 
+                                <!-- 原文歌词 6495ED -->
+                                <local:MultiLineLyricControl x:Name="OriginalLyric" Grid.Row="0" 
                                     Text="{Binding OriginalText}"
                                     FontSize="{Binding LyricFontSize}"
                                     FontWeight="SemiBold"
-                                      Foreground="Gray"
-                                 HighlightColor="#6495ED" 
+                                    Foreground="Gray" HighlightColor="#6495ED"
                                     Progress="{Binding Progress}" 
                                      TextAlignment="{Binding LyricTextAlignment}"    
                                     HorizontalAlignment="Stretch"
-                                    LineHeight="5"  />  
+                                    LineHeight="5"  />
                                 <!-- 翻译歌词 -->
-                                <local:MultiLineLyricControl x:Name="LyricEN" Grid.Row="1"  
+                                <local:MultiLineLyricControl x:Name="TranslatedLyric" Grid.Row="1"  
                                     Text="{Binding TranslatedText}"
                                     FontSize="{Binding LyricFontSize}"
                                     FontWeight="SemiBold"
-                                       Foreground="Gray"
-HighlightColor="#6495ED" 
+                                      Foreground="Gray" HighlightColor="#7CB3F5"
                                     Progress="{Binding Progress}" 
                                      TextAlignment="{Binding LyricTextAlignment}"                        
                                     HorizontalAlignment="Stretch" 
                                     Visibility="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}"
-                                    LineHeight="5"  /> 
+                                    LineHeight="5"  />
                                 
                             </Grid>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="False">
-                                    <Setter TargetName="LyricCN" Property="HighlightWidth" Value="0"/>
-                                    <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0"/>
-                                    <Setter TargetName="LyricCN" Property="Progress" Value="0"/>
-                                    <Setter TargetName="LyricEN" Property="Progress" Value="0"/>
-                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricEN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
-                                    <Setter TargetName="LyricEN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="OriginalLyric" Property="HighlightWidth" Value="0"/>
+                                    <Setter TargetName="TranslatedLyric" Property="HighlightWidth" Value="0"/>
+                                    <Setter TargetName="OriginalLyric" Property="Progress" Value="0"/>
+                                    <Setter TargetName="TranslatedLyric" Property="Progress" Value="0"/>
+                                    <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="TranslatedLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="TranslatedLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="True">
-                                    <Setter TargetName="LyricCN" Property="HighlightWidth" Value="0.2"/>
-                                    <Setter TargetName="LyricEN" Property="HighlightWidth" Value="0.2"/>
-                                    <Setter TargetName="LyricCN" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
-                                    <Setter TargetName="LyricEN" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
-                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricEN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
-                                    <Setter TargetName="LyricEN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="OriginalLyric" Property="HighlightWidth" Value="0.2"/>
+                                    <Setter TargetName="TranslatedLyric" Property="HighlightWidth" Value="0.2"/>
+                                    <Setter TargetName="OriginalLyric" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
+                                    <Setter TargetName="TranslatedLyric" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
+                                    <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="TranslatedLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="TranslatedLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </DataTrigger> 
                                 <!-- 歌词翻译显示控制 -->
                                 <!-- 只有原文歌词时：始终显示原文歌词 -->
@@ -258,9 +262,9 @@ HighlightColor="#6495ED"
                                         <Condition Binding="{Binding IsLyricTranslationEnabled}" Value="False"/>
                                         <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Collapsed"/>
                                     </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="OriginalLyric" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </MultiDataTrigger>
                                 
                                 <!-- 双语歌词时：根据翻译开关控制原文歌词显示 -->
@@ -269,9 +273,9 @@ HighlightColor="#6495ED"
                                         <Condition Binding="{Binding IsLyricTranslationEnabled}" Value="True"/>
                                         <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"/>
                                     </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="LyricCN" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
-                                    <Setter TargetName="LyricCN" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="OriginalLyric" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </MultiDataTrigger>
                                 
                                 <MultiDataTrigger>
@@ -279,7 +283,10 @@ HighlightColor="#6495ED"
                                         <Condition Binding="{Binding IsLyricTranslationEnabled}" Value="False"/>
                                         <Condition Binding="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"/>
                                     </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="LyricCN" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="OriginalLyric" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
+                                    <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter TargetName="TranslatedLyric" Property="Visibility" Value="Collapsed"/>
                                 </MultiDataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>

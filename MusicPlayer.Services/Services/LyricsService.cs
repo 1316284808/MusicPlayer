@@ -223,9 +223,32 @@ namespace MusicPlayer.Services
                 // 检查是否有多个文本行（双语歌词）
                 if (texts.Count > 1)
                 {
-                    // 第一行作为原文，第二行作为翻译
-                    lyricLine.OriginalText = texts[0].Trim();
-                    lyricLine.TranslatedText = texts[1].Trim();
+                    var firstText = texts[0].Trim();
+                    var secondText = texts[1].Trim();
+                    
+                    // 检测语言类型
+                    var firstHasChinese = ContainsChineseChars(firstText);
+                    var secondHasChinese = ContainsChineseChars(secondText);
+                    
+                    // 智能判断原文和翻译
+                    if (firstHasChinese && !secondHasChinese)
+                    {
+                        // 第一行是中文，第二行不是中文 → 第二行作为原文，第一行作为翻译
+                        lyricLine.OriginalText = secondText;
+                        lyricLine.TranslatedText = firstText;
+                    }
+                    else if (!firstHasChinese && secondHasChinese)
+                    {
+                        // 第一行不是中文，第二行是中文 → 第一行作为原文，第二行作为翻译
+                        lyricLine.OriginalText = firstText;
+                        lyricLine.TranslatedText = secondText;
+                    }
+                    else
+                    {
+                        // 其他情况保持原有逻辑
+                        lyricLine.OriginalText = firstText;
+                        lyricLine.TranslatedText = secondText;
+                    }
                 }
                 else
                 {
@@ -239,9 +262,32 @@ namespace MusicPlayer.Services
                         var parts = text.Split(new[] { separator }, 2);
                         if (parts.Length == 2)
                         {
-                            // 第一部分作为原文，第二部分作为翻译
-                            lyricLine.OriginalText = parts[0].Trim();
-                            lyricLine.TranslatedText = parts[1].Trim();
+                            var firstPart = parts[0].Trim();
+                            var secondPart = parts[1].Trim();
+                            
+                            // 检测语言类型
+                            var firstHasChinese = ContainsChineseChars(firstPart);
+                            var secondHasChinese = ContainsChineseChars(secondPart);
+                            
+                            // 智能判断原文和翻译
+                            if (firstHasChinese && !secondHasChinese)
+                            {
+                                // 第一部分是中文，第二部分不是中文 → 第二部分作为原文，第一部分作为翻译
+                                lyricLine.OriginalText = secondPart;
+                                lyricLine.TranslatedText = firstPart;
+                            }
+                            else if (!firstHasChinese && secondHasChinese)
+                            {
+                                // 第一部分不是中文，第二部分是中文 → 第一部分作为原文，第二部分作为翻译
+                                lyricLine.OriginalText = firstPart;
+                                lyricLine.TranslatedText = secondPart;
+                            }
+                            else
+                            {
+                                // 其他情况保持原有逻辑
+                                lyricLine.OriginalText = firstPart;
+                                lyricLine.TranslatedText = secondPart;
+                            }
                         }
                         else
                         {
@@ -261,6 +307,17 @@ namespace MusicPlayer.Services
             }
             
             return lyrics;
+        }
+
+        /// <summary>
+        /// 检测文本是否包含中文字符
+        /// </summary>
+        /// <param name="text">要检测的文本</param>
+        /// <returns>是否包含中文字符</returns>
+        private bool ContainsChineseChars(string text)
+        {
+            // 使用正则表达式检测中文字符（Unicode范围：\u4e00-\u9fa5）
+            return System.Text.RegularExpressions.Regex.IsMatch(text, "[\\u4e00-\\u9fa5]");
         }
 
         /// <summary>

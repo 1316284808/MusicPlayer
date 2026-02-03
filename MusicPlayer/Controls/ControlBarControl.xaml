@@ -174,8 +174,7 @@
                             <!-- 音量滑块控制 - 竖向 -->
                             <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" 
                            Orientation="Vertical" Height="120" Width="20"  
-                           Style="{StaticResource VerticalSliderStyle}" ToolTip="音量调节"
-                           />
+                           Style="{StaticResource VerticalSliderStyle}" ToolTip="音量调节"  />
                             <TextBlock Text="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
                              FontWeight="Bold"     FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
@@ -183,7 +182,9 @@
                             </Border>
                         </Popup>
                     <!-- 音量按钮 - icon视觉效果比较小，所以size给到18 -->
-                        <ui:Button  x:Name="VolumeButton" Grid.Row="1" Command="{Binding ToggleVolumePopupCommand}" ToolTip="音量控制"  >
+                        <ui:Button  x:Name="VolumeButton" Grid.Row="1" 
+                                    ToolTip="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
+                                    Command="{Binding ToggleVolumePopupCommand}"    >
                         <Helper:CustomIcon   IconSize="18">
                             <Helper:CustomIcon.Kind>
                                 <MultiBinding Converter="{StaticResource VolumeIconConverter}">
