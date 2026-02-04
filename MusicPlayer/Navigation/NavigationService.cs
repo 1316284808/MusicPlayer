@@ -36,20 +36,24 @@ namespace MusicPlayer.Navigation
             _mainFrame = frame as AnimatedFrame;
         }
 
+        // 当前活跃的页面实例
+        private System.Windows.Controls.Page? _currentPage;
+
         public void NavigateTo(string pageUri)
         {
             if (_mainFrame != null)
             {
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 开始导航到页面: {pageUri}");
                  
-                // 1. 清理导航历史记录（Frame内置的）
+                // 1. 强制清理当前页面资源
+                ForceCleanupCurrentPage();
+                
+                // 2. 清理导航历史记录（Frame内置的）
                 while (_mainFrame.CanGoBack)
                 {
                     _mainFrame.RemoveBackEntry();
                 }
                 
-                // 2. 清理当前页面资源
-                CleanupCurrentPage();
-
                 // 3. 更新导航历史
                 // 如果当前不是在列表末尾，截断列表（新导航会清除前进历史）
                 if (_currentIndex < _navigationHistory.Count - 1)
@@ -61,60 +65,67 @@ namespace MusicPlayer.Navigation
                 _currentIndex = _navigationHistory.Count - 1;
                 
                 // 4. 创建页面和对应的Transient ViewModel
+                System.Windows.Controls.Page? newPage = null;
+                
                 if (pageUri.Contains("PlaylistPage.xaml"))
                 {
                     // 获取Transient ViewModel
                     var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
-                    var playlistPage = new PlaylistPage(playlistViewModel);
-                    _mainFrame.Navigate(playlistPage);
+                    newPage = new PlaylistPage(playlistViewModel);
                 }
                 else if (pageUri.Contains("PlaylistDetailPage.xaml"))
                 {
                     var playlistDetailViewModel = _serviceProvider.GetRequiredService<IPlaylistDetailViewModel>();
-                    var playlistDetailPage = new PlaylistDetailPage(playlistDetailViewModel);
+                    newPage = new PlaylistDetailPage(playlistDetailViewModel);
                     // 将导航参数传递给ViewModel的Initialize方法
                     (playlistDetailViewModel as MusicPlayer.ViewModels.PlaylistDetailViewModel)?.Initialize(_currentPlaylistDetailParams);
-                    _mainFrame.Navigate(playlistDetailPage);
                     // 清空导航参数，避免影响下次导航
                     _currentPlaylistDetailParams = null;
                 }
                 else if (pageUri.Contains("SettingsPage.xaml"))
                 {
                     var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
-                    var settingsPage = new SettingsPage(settingsViewModel);
-                    _mainFrame.Navigate(settingsPage);
+                    newPage = new SettingsPage(settingsViewModel);
                 }
                 else if (pageUri.Contains("PlayerPage.xaml"))
                 {
                     var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
-                    var playerPage = new PlayerPage(centerContentViewModel);
-                    _mainFrame.Navigate(playerPage);
+                    newPage = new PlayerPage(centerContentViewModel);
                 }
                 else if (pageUri.Contains("AlbumPage.xaml"))
                 {
                     var albumViewModel = _serviceProvider.GetRequiredService<IAlbumViewModel>();
-                    var albumPage = new AlbumPage(albumViewModel);
+                    newPage = new AlbumPage(albumViewModel);
                     albumViewModel.Initialize();
-                    _mainFrame.Navigate(albumPage);
                 }
                 else if (pageUri.Contains("SingerPage.xaml"))
                 {
                     var singerViewModel = _serviceProvider.GetRequiredService<ISingerViewModel>();
-                    var singerPage = new SingerPage(singerViewModel);
+                    newPage = new SingerPage(singerViewModel);
                     singerViewModel.Initialize();
-                    _mainFrame.Navigate(singerPage);
                 }
                 else if (pageUri.Contains("HeartPage.xaml"))
                 {
                     var heartViewModel = _serviceProvider.GetRequiredService<IHeartViewModel>();
-                    var heartPage = new HeartPage(heartViewModel);
+                    newPage = new HeartPage(heartViewModel);
                     heartViewModel.Initialize();
-                    _mainFrame.Navigate(heartPage);
+                }
+                
+                // 5. 执行导航
+                if (newPage != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"NavigationService: 导航到新页面: {newPage.GetType().Name}");
+                    _mainFrame.Navigate(newPage);
+                    // 更新当前页面引用
+                    _currentPage = newPage;
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine($"NavigationService: 通过URI导航: {pageUri}");
                     _mainFrame.Navigate(new Uri(pageUri, UriKind.Relative));
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 导航完成到页面: {pageUri}");
             }
         }
 
@@ -144,65 +155,115 @@ namespace MusicPlayer.Navigation
         public void NavigateToPlaylistDetail() => NavigateToPlaylistDetail(null);
 
 
+        /// <summary>
+        /// 强制清理当前页面资源
+        /// </summary>
+        private void ForceCleanupCurrentPage()
+        {
+            System.Diagnostics.Debug.WriteLine("NavigationService: 开始执行ForceCleanupCurrentPage方法");
+            
+            // 清理_currentPage引用的页面
+            if (_currentPage != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 清理当前活跃页面: {_currentPage.GetType().Name}");
+                
+                try
+                {
+                    // 强制释放页面资源
+                    if (_currentPage is IDisposable disposablePage)
+                    {
+                        disposablePage.Dispose();
+                        System.Diagnostics.Debug.WriteLine($"NavigationService: 已释放页面: {_currentPage.GetType().Name}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"NavigationService: 清理页面时出错: {ex.Message}");
+                }
+                finally
+                {
+                    _currentPage = null;
+                }
+            }
+            
+            // 清理Frame中的当前内容
+            if (_mainFrame != null && _mainFrame.Content != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 清理Frame中的当前内容");
+                CleanupCurrentPage();
+            }
+            
+            System.Diagnostics.Debug.WriteLine("NavigationService: ForceCleanupCurrentPage方法执行完成");
+        }
+
         public bool CanGoBack() => _currentIndex > 0;
         public void GoBack()
         {
             if (_mainFrame != null && CanGoBack())
             {
-                // 清理当前页面资源
-                CleanupCurrentPage();
+                System.Diagnostics.Debug.WriteLine("NavigationService: 开始执行GoBack方法");
+                
+                // 强制清理当前页面资源
+                ForceCleanupCurrentPage();
                 
                 // 移动到上一页
                 _currentIndex--;
                 string previousPage = _navigationHistory[_currentIndex];
                 
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 导航到上一页: {previousPage}");
+                
                 // 根据上一页URI导航
+                System.Windows.Controls.Page? newPage = null;
+                
                 if (previousPage.Contains("PlaylistPage.xaml"))
                 {
                     var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
-                    var playlistPage = new PlaylistPage(playlistViewModel);
-                    _mainFrame.Navigate(playlistPage);
+                    newPage = new PlaylistPage(playlistViewModel);
                 }
                 else if (previousPage.Contains("PlaylistDetailPage.xaml"))
                 {
                     var playlistDetailViewModel = _serviceProvider.GetRequiredService<IPlaylistDetailViewModel>();
-                    var playlistDetailPage = new PlaylistDetailPage(playlistDetailViewModel);
+                    newPage = new PlaylistDetailPage(playlistDetailViewModel);
                     playlistDetailViewModel.Initialize();
-                    _mainFrame.Navigate(playlistDetailPage);
                 }
                 else if (previousPage.Contains("SettingsPage.xaml"))
                 {
                     var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
-                    var settingsPage = new SettingsPage(settingsViewModel);
-                    _mainFrame.Navigate(settingsPage);
+                    newPage = new SettingsPage(settingsViewModel);
                 }
                 else if (previousPage.Contains("PlayerPage.xaml"))
                 {
                     var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
-                    var playerPage = new PlayerPage(centerContentViewModel);
-                    _mainFrame.Navigate(playerPage);
+                    newPage = new PlayerPage(centerContentViewModel);
                 }
                 else if (previousPage.Contains("AlbumPage.xaml"))
                 {
                     var albumViewModel = _serviceProvider.GetRequiredService<IAlbumViewModel>();
-                    var albumPage = new AlbumPage(albumViewModel);
+                    newPage = new AlbumPage(albumViewModel);
                     albumViewModel.Initialize();
-                    _mainFrame.Navigate(albumPage);
                 }
                 else if (previousPage.Contains("SingerPage.xaml"))
                 {
                     var singerViewModel = _serviceProvider.GetRequiredService<ISingerViewModel>();
-                    var singerPage = new SingerPage(singerViewModel);
+                    newPage = new SingerPage(singerViewModel);
                     singerViewModel.Initialize();
-                    _mainFrame.Navigate(singerPage);
                 }
                 else if (previousPage.Contains("HeartPage.xaml"))
                 {
                     var heartViewModel = _serviceProvider.GetRequiredService<IHeartViewModel>();
-                    var heartPage = new HeartPage(heartViewModel);
+                    newPage = new HeartPage(heartViewModel);
                     heartViewModel.Initialize();
-                    _mainFrame.Navigate(heartPage);
                 }
+                
+                // 执行导航
+                if (newPage != null)
+                {
+                    _mainFrame.Navigate(newPage);
+                    // 更新当前页面引用
+                    _currentPage = newPage;
+                }
+                
+                System.Diagnostics.Debug.WriteLine("NavigationService: GoBack方法执行完成");
             }
         }
 
@@ -283,67 +344,84 @@ namespace MusicPlayer.Navigation
             {
                 // 获取当前页面
                 var currentPage = _mainFrame.Content;
+                System.Diagnostics.Debug.WriteLine($"NavigationService: 开始清理页面资源: {currentPage.GetType().Name}");
 
                 // 1. 清理页面资源（如果页面实现了IDisposable）
-               
-
-                // 2. 清理ViewModel资源（如果页面有ViewModel并且实现了IViewModelLifecycle）
-            // 这里需要根据不同页面类型处理，因为每个页面的ViewModel属性名可能不同
-            if (currentPage is PlaylistPage playlistPage)
-            {
-                if (playlistPage.DataContext is MusicPlayer.ViewModels.ObservableObject homeViewModel)
-                {
-                    homeViewModel.Cleanup();
-                }
-            }
-            else if (currentPage is PlaylistDetailPage playlistDetailPage)
-            {
-                if (playlistDetailPage.DataContext is MusicPlayer.ViewModels.ObservableObject playlistDetailViewModel)
-                {
-                    playlistDetailViewModel.Cleanup();
-                }
-            }
-            else if (currentPage is SettingsPage settingsPage)
-            {
-                if (settingsPage.DataContext is MusicPlayer.ViewModels.ObservableObject settingsViewModel)
-                {
-                    settingsViewModel.Cleanup();
-                }
-            }
-           
-            else if (currentPage is AlbumPage albumPage)
-            {
-                if (albumPage.DataContext is MusicPlayer.ViewModels.ObservableObject albumViewModel)
-                {
-                    albumViewModel.Cleanup();
-                }
-            }
-            else if (currentPage is SingerPage singerPage)
-            {
-                if (singerPage.DataContext is MusicPlayer.ViewModels.ObservableObject singerViewModel)
-                {
-                    singerViewModel.Cleanup();
-                }
-            }
-            else if (currentPage is HeartPage heartPage)
-            {
-                if (heartPage.DataContext is MusicPlayer.ViewModels.ObservableObject heartViewModel)
-                {
-                        
-                    heartViewModel.Cleanup();
-                }
-            }
                 if (currentPage is IDisposable disposablePage)
                 {
                     disposablePage.Dispose();
+                    System.Diagnostics.Debug.WriteLine($"NavigationService: 已释放页面资源: {currentPage.GetType().Name}");
                 }
-                // 3. 重置页面引用
+
+                // 2. 清理ViewModel资源（如果页面有ViewModel并且实现了IViewModelLifecycle）
+                // 这里需要根据不同页面类型处理，因为每个页面的ViewModel属性名可能不同
+                if (currentPage is PlaylistPage playlistPage)
+                {
+                    if (playlistPage.DataContext is MusicPlayer.ViewModels.ObservableObject homeViewModel)
+                    {
+                        homeViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理PlaylistPage的ViewModel");
+                    }
+                }
+                else if (currentPage is PlaylistDetailPage playlistDetailPage)
+                {
+                    if (playlistDetailPage.DataContext is MusicPlayer.ViewModels.ObservableObject playlistDetailViewModel)
+                    {
+                        playlistDetailViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理PlaylistDetailPage的ViewModel");
+                    }
+                }
+                else if (currentPage is SettingsPage settingsPage)
+                {
+                    if (settingsPage.DataContext is MusicPlayer.ViewModels.ObservableObject settingsViewModel)
+                    {
+                        settingsViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理SettingsPage的ViewModel");
+                    }
+                }
+                else if (currentPage is PlayerPage playerPage)
+                {
+                    if (playerPage.DataContext is MusicPlayer.ViewModels.ObservableObject playerViewModel)
+                    {
+                        playerViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理PlayerPage的ViewModel");
+                    }
+                }
+                else if (currentPage is AlbumPage albumPage)
+                {
+                    if (albumPage.DataContext is MusicPlayer.ViewModels.ObservableObject albumViewModel)
+                    {
+                        albumViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理AlbumPage的ViewModel");
+                    }
+                }
+                else if (currentPage is SingerPage singerPage)
+                {
+                    if (singerPage.DataContext is MusicPlayer.ViewModels.ObservableObject singerViewModel)
+                    {
+                        singerViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理SingerPage的ViewModel");
+                    }
+                }
+                else if (currentPage is HeartPage heartPage)
+                {
+                    if (heartPage.DataContext is MusicPlayer.ViewModels.ObservableObject heartViewModel)
+                    {
+                        heartViewModel.Cleanup();
+                        System.Diagnostics.Debug.WriteLine("NavigationService: 已清理HeartPage的ViewModel");
+                    }
+                }
                 
+                // 3. 重置页面引用
+                System.Diagnostics.Debug.WriteLine("NavigationService: 重置Frame的Content");
                 _mainFrame.Content = null;
                 
                 // 4. 强制垃圾回收
+                System.Diagnostics.Debug.WriteLine("NavigationService: 执行垃圾回收");
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
+                
+                System.Diagnostics.Debug.WriteLine("NavigationService: 页面资源清理完成");
             }
             catch (Exception ex)
             {

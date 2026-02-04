@@ -691,6 +691,34 @@ namespace MusicPlayer.ViewModels
             {
                 _configurationService.ConfigurationChanged -= OnConfigurationChanged;
             }
+            
+            // 清理集合资源
+            try
+            {
+                // 清空过滤后的播放列表
+                if (_filteredPlaylist != null)
+                {
+                    _filteredPlaylist.Clear();
+                }
+                
+                // 清空所有播放列表
+                if (_allPlaylists != null)
+                {
+                    _allPlaylists.Clear();
+                }
+                
+                // 清空排序选项
+                if (SortOptions != null)
+                {
+                    SortOptions.Clear();
+                }
+                
+                System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 已清理所有集合资源");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 清理集合资源时出错: {ex.Message}");
+            }
         }
 
         /// <summary>

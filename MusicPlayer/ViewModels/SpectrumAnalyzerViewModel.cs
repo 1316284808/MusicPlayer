@@ -19,7 +19,7 @@ namespace MusicPlayer.ViewModels
         private readonly IMessagingService _messagingService;
         private bool _disposed = false;
         private bool _isWindowMaximized = false;
-        private static readonly object _lockObject = new object(); // 用于线程同步
+        private readonly object _lockObject = new object(); // 用于线程同步
 
         /// <summary>
         /// 音频频谱数据 - 使用ObservableCollection确保实时更新

@@ -520,6 +520,8 @@
                             CornerRadius="8">
                         <ContentPresenter x:Name="Content" 
                                           Margin="10"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"
                                           ContentSource="Header" 
                                           RecognizesAccessKey="True" />
                     </Border>

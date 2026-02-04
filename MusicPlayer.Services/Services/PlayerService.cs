@@ -298,6 +298,54 @@ namespace MusicPlayer.Services
                     
                     System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 资源释放完成");
                 }
+                
+                // 清理_currentlyLoadedSong的资源
+                if (_currentlyLoadedSong != null && _currentlyLoadedSong != song)
+                {
+                    System.Diagnostics.Debug.WriteLine($"开始释放_currentlyLoadedSong {_currentlyLoadedSong.Title} 的资源");
+                    
+                    // 释放旧歌曲的高清封面资源
+                    if (_currentlyLoadedSong.OriginalAlbumArt != null)
+                    {
+                        try
+                        {
+                            _currentlyLoadedSong.OriginalAlbumArt.Freeze();
+                            _currentlyLoadedSong.OriginalAlbumArt = null;
+                            System.Diagnostics.Debug.WriteLine("已释放_currentlyLoadedSong高清封面资源");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"释放_currentlyLoadedSong高清封面资源时出错: {ex.Message}");
+                            _currentlyLoadedSong.OriginalAlbumArt = null;
+                        }
+                    }
+                    
+                    // 释放旧歌曲的缩略图资源
+                    if (_currentlyLoadedSong.AlbumArt != null)
+                    {
+                        try
+                        {
+                            _currentlyLoadedSong.AlbumArt.Freeze();
+                            _currentlyLoadedSong.AlbumArt = null;
+                            System.Diagnostics.Debug.WriteLine("已释放_currentlyLoadedSong缩略图资源");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"释放_currentlyLoadedSong缩略图资源时出错: {ex.Message}");
+                            _currentlyLoadedSong.AlbumArt = null;
+                        }
+                    }
+                    
+                    // 清空其他可能占用内存的属性
+                    _currentlyLoadedSong.Title = string.Empty;
+                    _currentlyLoadedSong.Artist = string.Empty;
+                    _currentlyLoadedSong.Album = string.Empty;
+                    _currentlyLoadedSong.FilePath = string.Empty;
+                    _currentlyLoadedSong.Id = 0;
+                    
+                    System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 资源释放完成");
+                    _currentlyLoadedSong = null;
+                }
 
                 // 完全停止并清理当前音频资源
                 StopAudio();
@@ -537,8 +585,16 @@ namespace MusicPlayer.Services
             // 安全地停止和释放音频设备
             try
             {
+                if (_waveOut != null)
+                {
+                    // 停止播放
+                    _waveOut.Stop();
+                    // 释放资源
+                    _waveOut.Dispose();
+                    _waveOut = null;
+                }
+                
                 _audioEngineManager.Dispose();
-                _waveOut = null;
             }
             catch (Exception ex)
             {
@@ -723,7 +779,8 @@ namespace MusicPlayer.Services
                 _waveOut.Volume = _playerStateService.IsMuted ? 0.0f : _playerStateService.Volume;
 
                 // ===== 核心修复：绑定播放停止事件，监听设备断开/播放异常 =====
-                _waveOut.PlaybackStopped += (sender, e) =>
+                EventHandler<StoppedEventArgs> onPlaybackStoppedHandler = null;
+                onPlaybackStoppedHandler = (sender, e) =>
                 {
                     // 播放停止的原因是【设备异常/设备断开】，且当前有正在播放的音频流
                     if (e.Exception != null && audioStream != null)
@@ -731,11 +788,18 @@ namespace MusicPlayer.Services
                         System.Diagnostics.Debug.WriteLine($"WASAPI播放中断：{e.Exception.Message}，原因：设备断开/异常，正在自动恢复播放...");
                         // 关键：重新初始化WASAPI，自动获取新的默认设备（扬声器）
 
+                        // 先取消订阅当前事件，避免循环引用
+                        if (sender is IWavePlayer waveOutSender)
+                        {
+                            waveOutSender.PlaybackStopped -= onPlaybackStoppedHandler;
+                        }
+
                         InitializeWasapiDevice(audioStream);
                         // 恢复播放
                         _waveOut?.Play();
                     }
                 };
+                _waveOut.PlaybackStopped += onPlaybackStoppedHandler;
 
                 // 检查音频流类型并初始化
                 if (audioStream is WaveStream waveStream)
@@ -890,6 +954,7 @@ namespace MusicPlayer.Services
         
         /// <summary>
         /// 更新频谱数据 - 对象池减少GC压力
+        /// 关键修复：确保缓冲区被复用，避免重复分配
         /// </summary>
         private void UpdateSpectrumData()
         {
@@ -899,11 +964,20 @@ namespace MusicPlayer.Services
                 {
                     lock (_spectrumLock)
                     {
-                        // 初始化缓冲区（如果需要）
-                        if (_spectrumDataBuffer == null)
+                        // 关键修复：只在缓冲区为null或长度不匹配时才重新分配
+                        if (_spectrumDataBuffer == null || _spectrumDataBuffer.Length != _spectrumDataLength)
                         {
+                            // 释放旧缓冲区（如果存在）
+                            if (_spectrumDataBuffer != null)
+                            {
+                                _spectrumDataBuffer = null;
+                            }
                             _spectrumDataBuffer = new float[_spectrumDataLength];
                         }
+                        
+                        // 清空旧数据，避免残留
+                        Array.Clear(_spectrumDataBuffer, 0, _spectrumDataBuffer.Length);
+                        
                         _spectrumAnalyzer.CopySpectrumTo(_spectrumDataBuffer);
                         _playerStateService.UpdateSpectrumData(_spectrumDataBuffer);
                     }

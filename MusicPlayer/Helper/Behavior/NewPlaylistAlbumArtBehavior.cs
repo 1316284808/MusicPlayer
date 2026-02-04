@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -389,8 +390,8 @@ namespace MusicPlayer.Helper
             }
         }
 
-        // 为每个UI元素存储独立的状态信息
-        private static readonly Dictionary<object, BehaviorState> _elementStates = new();
+        // 使用ConditionalWeakTable替代Dictionary，防止内存泄漏
+        private static readonly ConditionalWeakTable<object, BehaviorState> _elementStates = new();
         
         // 状态类，存储每个UI元素的独立状态
         private class BehaviorState
@@ -408,12 +409,7 @@ namespace MusicPlayer.Helper
         /// </summary>
         private static BehaviorState GetOrCreateElementState(object element)
         {
-            if (!_elementStates.TryGetValue(element, out var state))
-            {
-                state = new BehaviorState();
-                _elementStates[element] = state;
-            }
-            return state;
+            return _elementStates.GetValue(element, _ => new BehaviorState());
         }
         
         private static void OnScrollChanged(object sender, ScrollChangedEventArgs e)

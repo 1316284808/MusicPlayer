@@ -55,28 +55,50 @@ namespace MusicPlayer.Page
                 return;
             }
             
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 开始执行Dispose方法");
+            
             // 取消Unloaded事件订阅
             Unloaded -= PlayerPage_Unloaded;
+            
+            // 清空CenterContentControl的DataContext
+            if (CenterContentControl != null)
+            {
+                System.Diagnostics.Debug.WriteLine("PlayerPage: 清空CenterContentControl的DataContext");
+                CenterContentControl.DataContext = null;
+            }
             
             // 释放ViewModel
             if (_centerContentViewModel is IDisposable disposableVm)
             {
+                System.Diagnostics.Debug.WriteLine("PlayerPage: 释放ViewModel资源");
                 disposableVm.Dispose();
+                // 注意：_centerContentViewModel是只读字段，不能设置为null
+                // 但Dispose方法会释放其内部资源
             }
             
             // 释放CenterContentControl资源
             if (CenterContentControl != null)
             {
+                System.Diagnostics.Debug.WriteLine("PlayerPage: 释放CenterContentControl资源");
                 CenterContentControl.Dispose();
             }
             
             // 清空DataContext，解除Page对ViewModel的强引用
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 清空Page的DataContext");
             this.DataContext = null;
             
             // 清空页面内容，释放UI资源
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 清空页面内容");
             this.Content = null;
             
+            // 强制垃圾回收，尝试回收释放的资源
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 执行垃圾回收");
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 垃圾回收完成");
+            
             _disposed = true;
+            System.Diagnostics.Debug.WriteLine("PlayerPage: Dispose方法执行完成");
         }
     }
 }

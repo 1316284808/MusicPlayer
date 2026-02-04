@@ -104,5 +104,24 @@ namespace MusicPlayer.Core.Models
                     return Duration.ToString(@"mm\:ss");
             }
         }
+        
+        /// <summary>
+        /// 清理Song对象中的资源，特别是BitmapImage资源
+        /// </summary>
+        public void Cleanup()
+        {
+            try
+            {
+                // 释放BitmapImage资源
+                AlbumArt = null;
+                OriginalAlbumArt = null;
+                
+                System.Diagnostics.Debug.WriteLine($"Song: 已清理资源，歌曲: {Title}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Song: 清理资源失败: {ex.Message}");
+            }
+        }
     }
 }

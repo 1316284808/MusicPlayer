@@ -33,6 +33,7 @@ namespace MusicPlayer.ViewModels
         private bool _areAllButtonsVisible = true; // 控制所有按钮的可见性
         private double _buttonsOpacity = 1.0; // 控制所有按钮的透明度
         private System.Timers.Timer _hideButtonsTimer; // 隐藏按钮的计时器
+        private bool _isNavigationFromSync = false; // 标记导航是否来自状态同步
         
         // 导航项集合
         private ObservableCollection<NavigationItem> _navigationItems;
@@ -67,7 +68,7 @@ namespace MusicPlayer.ViewModels
                     _selectedNavigationItem = value;
                     OnPropertyChanged(nameof(SelectedNavigationItem));
                     // 当选中项变化时，执行导航
-                    if (_selectedNavigationItem != null)
+                    if (_selectedNavigationItem != null && !_isNavigationFromSync)
                     {
                         ExecuteNavigate(_selectedNavigationItem);
                     }
@@ -295,6 +296,51 @@ namespace MusicPlayer.ViewModels
         {
             // 可以在这里添加导航完成后的处理逻辑
             System.Diagnostics.Debug.WriteLine($"SettingsBarViewModel: 导航完成，目标页面: {message.Value}");
+            
+            // 标记为来自状态同步的导航
+            _isNavigationFromSync = true;
+            
+            try
+            {
+                // 当导航到PlayerPage或PlaylistDetailPage时，清除选中状态
+                if (message.Value == typeof(PlayerPage) || message.Value == typeof(PlaylistDetailPage))
+                {
+                    SelectedNavigationItem = null;
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 清除导航项选中状态");
+                }
+                // 当导航到SettingsBarViewModel中定义的导航项对应的页面时，设置对应的SelectedNavigationItem
+                else if (message.Value == typeof(PlaylistPage))
+                {
+                    SelectedNavigationItem = NavigationItems.FirstOrDefault(item => item.Page == PageEnums.PlaylistPage);
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 设置导航项选中状态为全部歌曲");
+                }
+                else if (message.Value == typeof(HeartPage))
+                {
+                    SelectedNavigationItem = NavigationItems.FirstOrDefault(item => item.Page == PageEnums.HeartPage);
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 设置导航项选中状态为音乐库");
+                }
+                else if (message.Value == typeof(SingerPage))
+                {
+                    SelectedNavigationItem = NavigationItems.FirstOrDefault(item => item.Page == PageEnums.SingerPage);
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 设置导航项选中状态为歌手列表");
+                }
+                else if (message.Value == typeof(AlbumPage))
+                {
+                    SelectedNavigationItem = NavigationItems.FirstOrDefault(item => item.Page == PageEnums.AlbumPage);
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 设置导航项选中状态为专辑列表");
+                }
+                else if (message.Value == typeof(SettingsPage))
+                {
+                    SelectedNavigationItem = NavigationItems.FirstOrDefault(item => item.Page == PageEnums.SettingsPage);
+                    System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 设置导航项选中状态为设置");
+                }
+            }
+            finally
+            {
+                // 无论如何，最终都要将标志重置为false
+                _isNavigationFromSync = false;
+                System.Diagnostics.Debug.WriteLine("SettingsBarViewModel: 重置导航同步标志");
+            }
         }
 
         /// <summary>

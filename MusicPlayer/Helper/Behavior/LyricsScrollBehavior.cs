@@ -220,6 +220,9 @@ namespace MusicPlayer.Helper
             }
         }
 
+        // 静态字典存储每个ListBox对应的Timer，避免重复创建和内存泄漏
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ListBox, System.Windows.Threading.DispatcherTimer> _manualScrollTimers = new();
+
         private static void OnScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             // 检测手动滚动
@@ -231,17 +234,45 @@ namespace MusicPlayer.Helper
                 {
                     SetIsManualScrolling(listBox, true);
                     
-                    // 1.5秒后重置手动滚动状态
+                    // 检查是否已存在Timer，如果存在则停止并释放
+                    if (_manualScrollTimers.TryGetValue(listBox, out var existingTimer))
+                    {
+                        existingTimer.Stop();
+                        existingTimer.Tick -= OnManualScrollTimerTick;
+                        _manualScrollTimers.Remove(listBox);
+                    }
+                    
+                    // 创建新的Timer并存储到ConditionalWeakTable
                     var timer = new System.Windows.Threading.DispatcherTimer
                     {
                         Interval = TimeSpan.FromSeconds(1.5)
                     };
-                    timer.Tick += (s, args) =>
-                    {
-                        SetIsManualScrolling(listBox, false);
-                        timer.Stop();
-                    };
+                    
+                    // 使用Tag存储listBox引用，避免闭包捕获
+                    timer.Tag = listBox;
+                    timer.Tick += OnManualScrollTimerTick;
+                    
+                    _manualScrollTimers.Add(listBox, timer);
                     timer.Start();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 手动滚动Timer的Tick事件处理
+        /// </summary>
+        private static void OnManualScrollTimerTick(object? sender, EventArgs e)
+        {
+            if (sender is System.Windows.Threading.DispatcherTimer timer)
+            {
+                timer.Stop();
+                timer.Tick -= OnManualScrollTimerTick;
+                
+                // 从Tag获取ListBox引用
+                if (timer.Tag is ListBox listBox)
+                {
+                    SetIsManualScrolling(listBox, false);
+                    _manualScrollTimers.Remove(listBox);
                 }
             }
         }

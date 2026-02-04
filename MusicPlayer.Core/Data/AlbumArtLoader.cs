@@ -320,6 +320,25 @@ namespace MusicPlayer.Core.Data
         {
             try
             {
+                // 检查原始图像是否为空
+                if (originalImage == null)
+                {
+                    return null;
+                }
+                
+                // 检查目标尺寸是否有效
+                if (targetWidth <= 0 || targetHeight <= 0)
+                {
+                    return null;
+                }
+                
+                // 检查目标尺寸是否与原始图像尺寸相同，如果相同，直接返回原始图像的副本
+                if (Math.Abs(originalImage.Width - targetWidth) < 0.1 && Math.Abs(originalImage.Height - targetHeight) < 0.1)
+                {
+                    // 创建原始图像的副本
+                    return LoadBitmapFromBytes(ConvertBitmapImageToBytes(originalImage));
+                }
+                
                 // 创建DrawingVisual用于绘制缩放裁切后的图像
                 DrawingVisual drawingVisual = new DrawingVisual();
                 using (DrawingContext drawingContext = drawingVisual.RenderOpen())
@@ -376,6 +395,24 @@ namespace MusicPlayer.Core.Data
             {
                 System.Diagnostics.Debug.WriteLine($"AlbumArtLoader: 缩放裁切图像失败: {ex.Message}");
                 return null;
+            }
+        }
+        
+        // 将BitmapImage转换为字节数组
+        private static byte[] ConvertBitmapImageToBytes(BitmapImage bitmapImage)
+        {
+            try
+            {
+                using MemoryStream memoryStream = new MemoryStream();
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmapImage));
+                encoder.Save(memoryStream);
+                return memoryStream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AlbumArtLoader: 将BitmapImage转换为字节数组失败: {ex.Message}");
+                return Array.Empty<byte>();
             }
         }
     }

@@ -163,12 +163,66 @@ namespace MusicPlayer.ViewModels
             {
                 if (_currentSong != value)
                 {
-                    _currentSong = value;
+                    // 清理旧歌曲的资源
+                    CleanupOldSongResources(_currentSong);
+                    
+                    // 先将CurrentSong设置为null，触发UI更新，清空封面
+                    _currentSong = null;
                     OnPropertyChanged(nameof(CurrentSong));
+                    
+                    // 清空ViewModel中的封面资源
+                    CurrentSongAlbumArt = null;
+                    CurrentSongOriginalAlbumArt = null;
+                    
+                    // 强制UI更新
+                    OnPropertyChanged(nameof(CurrentSongAlbumArt));
+                    OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
+                    
+                    // 延迟设置新歌曲，确保UI有足够时间更新
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => 
+                    {
+                        try
+                        {
+                            _currentSong = value;
+                            OnPropertyChanged(nameof(CurrentSong));
 
-                    // 更新缓存的歌曲信息属性
-                    UpdateSongProperties();
+                            // 更新缓存的歌曲信息属性
+                            UpdateSongProperties();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 设置新歌曲失败: {ex.Message}");
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Background);
                 }
+            }
+        }
+        
+        /// <summary>
+        /// 清理旧歌曲的BitmapImage资源
+        /// </summary>
+        /// <param name="oldSong">旧歌曲对象</param>
+        private void CleanupOldSongResources(Core.Models.Song? oldSong)
+        {
+            try
+            {
+                if (oldSong != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理旧歌曲资源 - {oldSong.Title}");
+                    
+                    // 清理旧歌曲的BitmapImage资源
+                    oldSong.Cleanup();
+                    
+                    // 清理ViewModel中的BitmapImage资源
+                    CurrentSongAlbumArt = null;
+                    CurrentSongOriginalAlbumArt = null;
+                    
+                    System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 旧歌曲资源清理完成");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理旧歌曲资源失败: {ex.Message}");
             }
         }
 
@@ -205,26 +259,67 @@ namespace MusicPlayer.ViewModels
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 开始加载专辑封面 - {song.Title}");
+                
                 await Task.Run(async () => 
                 {
-                    var albumArt = await AlbumArtLoader.LoadAlbumArtAsync(song.FilePath);
-                    var originalAlbumArt = await AlbumArtLoader.LoadAlbumArtAsync(song.FilePath);
+                    BitmapImage? albumArt = null;
+                    BitmapImage? originalAlbumArt = null;
+                    
+                    try
+                    {
+                        // 关键修复：只加载一次封面，然后复用引用
+                        albumArt = await AlbumArtLoader.LoadAlbumArtAsync(song.FilePath);
+                        
+                        // 如果加载失败，使用默认封面
+                        if (albumArt == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 封面加载失败，使用默认封面 - {song.Title}");
+                            albumArt = await AlbumArtLoader.GetDefaultAlbumArtAsync();
+                        }
+                        
+                        // 复用同一个BitmapImage引用，避免重复加载占用双倍内存
+                        originalAlbumArt = albumArt;
+                    }
+                    catch (Exception loadEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 加载封面失败: {loadEx.Message}");
+                        // 使用默认封面
+                        albumArt = await AlbumArtLoader.GetDefaultAlbumArtAsync();
+                        originalAlbumArt = albumArt;
+                    }
                     
                     // 在UI线程更新封面
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
                     {
-                        if (song != null)
+                        try
                         {
-                            song.AlbumArt = albumArt;
-                            song.OriginalAlbumArt = originalAlbumArt;
-                            
-                            // 如果当前歌曲还是这首歌，更新ViewModel的封面属性
-                            if (CurrentSong == song)
+                            if (song != null && CurrentSong == song)
                             {
+                                // 更新歌曲对象的封面
+                                song.AlbumArt = albumArt;
+                                song.OriginalAlbumArt = originalAlbumArt;
+                                
+                                // 更新ViewModel的封面属性
                                 CurrentSongAlbumArt = albumArt;
                                 CurrentSongOriginalAlbumArt = originalAlbumArt;
-                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面完成");
+                                
+                                // 触发属性变更通知
+                                OnPropertyChanged(nameof(CurrentSongAlbumArt));
+                                OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
+                                
+                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面完成 - {song.Title}");
                             }
+                            else
+                            {
+                                // 如果歌曲已不再是当前歌曲，释放资源
+                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 歌曲已变更，放弃封面更新");
+                                // BitmapImage将在GC时被回收
+                            }
+                        }
+                        catch (Exception uiEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 更新封面UI失败: {uiEx.Message}");
                         }
                     });
                 });
@@ -232,6 +327,26 @@ namespace MusicPlayer.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面失败: {ex.Message}");
+                
+                // 加载失败时使用默认封面
+                try
+                {
+                    var defaultAlbumArt = await AlbumArtLoader.GetDefaultAlbumArtAsync();
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                    {
+                        if (CurrentSong == song)
+                        {
+                            CurrentSongAlbumArt = defaultAlbumArt;
+                            CurrentSongOriginalAlbumArt = defaultAlbumArt;
+                            OnPropertyChanged(nameof(CurrentSongAlbumArt));
+                            OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
+                        }
+                    });
+                }
+                catch (Exception defaultEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 加载默认封面失败: {defaultEx.Message}");
+                }
             }
         }
 
@@ -739,17 +854,25 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public void SetLyrics(ObservableCollection<Core.Models.LyricLine> lyrics)
         {
-            Lyrics.Clear();
+            // 关键修复：先深度清理旧歌词数据，断开所有引用关系
+            DeepCleanupLyrics();
+            
+            // 使用新的歌词集合，避免复用旧的ObservableCollection
+            var newLyrics = new ObservableCollection<Core.Models.LyricLine>();
+            
             foreach (var lyric in lyrics)
             {
-                // 同步歌词显示设置
+                // 同步歌词显示设置（值类型复制，不建立引用关系）
                 lyric.LyricFontSize = LyricFontSize;
                 lyric.SelectedLyricFontSize = SelectedLyricFontSize;
                 lyric.LyricTextAlignment = LyricTextAlignment;
                 lyric.IsLyricTranslationEnabled = IsLyricTranslationEnabled;
                 
-                Lyrics.Add(lyric);
+                newLyrics.Add(lyric);
             }
+            
+            // 替换整个集合，确保旧集合可以被GC回收
+            _lyrics = newLyrics;
 
             // 通知歌词已更新，触发滚动重置
             OnPropertyChanged(nameof(Lyrics));
@@ -764,14 +887,56 @@ namespace MusicPlayer.ViewModels
                 CurrentLyricLine = null;
             }
         }
+        
+        /// <summary>
+        /// 深度清理歌词集合，断开所有引用关系
+        /// </summary>
+        private void DeepCleanupLyrics()
+        {
+            if (_lyrics == null || _lyrics.Count == 0)
+                return;
+                
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 开始深度清理 {Lyrics.Count} 行歌词");
+            
+            // 重置每行歌词的状态，断开与UI的绑定关系
+            foreach (var lyric in _lyrics)
+            {
+                try
+                {
+                    // 重置所有可绑定的属性为默认值
+                    lyric.Progress = 0;
+                    // 注意：不要清空OriginalText和TranslatedText，因为它们是歌词内容
+                    // 这些属性会在新歌曲加载时被覆盖
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理歌词行时出错: {ex.Message}");
+                }
+            }
+            
+            // 清空集合
+            _lyrics.Clear();
+            
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 歌词集合深度清理完成");
+        }
 
         /// <summary>
         /// 清空歌词
         /// </summary>
         public void ClearLyrics()
         {
-            Lyrics.Clear();
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始清空歌词");
+            
+            // 关键修复：先深度清理，断开所有绑定引用
+            DeepCleanupLyrics();
+            
+            // 创建新的集合替换旧集合，确保旧集合可以被GC回收
+            _lyrics = new ObservableCollection<Core.Models.LyricLine>();
+            OnPropertyChanged(nameof(Lyrics));
+            
             CurrentLyricLine = null;
+            
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 歌词已清空");
         }
         
         /// <summary>
@@ -811,8 +976,14 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Cleanup()
         {
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始执行Cleanup方法");
+            
+            // 关键修复：先深度清理歌词，断开所有绑定引用
+            DeepCleanupLyrics();
+            
             // 取消注册所有消息处理器
             _messagingService.Unregister(this);
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已取消所有消息注册");
             
             // 停止并释放计时器
             if (_hideSettingsTimer != null)
@@ -821,6 +992,7 @@ namespace MusicPlayer.ViewModels
                 _hideSettingsTimer.Elapsed -= HideSettingsTimer_Elapsed;
                 _hideSettingsTimer.Dispose();
                 _hideSettingsTimer = null;
+                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已释放计时器");
             }
             
             // 清理歌词数据
@@ -829,6 +1001,61 @@ namespace MusicPlayer.ViewModels
             // 清理播放列表集合
             PlayedLyrics.Clear();
             UnplayedLyrics.Clear();
+            
+            // 清理当前歌曲引用
+            _currentSong = null;
+            CurrentLyricLine = null;
+            
+            // 清理BitmapImage资源
+            CleanupBitmapResources();
+            
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: Cleanup方法执行完成");
+        }
+        
+        /// <summary>
+        /// 清理BitmapImage资源
+        /// </summary>
+        private void CleanupBitmapResources()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始清理BitmapImage资源");
+                
+                // 清空ViewModel中的封面资源
+                if (CurrentSongAlbumArt != null)
+                {
+                    CurrentSongAlbumArt = null;
+                    System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已清空CurrentSongAlbumArt");
+                }
+                
+                if (CurrentSongOriginalAlbumArt != null)
+                {
+                    CurrentSongOriginalAlbumArt = null;
+                    System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已清空CurrentSongOriginalAlbumArt");
+                }
+                
+                // 触发属性变更通知
+                OnPropertyChanged(nameof(CurrentSongAlbumArt));
+                OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
+                
+                // 清理CurrentSong中的BitmapImage资源
+                if (_currentSong != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理CurrentSong资源 - {_currentSong.Title}");
+                    _currentSong.Cleanup();
+                }
+                
+                // 强制垃圾回收
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                
+                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已完成BitmapImage资源清理和垃圾回收");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理BitmapImage资源失败: {ex.Message}");
+            }
         }
     }
 }

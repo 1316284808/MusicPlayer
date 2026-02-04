@@ -15,7 +15,7 @@ namespace MusicPlayer.Controls
     /// 解决整句歌词换行后多行同步高亮的问题
     /// 优化：使用对象池减少内存分配
     /// </summary>
-    public partial class MultiLineLyricControl : UserControl
+    public partial class MultiLineLyricControl : UserControl, IDisposable
     {
         // 对象池：存储可重用的 HighlightTextBlock
         private readonly Queue<Helper.HighlightTextBlock> _textBlockPool = new Queue<Helper.HighlightTextBlock>();
@@ -42,6 +42,8 @@ namespace MusicPlayer.Controls
         {
             InitializeComponent();
             Unloaded += MultiLineLyricControl_Unloaded;
+            Loaded += MultiLineLyricControl_Loaded;
+            SizeChanged += MultiLineLyricControl_SizeChanged;
         }
         
         /// <summary>
@@ -107,6 +109,16 @@ namespace MusicPlayer.Controls
             }
             catch { }
         }
+        
+        /// <summary>
+        /// IDisposable接口实现 - 调用Cleanup清理资源
+        /// </summary>
+        public void Dispose()
+        {
+            Cleanup();
+            GC.SuppressFinalize(this);
+            System.Diagnostics.Debug.WriteLine("MultiLineLyricControl: Dispose被调用");
+        }
 
         private void MultiLineLyricControl_Unloaded(object sender, RoutedEventArgs e)
         {
@@ -134,7 +146,8 @@ namespace MusicPlayer.Controls
             if (_textBlockPool.Count > 0)
             {
                 textBlock = _textBlockPool.Dequeue();
-                // 确保从池中取出时重置高亮状态
+                // 确保从池中取出时重置高亮状态和效果
+                textBlock.ResetEffect();
                 textBlock.HighlightPos = 0;
                 textBlock.HighlightWidth = 0;
                 return textBlock;
@@ -156,16 +169,23 @@ namespace MusicPlayer.Controls
         {
             if (textBlock != null)
             {
-                // 重置状态
-                textBlock.Text = string.Empty;
-                textBlock.Opacity = 1.0;
-                
-                // 重置高亮相关属性，避免状态残留导致混色问题
-                textBlock.HighlightPos = 0;
-                textBlock.HighlightWidth = 0;
-                
-                // 归还到池中
-                _textBlockPool.Enqueue(textBlock);
+                try
+                {
+                    // 清理资源，避免内存泄漏
+                    textBlock.Cleanup();
+                    
+                    // 重置状态
+                    textBlock.Text = string.Empty;
+                    textBlock.Opacity = 1.0;
+                    
+                    // 重置高亮相关属性，避免状态残留导致混色问题
+                    textBlock.HighlightPos = 0;
+                    textBlock.HighlightWidth = 0;
+                    
+                    // 归还到池中
+                    _textBlockPool.Enqueue(textBlock);
+                }
+                catch { }
             }
         }
 
@@ -417,7 +437,8 @@ namespace MusicPlayer.Controls
                     {
                         string testLine = currentLine.Length > 0 ? currentLine + " " + word : word;
                         
-                        // 使用FormattedText精确测量宽度
+                        // 关键修复：FormattedText虽然没有实现IDisposable，但它是重量级的非托管资源
+                        // 通过尽快释放引用，让GC能及时回收
                         var formattedText = new FormattedText(
                             testLine,
                             CultureInfo.CurrentCulture,
@@ -448,6 +469,10 @@ namespace MusicPlayer.Controls
                             // 将当前词作为新行的开始
                             currentLine.Append(word);
                         }
+                        
+                        // 关键：立即释放formattedText引用，让GC能及时回收
+                        // 虽然FormattedText没有实现IDisposable，但它是非托管资源，需要及时清理
+                        formattedText = null;
                     }
                     
                     // 添加最后一行
@@ -711,5 +736,7 @@ namespace MusicPlayer.Controls
             }
             catch { }
         }
+
+        protected virtual void Dispose(bool disposing) { }
     }
 }

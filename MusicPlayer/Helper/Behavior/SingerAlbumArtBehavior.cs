@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -346,11 +347,9 @@ namespace MusicPlayer.Helper
                     // 移除滚动事件处理器
                     scrollViewer.ScrollChanged -= OnScrollChanged;
                     
-                    // 清理状态字典
-                    if (_elementStates.ContainsKey(scrollViewer))
+                    // 清理状态
+                    if (_elementStates.TryGetValue(scrollViewer, out var state))
                     {
-                        var state = _elementStates[scrollViewer];
-                        
                         // 停止并销毁计时器
                         if (state.ScrollThrottleTimer != null)
                         {
@@ -535,8 +534,8 @@ namespace MusicPlayer.Helper
         /// 
         /// </summary>
 
-        // 为每个UI元素存储独立的状态信息
-        private static readonly Dictionary<object, BehaviorState> _elementStates = new();
+        // 使用ConditionalWeakTable替代Dictionary，防止内存泄漏
+        private static readonly ConditionalWeakTable<object, BehaviorState> _elementStates = new();
         
         // 状态类，存储每个UI元素的独立状态
         private class BehaviorState
@@ -547,6 +546,14 @@ namespace MusicPlayer.Helper
             public Rect PendingViewport { get; set; }
             public System.Windows.Point PendingScrollOffset { get; set; }
             public NotifyCollectionChangedEventHandler? CollectionChangedHandler { get; set; }
+        }
+        
+        /// <summary>
+        /// 获取或创建UI元素的状态
+        /// </summary>
+        private static BehaviorState GetOrCreateElementState(object element)
+        {
+            return _elementStates.GetValue(element, _ => new BehaviorState());
         }
         
         private static void OnScrollChanged(object sender, ScrollChangedEventArgs e){
@@ -624,19 +631,6 @@ namespace MusicPlayer.Helper
             catch (Exception ex){
                 System.Diagnostics.Debug.WriteLine($"SingerAlbumArtBehavior: 处理节流滚动事件失败: {ex.Message}");
             }
-        }
-        
-        /// <summary>
-        /// 获取或创建UI元素的状态
-        /// </summary>
-        private static BehaviorState GetOrCreateElementState(object element)
-        {
-            if (!_elementStates.TryGetValue(element, out var state))
-            {
-                state = new BehaviorState();
-                _elementStates[element] = state;
-            }
-            return state;
         }
 
         /// <summary>

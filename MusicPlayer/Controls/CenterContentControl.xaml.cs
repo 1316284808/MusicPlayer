@@ -25,27 +25,9 @@ namespace MusicPlayer.Controls
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 收到歌词更新消息，开始清理旧歌词资源");
                 CleanupLyricItems();
             });
-            
-            // 延迟初始化频谱控件（等页面基本渲染完成后再初始化）
-            this.Loaded += async (s, e) => 
-            {
-                await Task.Delay(100); // 等待100ms，让页面基本渲染完成
-                InitializeSpectrumControl();
-            };
         }
 
-        /// <summary>
-        /// 初始化频谱控件（延迟调用，避免阻塞UI）
-        /// </summary>
-        private void InitializeSpectrumControl()
-        {
-            if (CircularSpectrum != null)
-            {
-                System.Diagnostics.Debug.WriteLine("CenterContentControl: 延迟初始化频谱控件");
-                // 如果频谱控件有需要初始化的逻辑，可以在这里调用
-                // CircularSpectrum.Initialize();
-            }
-        }
+       
 
         protected virtual void Dispose(bool disposing)
         {
@@ -53,7 +35,11 @@ namespace MusicPlayer.Controls
             {
                 if (disposing)
                 {
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 开始执行Dispose方法");
+                    
+                    // 取消消息订阅
                     WeakReferenceMessenger.Default.UnregisterAll(this);
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 已取消所有消息订阅");
                     
                     // 清理附加行为
                     CleanupAttachedBehaviors();
@@ -67,22 +53,55 @@ namespace MusicPlayer.Controls
                     // 清空ListBox ItemsSource，移除所有子项（包括MultiLineLyricControl）
                     if (LyricsListBox != null)
                     {
+                        System.Diagnostics.Debug.WriteLine("CenterContentControl: 清空LyricsListBox的ItemsSource");
                         LyricsListBox.ItemsSource = null;
+                        LyricsListBox.DataContext = null;
                     }
-                    
+
                     // 调用CircularSpectrumControl的Dispose方法
                     if (CircularSpectrum != null)
                     {
-                        CircularSpectrum.Dispose(); 
+                        System.Diagnostics.Debug.WriteLine("CenterContentControl: 释放CircularSpectrumControl资源");
+                        CircularSpectrum.Dispose();
+                        CircularSpectrum.DataContext = null;
                     }
+
+                    // 清理所有子控件的DataContext
+                    CleanupChildControlsDataContext(this);
                     
-                    // 清空DataContext，解除所有绑定
+                    // 清空自身DataContext，解除所有绑定
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 清空自身DataContext");
                     this.DataContext = null;
                     
                     // 清空页面内容，释放UI资源
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 清空页面内容");
                     this.Content = null;
                 }
                 _disposed = true;
+                System.Diagnostics.Debug.WriteLine("CenterContentControl: Dispose方法执行完成");
+            }
+        }
+        
+        /// <summary>
+        /// 递归清理所有子控件的DataContext
+        /// </summary>
+        private void CleanupChildControlsDataContext(DependencyObject parent)
+        {
+            if (parent == null)
+                return;
+            
+            // 清理当前控件的DataContext
+            if (parent is FrameworkElement element)
+            {
+                element.DataContext = null;
+            }
+            
+            // 递归清理所有子控件
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                CleanupChildControlsDataContext(child);
             }
         }
         
@@ -161,8 +180,9 @@ namespace MusicPlayer.Controls
             }
             return null;
         }
-        
-        // 清理歌词项
+        /// <summary>
+        /// 清理歌词项
+        /// </summary> 
         private void CleanupLyricItems()
         {
             if (LyricsListBox != null)
@@ -201,11 +221,69 @@ namespace MusicPlayer.Controls
                         // 清空ListBoxItem的Content和DataContext
                         listBoxItem.Content = null;
                         listBoxItem.DataContext = null;
+                        
+                        // 从视觉树中移除ListBoxItem
+                        if (listBoxItem.Parent is Panel parentPanel)
+                        {
+                            parentPanel.Children.Remove(listBoxItem);
+                        }
                     }
                 }
                 
-                // 调用UpdateLayout确保UI更新
-                LyricsListBox.UpdateLayout();
+                // 智能清理策略：临时设置为null并立即重新绑定
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 执行智能清理策略");
+                    
+                    // 保存当前的DataContext，确保重新绑定时使用正确的上下文
+                    var currentDataContext = LyricsListBox.DataContext;
+                    
+                    // 临时设置ItemsSource为null，触发UI清理旧项
+                    LyricsListBox.ItemsSource = null;
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 临时设置ItemsSource为null");
+                    
+                    // 强制UI更新，确保清理生效
+                    LyricsListBox.UpdateLayout();
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 强制UI更新");
+                    
+                    // 立即重新绑定到Lyrics属性，保持数据绑定关系
+                    if (currentDataContext != null)
+                    {
+                        // 使用Binding对象重新绑定，确保与XAML中的绑定一致
+                        var binding = new Binding("Lyrics");
+                        binding.Source = currentDataContext;
+                        LyricsListBox.SetBinding(ListBox.ItemsSourceProperty, binding);
+                        System.Diagnostics.Debug.WriteLine("CenterContentControl: 重新绑定到Lyrics属性");
+                    }
+                    
+                    // 再次强制UI更新，确保歌词正常显示
+                    LyricsListBox.UpdateLayout();
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 再次强制UI更新");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"CenterContentControl: 智能清理策略执行失败: {ex.Message}");
+                    // 清理失败时，尝试恢复绑定
+                    try
+                    {
+                        var currentDataContext = LyricsListBox.DataContext;
+                        if (currentDataContext != null)
+                        {
+                            var binding = new Binding("Lyrics");
+                            binding.Source = currentDataContext;
+                            LyricsListBox.SetBinding(ListBox.ItemsSourceProperty, binding);
+                            LyricsListBox.UpdateLayout();
+                        }
+                    }
+                    catch { }
+                }
+                
+                // 添加强制垃圾回收，确保资源及时释放
+                System.Diagnostics.Debug.WriteLine("CenterContentControl: 执行垃圾回收");
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                System.Diagnostics.Debug.WriteLine("CenterContentControl: 垃圾回收完成");
                 
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 歌词项资源清理完成");
             }

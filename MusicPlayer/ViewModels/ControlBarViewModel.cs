@@ -222,9 +222,39 @@ namespace MusicPlayer.ViewModels
             {
                 if (_currentSong != value)
                 {
+                    // 清理旧歌曲的资源
+                    CleanupOldSongResources(_currentSong);
+                    
                     _currentSong = value;
                     OnPropertyChanged(nameof(CurrentSong));
                 }
+            }
+        }
+        
+        /// <summary>
+        /// 清理旧歌曲的BitmapImage资源
+        /// </summary>
+        /// <param name="oldSong">旧歌曲对象</param>
+        private void CleanupOldSongResources(Core.Models.Song? oldSong)
+        {
+            try
+            {
+                if (oldSong != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 清理旧歌曲资源 - {oldSong.Title}");
+                    
+                    // 清理旧歌曲的BitmapImage资源
+                    oldSong.Cleanup();
+                    
+                    // 清理ViewModel中的BitmapImage资源
+                    CurrentSongAlbumArt = null;
+                    
+                    System.Diagnostics.Debug.WriteLine("ControlBarViewModel: 旧歌曲资源清理完成");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ControlBarViewModel: 清理旧歌曲资源失败: {ex.Message}");
             }
         }
 

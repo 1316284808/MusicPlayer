@@ -9,7 +9,7 @@ namespace MusicPlayer.Helper;
 
 public partial class HighlightTextBlock : UserControl
 {
-    private readonly ProgresiveHighlightEffect _effect;
+    private ProgresiveHighlightEffect _effect;
 
     static HighlightTextBlock()
     {
@@ -29,18 +29,89 @@ public partial class HighlightTextBlock : UserControl
     }
 
     public HighlightTextBlock()
-    {
-        InitializeComponent();
-        _effect = new ProgresiveHighlightEffect
         {
-            HighlightColor = HighlightColor,
-            HighlightPos = HighlightPos,
-            HighlightWidth = HighlightWidth
-        };
-        PART_Rectangle.Effect = _effect;
-        Loaded += (_, _) => UpdateTextClip();
-        SizeChanged += (_, _) => UpdateTextClip();
-    }
+            InitializeComponent();
+            _effect = new ProgresiveHighlightEffect
+            {
+                HighlightColor = HighlightColor,
+                HighlightPos = HighlightPos,
+                HighlightWidth = HighlightWidth
+            };
+            PART_Rectangle.Effect = _effect;
+            Loaded += OnLoaded;
+            SizeChanged += OnSizeChanged;
+            Unloaded += OnUnloaded;
+        }
+        
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            UpdateTextClip();
+        }
+        
+        private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateTextClip();
+        }
+        
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            Cleanup();
+        }
+        
+        /// <summary>
+        /// 显式清理所有资源，避免内存泄漏
+        /// </summary>
+        public void Cleanup()
+        {
+            // 清理ShaderEffect，避免内存泄漏
+            if (PART_Rectangle != null)
+            {
+                PART_Rectangle.Effect = null;
+            }
+            
+            // 清理Geometry对象
+            if (PART_Rectangle != null)
+            {
+                PART_Rectangle.Clip = null;
+            }
+            
+            // 移除事件订阅
+            Loaded -= OnLoaded;
+            SizeChanged -= OnSizeChanged;
+            Unloaded -= OnUnloaded;
+        }
+        
+        /// <summary>
+        /// 重置ShaderEffect，确保从对象池获取时能正常工作
+        /// </summary>
+        public void ResetEffect()
+        {
+            try
+            {
+                // 重新创建ShaderEffect
+                _effect = new ProgresiveHighlightEffect
+                {
+                    HighlightColor = HighlightColor,
+                    HighlightPos = HighlightPos,
+                    HighlightWidth = HighlightWidth
+                };
+                
+                // 应用到Rectangle
+                if (PART_Rectangle != null)
+                {
+                    PART_Rectangle.Effect = _effect;
+                }
+                
+                // 重新订阅事件
+                if (!IsLoaded)
+                {
+                    Loaded += OnLoaded;
+                    SizeChanged += OnSizeChanged;
+                    Unloaded += OnUnloaded;
+                }
+            }
+            catch { }
+        }
 
     #region Text
 
@@ -282,6 +353,7 @@ public partial class HighlightTextBlock : UserControl
         {
             if (string.IsNullOrEmpty(Text))
             {
+                // 清理旧的Geometry对象
                 PART_Rectangle.Clip = null;
                 PART_Rectangle.Width = 0;
                 PART_Rectangle.Height = 0;
@@ -345,7 +417,8 @@ public partial class HighlightTextBlock : UserControl
             // 构建几何图形（从计算出的偏移点开始）
             var geometry = formattedText.BuildGeometry(new Point(offsetX, 0));
 
-            // 应用裁剪并设置尺寸
+            // 清理旧的Geometry对象，然后应用新的
+            PART_Rectangle.Clip = null;
             PART_Rectangle.Clip = geometry;
             PART_Rectangle.Width = containerWidth;
             PART_Rectangle.Height = textHeight;

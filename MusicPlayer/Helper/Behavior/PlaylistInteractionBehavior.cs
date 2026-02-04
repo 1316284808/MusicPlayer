@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -28,10 +29,16 @@ namespace MusicPlayer.Helper
             obj.SetValue(IsEnabledProperty, value);
         }
 
-        // 用于跟踪左键单击状态
-        private static bool _isLeftClicked = false;
-        private static ListBoxItem? _leftClickedItem = null;
+        // 使用ConditionalWeakTable替代Dictionary，防止内存泄漏
+        private static readonly ConditionalWeakTable<ListBox, ListBoxState> _listBoxStates = new();
         private static readonly object _lockObject = new object();
+        
+        // 状态类，存储每个ListBox的状态
+        private class ListBoxState
+        {
+            public bool IsLeftClicked { get; set; }
+            public ListBoxItem? LeftClickedItem { get; set; }
+        }
 
         private static void OnIsEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -48,6 +55,9 @@ namespace MusicPlayer.Helper
                     listBox.PreviewMouseLeftButtonDown -= ListBox_PreviewMouseLeftButtonDown;
                     listBox.PreviewMouseRightButtonDown -= ListBox_PreviewMouseRightButtonDown;
                     listBox.MouseDoubleClick -= ListBox_MouseDoubleClick;
+                    
+                    // ConditionalWeakTable会自动清理，无需手动Remove
+                    // 当ListBox被GC回收时，对应的条目会自动从ConditionalWeakTable中移除
                 }
             }
         }
@@ -71,8 +81,10 @@ namespace MusicPlayer.Helper
                 {
                     lock (_lockObject)
                     {
-                        _isLeftClicked = true;
-                        _leftClickedItem = clickedItem;
+                        // 获取或创建状态并更新
+                        var state = _listBoxStates.GetValue(listBox, _ => new ListBoxState());
+                        state.IsLeftClicked = true;
+                        state.LeftClickedItem = clickedItem;
                     }
                     
                     // 设置选中项但不触发播放
@@ -88,8 +100,12 @@ namespace MusicPlayer.Helper
                         timer.Stop();
                         lock (_lockObject)
                         {
-                            _isLeftClicked = false;
-                            _leftClickedItem = null;
+                            // 获取状态并重置
+                            if (_listBoxStates.TryGetValue(listBox, out var state))
+                            {
+                                state.IsLeftClicked = false;
+                                state.LeftClickedItem = null;
+                            }
                         }
                     };
                     timer.Start();
@@ -119,11 +135,12 @@ namespace MusicPlayer.Helper
                     lock (_lockObject)
                     {
                         // 检查是否是之前左键单击的同一项
-                        if (_isLeftClicked && _leftClickedItem == clickedItem)
+                        if (_listBoxStates.TryGetValue(listBox, out var state) && state.IsLeftClicked && state.LeftClickedItem == clickedItem)
                         {
                             shouldOpenContextMenu = true;
-                            _isLeftClicked = false;
-                            _leftClickedItem = null;
+                            // 重置状态
+                            state.IsLeftClicked = false;
+                            state.LeftClickedItem = null;
                         }
                     }
                     
@@ -146,8 +163,11 @@ namespace MusicPlayer.Helper
                         // 重置状态
                         lock (_lockObject)
                         {
-                            _isLeftClicked = false;
-                            _leftClickedItem = null;
+                            if (_listBoxStates.TryGetValue(listBox, out var state))
+                            {
+                                state.IsLeftClicked = false;
+                                state.LeftClickedItem = null;
+                            }
                         }
                         
                         // 阻止右键菜单打开
@@ -168,8 +188,11 @@ namespace MusicPlayer.Helper
                 // 重置状态
                 lock (_lockObject)
                 {
-                    _isLeftClicked = false;
-                    _leftClickedItem = null;
+                    if (_listBoxStates.TryGetValue(listBox, out var state))
+                    {
+                        state.IsLeftClicked = false;
+                        state.LeftClickedItem = null;
+                    }
                 }
                 
                 // 获取ViewModel并调用播放命令

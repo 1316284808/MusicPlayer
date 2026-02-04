@@ -102,54 +102,54 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
             <Grid Grid.Column="0"  
                   Width="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}"
                   Height="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToSpectrumSizeConverter}}">
-           
+
                 <!-- 专辑封面容器 - 作为上层，通过Margin居中于频谱 -->
-                    <Border x:Name="AlbumArtBorder" 
+                <Border x:Name="AlbumArtBorder" 
                         Width="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}, ConverterParameter=diameter}"
                         Height="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}, ConverterParameter=diameter}"
                         CornerRadius="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}">
-                        <Border.Effect>
-                            <DropShadowEffect ShadowDepth="1" BlurRadius="15" Color="Black" Opacity="0.4"/>
-                        </Border.Effect>
-                        <Border.RenderTransform>
-                            <RotateTransform x:Name="AlbumArtRotateTransform" 
+                    <Border.Effect>
+                        <DropShadowEffect ShadowDepth="1" BlurRadius="15" Color="Black" Opacity="0.4"/>
+                    </Border.Effect>
+                    <Border.RenderTransform>
+                        <RotateTransform x:Name="AlbumArtRotateTransform" 
                                 CenterX="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}"
                                 CenterY="{Binding IsWindowMaximized, Converter={StaticResource WindowStateToCoverSizeConverter}}"/>
-                        </Border.RenderTransform>
-                        <Ellipse>
-                            <Ellipse.Fill>
-                                <ImageBrush ImageSource="{Binding CurrentSong.OriginalAlbumArt}" Stretch="UniformToFill"/>
-                            </Ellipse.Fill>
-                        </Ellipse>
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard Name="SpinningStoryboard">
-                                                <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
+                    </Border.RenderTransform>
+                    <Ellipse>
+                        <Ellipse.Fill>
+                            <ImageBrush ImageSource="{Binding CurrentSongOriginalAlbumArt}" Stretch="UniformToFill"/>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard Name="SpinningStoryboard">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
                                           From="0" To="360" Duration="0:01:30"
                                           RepeatBehavior="Forever"/>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                        <DataTrigger.ExitActions>
-                                            <StopStoryboard BeginStoryboardName="SpinningStoryboard"/>
-                                        </DataTrigger.ExitActions>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                    </Border>
-                    <!-- 圆形频谱控件 - 测试阶段，把频谱至于上层才能更好发现问题 -->
-                    <local:CircularSpectrumControl x:Name="CircularSpectrum"  
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions>
+                                        <StopStoryboard BeginStoryboardName="SpinningStoryboard"/>
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <!-- 圆形频谱控件 - 测试阶段，把频谱至于上层才能更好发现问题 -->
+                <local:CircularSpectrumControl x:Name="CircularSpectrum"  
      Width="{Binding DataContext.IsWindowMaximized, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource WindowStateToSpectrumDisplaySizeConverter}}"
      Height="{Binding DataContext.IsWindowMaximized, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource WindowStateToSpectrumDisplaySizeConverter}}"/>
 
-                
+
             </Grid>
-            
+
             <!-- Lyrics Section -->
             <Grid Grid.Column="1" HorizontalAlignment="Stretch">
                 <Grid.OpacityMask>
@@ -159,7 +159,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                         <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
                         <GradientStop Color="#00000000" Offset="1"/>
                     </LinearGradientBrush>
-                </Grid.OpacityMask> 
+                </Grid.OpacityMask>
                 <ListBox  x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
                 BorderThickness="0" HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -173,10 +173,10 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                 behaviors:LyricsScrollBehavior.ScrollOnLoad="True"
                   ClipToBounds="True" VerticalContentAlignment="Stretch" >
                     <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem"> 
+                        <Style TargetType="ListBoxItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/> 
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
@@ -185,7 +185,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                                 <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
                                             </Border.Effect>
                                             <ContentPresenter/>
-                                            </Border> 
+                                        </Border>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -194,7 +194,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter Property="Background"  Value="Transparent"/>
                                 </Trigger>
-                                <Trigger Property="IsSelected" Value="False"> 
+                                <Trigger Property="IsSelected" Value="False">
                                     <Setter Property="Background" Value="Transparent"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -232,7 +232,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     HorizontalAlignment="Stretch" 
                                     Visibility="{Binding TranslatedText, Converter={StaticResource StringToVisibilityConverter}}"
                                     LineHeight="5"  />
-                                
+
                             </Grid>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="False">
@@ -249,12 +249,11 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     <Setter TargetName="OriginalLyric" Property="HighlightWidth" Value="0.2"/>
                                     <Setter TargetName="TranslatedLyric" Property="HighlightWidth" Value="0.2"/>
                                     <Setter TargetName="OriginalLyric" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
-                                    <Setter TargetName="TranslatedLyric" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
                                     <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
                                     <Setter TargetName="TranslatedLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
                                     <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                     <Setter TargetName="TranslatedLyric" Property="HorizontalAlignment" Value="Stretch"/>
-                                </DataTrigger> 
+                                </DataTrigger>
                                 <!-- 歌词翻译显示控制 -->
                                 <!-- 只有原文歌词时：始终显示原文歌词 -->
                                 <MultiDataTrigger>
@@ -266,7 +265,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
                                     <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </MultiDataTrigger>
-                                
+
                                 <!-- 双语歌词时：根据翻译开关控制原文歌词显示 -->
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
@@ -277,7 +276,7 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
                                     <Setter TargetName="OriginalLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </MultiDataTrigger>
-                                
+
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
                                         <Condition Binding="{Binding IsLyricTranslationEnabled}" Value="False"/>
@@ -291,10 +290,10 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                  
-            </ListBox>
 
-                
+                </ListBox>
+
+
             </Grid>  
         </Grid>
 
