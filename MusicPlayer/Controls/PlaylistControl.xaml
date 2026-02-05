@@ -32,11 +32,36 @@
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
             <TextBlock  Text="全部歌曲" FontSize="24" FontWeight="Bold"  Margin="10"   />
             </StackPanel>
-        
-       
 
 
-        <StackPanel Grid.Row="1" VerticalAlignment="Center"    HorizontalAlignment="Right" Orientation="Horizontal"> 
+        <StackPanel Grid.Row="1"   Orientation="Horizontal"
+                    VerticalAlignment="Center" HorizontalAlignment="Left">
+
+            <ui:Button ToolTip="播放全部" Command="{Binding PlayAllCommand}"
+ HorizontalAlignment="Center"
+ Width="auto" 
+Padding="5" Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play" />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="播放全部"/>
+                </StackPanel>
+            </ui:Button>
+
+            <ui:Button ToolTip="随机播放" Command="{Binding ShufflePlayCommand}"
+ HorizontalAlignment="Center"
+ Width="auto" 
+Padding="5" Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle" />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="随机播放"/>
+                </StackPanel>
+            </ui:Button>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" VerticalAlignment="Center"  
+                    HorizontalAlignment="Right" Orientation="Horizontal"> 
 
                 <!-- 排序下拉按钮 -->
 
@@ -91,16 +116,14 @@
 
         <!-- 播放列表内容区域 -->
         <Border x:Name="ContentBorder" Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 
-              
-               
-                HorizontalAlignment="Stretch" >
+               HorizontalAlignment="Stretch" >
             <Border.Effect>
                 <DropShadowEffect BlurRadius="8" ShadowDepth="2" Color="Black" Opacity="0.1"/>
             </Border.Effect>
 
             <Grid >
                 <Grid.RowDefinitions>  
-                    <RowDefinition Height="9*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
                
@@ -113,7 +136,7 @@
                            VirtualizingStackPanel.IsVirtualizing="True"
                            VirtualizingStackPanel.VirtualizationMode="Recycling"
                            VirtualizingStackPanel.ScrollUnit="Pixel"
-                           VirtualizingStackPanel.CacheLength="5,5"
+                           VirtualizingStackPanel.CacheLength="1"
                            VirtualizingStackPanel.CacheLengthUnit="Item"
                            Helper:PlaylistScrollBehavior.IsEnabled="True" 
                            SelectionMode="Single"
@@ -165,7 +188,7 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <Border x:Name="ItemBorder" CornerRadius="8" Margin="0,0,15,0" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                                             <ContentPresenter/>
                                         </Border>
                                     </ControlTemplate>

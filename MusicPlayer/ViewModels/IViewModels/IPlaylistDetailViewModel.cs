@@ -35,6 +35,11 @@ namespace MusicPlayer.ViewModels
         ICommand PlayAllCommand { get; }
 
         /// <summary>
+        /// 随机播放命令
+        /// </summary>
+        ICommand ShufflePlayCommand { get; }
+
+        /// <summary>
         /// 搜索按钮点击命令
         /// </summary>
         ICommand SearchButtonClickCommand { get; }

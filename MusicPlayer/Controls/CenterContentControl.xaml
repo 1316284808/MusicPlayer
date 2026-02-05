@@ -155,8 +155,8 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                 <Grid.OpacityMask>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="#00000000" Offset="0"/>
-                        <GradientStop Color="#FFFFFFFF" Offset="0.4"/>
-                        <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
+                        <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
+                        <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
                         <GradientStop Color="#00000000" Offset="1"/>
                     </LinearGradientBrush>
                 </Grid.OpacityMask>

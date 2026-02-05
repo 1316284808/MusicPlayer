@@ -58,7 +58,7 @@
                         </Border>
                     </StackPanel>
                    
-                    <TextBlock Text="在音乐播放界面显示音频频谱可视化效果" FontSize="12"  FontWeight="Normal"   Margin="20,5,0,0"/>
+                    <TextBlock Text="启用后在音乐播放界面显示音频频谱可视化效果" FontSize="12"  FontWeight="Normal"   Margin="20,5,0,0"/>
                 </StackPanel>
 
                 <!-- 右侧：开关控件 -->
@@ -83,7 +83,7 @@
                         <TextBlock Text="程序托盘"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
-                    <TextBlock Text="点击关闭主窗口自动最小化到程序托盘" FontSize="12"  FontWeight="Normal"  Margin="20,5,0,0"/>
+                    <TextBlock Text="启用后点击关闭主窗口自动最小化到程序托盘" FontSize="12"  FontWeight="Normal"  Margin="20,5,0,0"/>
                 </StackPanel>
 
                 <!-- 右侧：开关控件 -->

@@ -257,7 +257,7 @@ namespace MusicPlayer.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"开始释放旧歌曲 {_playlistDataService.CurrentSong.Title} 的资源");
                     
-                    // 释放旧歌曲的高清封面资源
+                    // 释放旧歌曲的高清封面资源（保留缩略图供播放列表显示）
                     if (_playlistDataService.CurrentSong.OriginalAlbumArt != null)
                     {
                         try
@@ -273,30 +273,10 @@ namespace MusicPlayer.Services
                         }
                     }
                     
-                    // 释放旧歌曲的缩略图资源
-                    if (_playlistDataService.CurrentSong.AlbumArt != null)
-                    {
-                        try
-                        {
-                            _playlistDataService.CurrentSong.AlbumArt.Freeze(); // 冻结BitmapImage，减少内存占用
-                            _playlistDataService.CurrentSong.AlbumArt = null; // 释放缩略图资源
-                            System.Diagnostics.Debug.WriteLine("已释放旧歌曲缩略图资源");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"释放旧歌曲缩略图资源时出错: {ex.Message}");
-                            _playlistDataService.CurrentSong.AlbumArt = null;
-                        }
-                    }
+                    // 注意：保留缩略图资源(AlbumArt)，因为播放列表中的歌曲可能引用同一个对象
+                    // 缩略图内存占用较小，不需要在切歌时立即释放
                     
-                    // 清空其他可能占用内存的属性
-                    _playlistDataService.CurrentSong.Title = string.Empty;
-                    _playlistDataService.CurrentSong.Artist = string.Empty;
-                    _playlistDataService.CurrentSong.Album = string.Empty;
-                    _playlistDataService.CurrentSong.FilePath = string.Empty;
-                    _playlistDataService.CurrentSong.Id = 0;
-                    
-                    System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 资源释放完成");
+                    System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 高清封面资源释放完成");
                 }
                 
                 // 清理_currentlyLoadedSong的资源
@@ -304,7 +284,7 @@ namespace MusicPlayer.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"开始释放_currentlyLoadedSong {_currentlyLoadedSong.Title} 的资源");
                     
-                    // 释放旧歌曲的高清封面资源
+                    // 释放旧歌曲的高清封面资源（保留缩略图供播放列表显示）
                     if (_currentlyLoadedSong.OriginalAlbumArt != null)
                     {
                         try
@@ -320,30 +300,10 @@ namespace MusicPlayer.Services
                         }
                     }
                     
-                    // 释放旧歌曲的缩略图资源
-                    if (_currentlyLoadedSong.AlbumArt != null)
-                    {
-                        try
-                        {
-                            _currentlyLoadedSong.AlbumArt.Freeze();
-                            _currentlyLoadedSong.AlbumArt = null;
-                            System.Diagnostics.Debug.WriteLine("已释放_currentlyLoadedSong缩略图资源");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"释放_currentlyLoadedSong缩略图资源时出错: {ex.Message}");
-                            _currentlyLoadedSong.AlbumArt = null;
-                        }
-                    }
+                    // 注意：保留缩略图资源(AlbumArt)，因为播放列表中的歌曲可能引用同一个对象
+                    // 缩略图内存占用较小，不需要在切歌时立即释放
                     
-                    // 清空其他可能占用内存的属性
-                    _currentlyLoadedSong.Title = string.Empty;
-                    _currentlyLoadedSong.Artist = string.Empty;
-                    _currentlyLoadedSong.Album = string.Empty;
-                    _currentlyLoadedSong.FilePath = string.Empty;
-                    _currentlyLoadedSong.Id = 0;
-                    
-                    System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 资源释放完成");
+                    System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 高清封面资源释放完成");
                     _currentlyLoadedSong = null;
                 }
 

@@ -110,6 +110,11 @@ namespace MusicPlayer.ViewModels
         public ICommand PlayAllCommand { get; }
 
         /// <summary>
+        /// 随机播放命令
+        /// </summary>
+        public ICommand ShufflePlayCommand { get; }
+
+        /// <summary>
         /// 搜索按钮点击命令
         /// </summary>
         public ICommand SearchButtonClickCommand { get; }
@@ -177,6 +182,7 @@ namespace MusicPlayer.ViewModels
 
             // 初始化命令
             PlayAllCommand = new RelayCommand(ExecutePlayAll);
+            ShufflePlayCommand = new RelayCommand(ExecuteShufflePlay);
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
             PlaySelectedSongCommand = new RelayCommand<Song>(ExecutePlaySelectedSong);
           
@@ -526,6 +532,42 @@ namespace MusicPlayer.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 播放全部歌曲失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 随机播放歌曲
+        /// </summary>
+        private void ExecuteShufflePlay()
+        {
+            try
+            {
+                if (_filteredPlaylist.Count > 0)
+                {
+                    IsPlaying= true;
+                    OnPropertyChanged(nameof(IsPlaying));
+                    
+                    // 设置播放上下文
+                    _playbackContextService.SetPlaybackContext(
+                        _currentContextType,
+                        _currentContextIdentifier,
+                        _currentContextDisplayName);
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 设置播放上下文为 {_currentContextType}: {_currentContextDisplayName}");
+                    
+                    // 随机排序播放列表
+                    var shuffledSongs = _filteredPlaylist.OrderBy(song => Guid.NewGuid()).ToList();
+                    
+                    // 发送播放消息，播放随机排序后的第一首歌曲
+                    var firstSong = shuffledSongs.First();
+                    _messagingService.Send(new SongSelectionMessage(firstSong, 0));
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 随机播放开始，第一首歌曲: {firstSong.Title}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 随机播放歌曲失败: {ex.Message}");
             }
         }
 

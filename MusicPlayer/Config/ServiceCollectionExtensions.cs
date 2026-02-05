@@ -8,6 +8,7 @@ using MusicPlayer.Services;
 using MusicPlayer.Services.Handlers;
 using MusicPlayer.Services.Services;
 using MusicPlayer.Services.Providers;
+using MusicPlayer.Logging;
  
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Helper;
@@ -33,12 +34,14 @@ namespace MusicPlayer.Config
         /// <returns>服务集合</returns>
         public static IServiceCollection AddMusicPlayerServices(this IServiceCollection services)
         {
-            // 日志配置 - 只记录错误信息
+            // 日志配置 - 只记录错误信息，并输出到文件
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
                 builder.AddDebug();
                 builder.SetMinimumLevel(LogLevel.Error);
+                // 添加文件日志，使用启动时间作为文件名
+                builder.AddFileWithTimestamp(Paths.LogsDirectory, LogLevel.Error);
             });
             services.AddMessageServices();
             services.AddCoreServices();
@@ -726,19 +729,19 @@ namespace MusicPlayer.Config
         {
             try
             {
-                _logger?.LogError("[INFO] 开始初始化ServiceCoordinator");
+                _logger?.LogInformation("开始初始化ServiceCoordinator");
                 System.Diagnostics.Debug.WriteLine("ServiceCoordinatorInitializationService: 开始初始化ServiceCoordinator");
 
                 // 只有在ServiceCoordinator未初始化时才进行初始化
                 if (!_serviceCoordinator.IsInitialized)
                 {
                     await _serviceCoordinator.InitializeAsync();
-                    _logger?.LogError("[INFO] ServiceCoordinator初始化完成");
+                    _logger?.LogInformation("ServiceCoordinator初始化完成");
                     System.Diagnostics.Debug.WriteLine("ServiceCoordinatorInitializationService: ServiceCoordinator初始化完成");
                 }
                 else
                 {
-                    _logger?.LogError("[INFO] ServiceCoordinator已经初始化，跳过");
+                    _logger?.LogInformation("ServiceCoordinator已经初始化，跳过");
                     System.Diagnostics.Debug.WriteLine("ServiceCoordinatorInitializationService: ServiceCoordinator已经初始化，跳过");
                 }
             }
@@ -752,7 +755,7 @@ namespace MusicPlayer.Config
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger?.LogError("[INFO] 停止ServiceCoordinator初始化服务");
+            _logger?.LogInformation("停止ServiceCoordinator初始化服务");
             System.Diagnostics.Debug.WriteLine("ServiceCoordinatorInitializationService: 停止ServiceCoordinator初始化服务");
             return Task.CompletedTask;
         }

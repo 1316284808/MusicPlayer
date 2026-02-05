@@ -35,7 +35,7 @@
                     </StackPanel>
 
                     <TextBlock Text="可以切换不同的音频引擎：Auto(由程序自主选择音频引擎)、 DirectX(DirectSound)、 Windows会话(WASAPI)" 
-                              FontSize="12" FontWeight="Normal" Margin="10,5,0,0"/>
+                              FontSize="12" FontWeight="Normal"  Margin="20,5,0,0"/>
                 </StackPanel>
                 <ComboBox x:Name="AudioEngineComboBox" FontWeight="Normal" Grid.Column="1" 
                            Width="auto" MinWidth="120" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -70,7 +70,7 @@
                         <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="可以切换不同调音风格 " FontSize="12" FontWeight="Normal" Margin="10,5,0,0"/>
+                        <TextBlock Text="启用后可以切换不同调音风格 " FontSize="12" FontWeight="Normal"  Margin="20,5,0,0"/>
  
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">

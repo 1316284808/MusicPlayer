@@ -6,6 +6,7 @@ using MusicPlayer.Core.Models;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Handlers;
 using MusicPlayer.Services.Messages;
+using MusicPlayer.Logging;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Threading.Tasks;
@@ -122,6 +123,7 @@ namespace MusicPlayer.Config
                     logging.ClearProviders();
                     logging.AddConsole();
                     logging.AddDebug();
+                    logging.AddFileWithTimestamp(Paths.LogsDirectory, LogLevel.Error);
                     logging.SetMinimumLevel(LogLevel.Error); // 只记录Error级别及以上
                 })
                 .Build();

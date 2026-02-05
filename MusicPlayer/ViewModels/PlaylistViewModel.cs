@@ -199,6 +199,16 @@ namespace MusicPlayer.ViewModels
         /// 添加歌曲到歌单命令
         /// </summary>
         public ICommand AddSongToPlaylistCommand { get; }
+
+        /// <summary>
+        /// 播放全部命令
+        /// </summary>
+        public ICommand PlayAllCommand { get; }
+
+        /// <summary>
+        /// 随机播放命令
+        /// </summary>
+        public ICommand ShufflePlayCommand { get; }
         
 
         /// <summary>
@@ -301,6 +311,8 @@ namespace MusicPlayer.ViewModels
             SearchButtonClickCommand = new RelayCommand(ExecuteSearchButtonClick);
             ScrollToCurrentSongCommand = new RelayCommand(ExecuteScrollToCurrentSong);
             AddSongToPlaylistCommand = new RelayCommand<object>(ExecuteAddSongToPlaylist);
+            PlayAllCommand = new RelayCommand(ExecutePlayAll);
+            ShufflePlayCommand = new RelayCommand(ExecuteShufflePlay);
           
          
             
@@ -738,6 +750,67 @@ namespace MusicPlayer.ViewModels
             else
             {
                 System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 没有当前播放歌曲或当前歌曲不在播放列表中");
+            }
+        }
+
+        /// <summary>
+        /// 播放全部歌曲
+        /// </summary>
+        private void ExecutePlayAll()
+        {
+            try
+            {
+                if (_filteredPlaylist.Count > 0)
+                {
+                    // 设置播放上下文为默认列表
+                    _playbackContextService.SetPlaybackContext(
+                        Core.Enums.PlaybackContextType.DefaultPlaylist, 
+                        "default", 
+                        "全部歌曲");
+                    
+                    System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 设置播放上下文为默认列表: 全部歌曲");
+                    
+                    // 发送播放消息
+                    var firstSong = _filteredPlaylist.First();
+                    _messagingService.Send(new SongSelectionMessage(firstSong, 0));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 播放全部歌曲失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 随机播放歌曲
+        /// </summary>
+        private void ExecuteShufflePlay()
+        {
+            try
+            {
+                if (_filteredPlaylist.Count > 0)
+                {
+                    // 设置播放上下文为默认列表
+                    _playbackContextService.SetPlaybackContext(
+                        Core.Enums.PlaybackContextType.DefaultPlaylist, 
+                        "default", 
+                        "全部歌曲");
+                    
+                    System.Diagnostics.Debug.WriteLine("PlaylistViewModel: 设置播放上下文为默认列表: 全部歌曲");
+                    
+                    // 随机排序播放列表
+                    var shuffledSongs = _filteredPlaylist.OrderBy(song => Guid.NewGuid()).ToList();
+                    
+                    // 发送播放消息，播放随机排序后的第一首歌曲
+                    var firstSong = shuffledSongs.First();
+                    _messagingService.Send(new SongSelectionMessage(firstSong, 0));
+                    
+                    System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 随机播放开始，第一首歌曲: {firstSong.Title}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 随机播放歌曲失败: {ex.Message}");
             }
         }
 

@@ -107,21 +107,11 @@ namespace MusicPlayer.Core.Models
         
         /// <summary>
         /// 清理Song对象中的资源，特别是BitmapImage资源
+        /// 注意：只清理OriginalAlbumArt（高清大图），保留AlbumArt（缩略图）供播放列表显示
         /// </summary>
         public void Cleanup()
-        {
-            try
-            {
-                // 释放BitmapImage资源
-                AlbumArt = null;
-                OriginalAlbumArt = null;
-                
-                System.Diagnostics.Debug.WriteLine($"Song: 已清理资源，歌曲: {Title}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Song: 清理资源失败: {ex.Message}");
-            }
+        { 
+                OriginalAlbumArt = null;   
         }
     }
 }

@@ -26,7 +26,35 @@
             <TextBlock x:Name="PlaylistName"  Text="{Binding CurrentPlaylist.Name}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" />
             <TextBlock x:Name="PlaylistDescription" Text="{Binding CurrentPlaylist.Description}" FontSize="14" Opacity="0.7" HorizontalAlignment="Center"  />
         </StackPanel>
+        
+        <StackPanel Grid.Row="1"   Orientation="Horizontal"
+                    VerticalAlignment="Center" HorizontalAlignment="Left">
 
+            <ui:Button ToolTip="播放全部" Command="{Binding PlayAllCommand}"
+ HorizontalAlignment="Center"
+ Width="auto" 
+Padding="5" Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Play" />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="播放全部"/>
+                </StackPanel>
+            </ui:Button>
+
+            <ui:Button ToolTip="随机播放" Command="{Binding ShufflePlayCommand}"
+ HorizontalAlignment="Center"
+ Width="auto" 
+Padding="5" Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Helper:CustomIcon HorizontalAlignment="Left" Margin="5,2" Kind="Shuffle" />
+                    <Separator Margin="2" />
+                    <ui:TextBlock Text="随机播放"/>
+                </StackPanel>
+            </ui:Button>
+        </StackPanel>
+        
+        
+        
         <!-- 操作区域 -->
         <StackPanel Grid.Row="1"  Orientation="Horizontal" HorizontalAlignment="Right">
             
@@ -63,8 +91,7 @@
         </StackPanel>
 
         <!-- 歌曲列表区域 -->
-        <Border Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 
-                Margin="0,0,10,0"
+        <Border Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent"  
                 HorizontalAlignment="Stretch" >
             <Border.Effect>
                 <DropShadowEffect BlurRadius="8" ShadowDepth="2" Color="Black" Opacity="0.1"/>
@@ -74,21 +101,20 @@
                 <!-- 歌曲列表 -->
                 <ui:ListView x:Name="PlaylistListBox" Grid.Row="1"    ItemsSource="{Binding FilteredPlaylist}" SelectedItem="{Binding CurrentPlaylistItem, Mode=TwoWay}" 
                            Background="Transparent" BorderThickness="0" AlternationCount="2"  
-                         
-ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-ScrollViewer.VerticalScrollBarVisibility="Auto"
-ScrollViewer.CanContentScroll="True"
-VirtualizingStackPanel.IsVirtualizing="True"
-VirtualizingStackPanel.VirtualizationMode="Recycling"
-VirtualizingStackPanel.ScrollUnit="Pixel"
-VirtualizingStackPanel.CacheLength="5,5"
-VirtualizingStackPanel.CacheLengthUnit="Item"
-Helper:PlaylistScrollBehavior.IsEnabled="True" 
-SelectionMode="Single"
-Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
-Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
-  Helper:PlaylistInteractionBehavior.IsEnabled="True"
-Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
+                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            ScrollViewer.CanContentScroll="True"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling"
+                            VirtualizingStackPanel.ScrollUnit="Pixel"
+                            VirtualizingStackPanel.CacheLength="1"
+                            VirtualizingStackPanel.CacheLengthUnit="Item"
+                            Helper:PlaylistScrollBehavior.IsEnabled="True" 
+                            SelectionMode="Single"
+                            Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
+                            Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
+                              Helper:PlaylistInteractionBehavior.IsEnabled="True"
+                            Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
 
                     <ui:ListView.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
@@ -101,7 +127,7 @@ Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <Border x:Name="ItemBorder" CornerRadius="8" Margin="0,0,15,0" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                                             <ContentPresenter/>
                                         </Border>
                                     </ControlTemplate>
@@ -127,6 +153,7 @@ Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
                                 <Grid.ColumnDefinitions>
 
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
@@ -165,8 +192,13 @@ Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
                                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
                                     <TextBlock Text="{Binding Artist}" FontSize="12"     Opacity="0.7"   />
                                 </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"  VerticalAlignment="Center">
+                                    <Separator Margin="5,0" />
+                                    <TextBlock Text="{Binding Album}" FontSize="12" Width="300" TextWrapping="Wrap"   />
+                                </StackPanel>
+
                                 <!--歌曲时长，音质图标-->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,25,0">
+                                <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,25,0">
                                     <ui:TextBlock Text="{Binding TotalTimeText}"   FontSize="12"  VerticalAlignment="Center"  />
                                     <Helper:ButtonControl AudioFormat="{Binding AudioFormat}"></Helper:ButtonControl>
                                 </StackPanel>

@@ -248,17 +248,17 @@
                                HorizontalOffset="-270"   
                         AllowsTransparency="True"
                                StaysOpen="False" >
-                        <Border Background="#f0f0f0"  
+                        <Border  Background="#E6FFFFFF" 
                                 BorderBrush="#d0d0d0" BorderThickness="1"
-                                CornerRadius="8" Padding="5"> 
-                            <Grid Width="300" Height="500">
+                                CornerRadius="8" >
+                            <Grid Width="320" Height="500"  >
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
                                 <!-- 播放队列标题 -->
-                                <StackPanel Margin="5" Grid.Row="0"  VerticalAlignment="Center">
+                                <StackPanel Margin="10" Grid.Row="0"  VerticalAlignment="Center">
                                     <TextBlock Text="{Binding QueueTitle}" FontSize="14" 
                     FontWeight="Bold"  HorizontalAlignment="Left"
                     TextWrapping="Wrap"   />
@@ -266,8 +266,7 @@
                                 </StackPanel>
 
                                 <!-- 播放队列列表 -->
-                                <ListBox Grid.Row="1" ItemsSource="{Binding CurrentContextPlaylist}" 
-                                      
+                                <ListBox Grid.Row="1" ItemsSource="{Binding CurrentContextPlaylist}"  
                                       VerticalAlignment="Stretch" 
                                       HorizontalContentAlignment="Stretch" 
                                       Background="Transparent" 
@@ -288,7 +287,7 @@
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="ListBoxItem">
-                                                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                        <Border x:Name="ItemBorder" CornerRadius="8" Margin="5,0,15,0"  Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                                                             <ContentPresenter/>
                                                         </Border>
                                                     </ControlTemplate>
@@ -297,13 +296,13 @@
 
                                             <Style.Triggers>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="White"/>
+                                                    <Setter Property="Background" Value="#e6e6e6"/>
                                                 </Trigger>
                                                 <Trigger Property="IsSelected" Value="False">
                                                     <Setter Property="Background" Value="Transparent"/>
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="White"/>
+                                                    <Setter Property="Background" Value="#e6e6e6"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -311,11 +310,9 @@
                                     <ListBox.ItemTemplate>
                                         <DataTemplate> 
                                                 <!-- 歌曲信息 -->
-                                                <StackPanel VerticalAlignment="Center" Width="320">
-                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" 
-                                    TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding Artist}" FontSize="11" Opacity="0.7" 
-                                    TextTrimming="CharacterEllipsis"/> 
+                                                <StackPanel VerticalAlignment="Center" Width="290">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" MaxWidth="280"  TextTrimming="CharacterEllipsis"  />
+                                                <TextBlock Text="{Binding Artist}" FontSize="11" Opacity="0.7"   MaxWidth="280"  TextTrimming="CharacterEllipsis"/> 
                                                 </StackPanel>  
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>

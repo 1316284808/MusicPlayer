@@ -806,8 +806,9 @@ namespace MusicPlayer.ViewModels
                 // 将秒转换为TimeSpan
                 var timeSpan = TimeSpan.FromSeconds(currentTime);
                 
-                // 找到当前时间对应的歌词行
-                var currentLyric = Lyrics.LastOrDefault(l => l.Time <= timeSpan);
+                // 找到当前时间对应的非空歌词行
+                var currentLyric = Lyrics.Where(l => !string.IsNullOrEmpty(l.OriginalText))
+                    .LastOrDefault(l => l.Time <= timeSpan);
 
                 if (currentLyric != null)
                 {
@@ -821,16 +822,20 @@ namespace MusicPlayer.ViewModels
                     int currentIndex = Lyrics.IndexOf(currentLyric);
                     TimeSpan lineDuration;
                     
-                    // 如果是最后一句歌词，进度固定为1
-                    if (currentIndex == Lyrics.Count - 1)
+                    // 找到下一句非空歌词行
+                    var nextNonEmptyLyric = Lyrics.Skip(currentIndex + 1)
+                        .Where(l => !string.IsNullOrEmpty(l.OriginalText))
+                        .FirstOrDefault();
+                    
+                    // 如果是最后一句非空歌词，进度固定为1
+                    if (nextNonEmptyLyric == null)
                     {
                         lineDuration = TimeSpan.FromSeconds(5); // 最后一句持续5秒
                     }
                     else
                     {
                         // 计算当前歌词行的播放时长（下一句时间 - 当前句时间）
-                        var nextLine = Lyrics[currentIndex + 1];
-                        lineDuration = nextLine.Time - currentLyric.Time;
+                        lineDuration = nextNonEmptyLyric.Time - currentLyric.Time;
                     }
 
                     // 计算当前进度在当前歌词行内的比例
@@ -860,6 +865,23 @@ namespace MusicPlayer.ViewModels
             // 使用新的歌词集合，避免复用旧的ObservableCollection
             var newLyrics = new ObservableCollection<Core.Models.LyricLine>();
             
+            // 添加开头空行（10行），确保第一句歌词能滚动到中心
+            for (int i = 0; i < 10; i++)
+            {
+                var emptyLyric = new Core.Models.LyricLine
+                {
+                    Time = TimeSpan.MinValue, // 设置最小时间，确保在最前面
+                    OriginalText = string.Empty,
+                    TranslatedText = string.Empty,
+                    LyricFontSize = LyricFontSize,
+                    SelectedLyricFontSize = SelectedLyricFontSize,
+                    LyricTextAlignment = LyricTextAlignment,
+                    IsLyricTranslationEnabled = IsLyricTranslationEnabled
+                };
+                newLyrics.Add(emptyLyric);
+            }
+            
+            // 添加原始歌词
             foreach (var lyric in lyrics)
             {
                 // 同步歌词显示设置（值类型复制，不建立引用关系）
@@ -871,16 +893,41 @@ namespace MusicPlayer.ViewModels
                 newLyrics.Add(lyric);
             }
             
+            // 添加结尾空行（10行），确保最后一句歌词能滚动到中心
+            for (int i = 0; i < 10; i++)
+            {
+                var emptyLyric = new Core.Models.LyricLine
+                {
+                    Time = TimeSpan.MaxValue, // 设置最大时间，确保在最后面
+                    OriginalText = string.Empty,
+                    TranslatedText = string.Empty,
+                    LyricFontSize = LyricFontSize,
+                    SelectedLyricFontSize = SelectedLyricFontSize,
+                    LyricTextAlignment = LyricTextAlignment,
+                    IsLyricTranslationEnabled = IsLyricTranslationEnabled
+                };
+                newLyrics.Add(emptyLyric);
+            }
+            
             // 替换整个集合，确保旧集合可以被GC回收
             _lyrics = newLyrics;
 
             // 通知歌词已更新，触发滚动重置
             OnPropertyChanged(nameof(Lyrics));
             
-            // 如果有歌词，设置第一句为当前歌词
+            // 如果有歌词，设置第一句非空歌词为当前歌词
             if (Lyrics.Count > 0)
             {
-                CurrentLyricLine = Lyrics[0];
+                // 找到第一句非空歌词
+                var firstNonEmptyLyric = Lyrics.FirstOrDefault(l => !string.IsNullOrEmpty(l.OriginalText));
+                if (firstNonEmptyLyric != null)
+                {
+                    CurrentLyricLine = firstNonEmptyLyric;
+                }
+                else
+                {
+                    CurrentLyricLine = null;
+                }
             }
             else
             {
