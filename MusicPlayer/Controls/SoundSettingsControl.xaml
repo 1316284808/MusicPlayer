@@ -121,9 +121,9 @@
                 </StackPanel>
             </Grid>
 
-                <Border Grid.Row="1"
+                <Border Grid.Row="1" Margin="20"
                     Visibility="{Binding IsEqualizerEnabled, Converter={StaticResource BooleanToVisibilityConverter}}"
-Margin="10"  VerticalAlignment="Bottom" HorizontalAlignment="Left"
+  VerticalAlignment="Bottom" HorizontalAlignment="Center"
     Padding="15" Background="Transparent" BorderBrush="Gray" BorderThickness="1" Opacity="0.8" CornerRadius="8" >
                     <Border.Effect>
                         <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>

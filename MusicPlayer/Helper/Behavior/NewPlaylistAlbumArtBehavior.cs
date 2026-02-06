@@ -635,10 +635,14 @@ namespace MusicPlayer.Helper
         {
             try
             {
-                // 清理封面，释放内存
+                // 清理封面，释放内存 - 实现即走即清策略
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    // 注意：不要清理AlbumArt（缩略图），因为播放列表需要显示
-                    // 如果必须清理内存，只清理OriginalAlbumArt（高清大图）
+                    // 清理AlbumArt（缩略图），实现即走即清
+                    if (song.AlbumArt != null)
+                    {
+                        song.AlbumArt = null;
+                    }
+                    // 同时清理OriginalAlbumArt（高清大图）
                     song.OriginalAlbumArt = null;
                 });
             }
