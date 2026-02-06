@@ -36,62 +36,7 @@
                  
                 <TextBlock x:Name="ArtistTextBlock" Text="{Binding CurrentSongArtist}"    FontSize="16" Opacity="0.8"/> 
          </StackPanel>
-        <StackPanel Grid.Row="0"  HorizontalAlignment="Right"  VerticalAlignment="Center"              
-       Helper:StackPanelMouseBehavior.MouseEnterCommand="{Binding MouseEnterCommand}"
-       Helper:StackPanelMouseBehavior.MouseLeaveCommand="{Binding MouseLeaveCommand}">
-            <Border  CornerRadius="8" Padding="5"   Background="#80FFFFFF"
-           HorizontalAlignment="Right"  
-           Opacity="{Binding LyricSettingsOpacity, Mode=OneWay}">
-                <Border.Effect>
-                    <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>
-                </Border.Effect>
-
-                <StackPanel Orientation="Horizontal"   HorizontalAlignment="Left"  VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" ToolTip="歌词翻译" >
-                        <Helper:CustomIcon HorizontalAlignment="left" Kind="LocaleLanguage" Margin="2,5"/>
-                        <ui:ToggleSwitch Margin="2,5"
-Content="{Binding LyricTranslationText, Mode=OneWay}"    
-IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
-                    </StackPanel>
-                    <Separator Margin="2" />
-                    <ui:Button CornerRadius="8" Margin="2"  ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
-                        <Helper:CustomIcon>
-                            <Helper:CustomIcon.Style>
-                                <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
-                                    <!-- 默认右对齐图标 -->
-                                    <Setter Property="Kind" Value="Right"/>
-                                    <Style.Triggers>
-                                        <!-- 左对齐 -->
-                                        <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Left}">
-                                            <Setter Property="Kind" Value="Left"/>
-                                        </DataTrigger>
-                                        <!-- 居中对齐 -->
-                                        <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Center}">
-                                            <Setter Property="Kind" Value="Center"/>
-                                        </DataTrigger>
-                                        <!-- 右对齐 -->
-                                        <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Right}">
-                                            <Setter Property="Kind" Value="Right"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Helper:CustomIcon.Style>
-                        </Helper:CustomIcon>
-                    </ui:Button>
-                    <Separator Margin="2" />
-                    <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号+" Command="{Binding IncreaseLyricFontSizeCommand}">
-                        <Helper:CustomIcon Kind="BigFont" IconSize="12" Margin="2,0,0,0"/>
-                    </ui:Button>
-                    <ui:TextBlock Text="{Binding LyricFontSize }"  Margin="2"    HorizontalAlignment="Left" VerticalAlignment="Center" />
-                    <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号-" Command="{Binding DecreaseLyricFontSizeCommand}">
-                        <Helper:CustomIcon Kind="SmallFont" IconSize="12"  Margin="0,0,2,0"/>
-                    </ui:Button>
-
-                </StackPanel>
-
-            </Border>
-        </StackPanel>
-
+      
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -203,7 +148,52 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                             </Style.Triggers>
                         </Style>
                     </ListBox.ItemContainerStyle>
+                    <ListBox.ContextMenu  >
+                        <ContextMenu Background="#80FFFFFF">
+                            <StackPanel  Orientation="Horizontal"  HorizontalAlignment="Left"  VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" ToolTip="歌词翻译" >
+                                    <Helper:CustomIcon HorizontalAlignment="left" Kind="LocaleLanguage" Margin="2,5"/>
+                                    <ui:ToggleSwitch Margin="2,5"
+Content="{Binding LyricTranslationText, Mode=OneWay}"    
+IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
+                                </StackPanel>
+                                <Separator Margin="2" />
+                                <ui:Button CornerRadius="8" Margin="2"  ToolTip="歌词对齐方式" Command="{Binding ToggleLyricAlignmentCommand}">
+                                    <Helper:CustomIcon>
+                                        <Helper:CustomIcon.Style>
+                                            <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
+                                                <!-- 默认右对齐图标 -->
+                                                <Setter Property="Kind" Value="Right"/>
+                                                <Style.Triggers>
+                                                    <!-- 左对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Left}">
+                                                        <Setter Property="Kind" Value="Left"/>
+                                                    </DataTrigger>
+                                                    <!-- 居中对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Center}">
+                                                        <Setter Property="Kind" Value="Center"/>
+                                                    </DataTrigger>
+                                                    <!-- 右对齐 -->
+                                                    <DataTrigger Binding="{Binding LyricTextAlignment}" Value="{x:Static syswindows:TextAlignment.Right}">
+                                                        <Setter Property="Kind" Value="Right"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Helper:CustomIcon.Style>
+                                    </Helper:CustomIcon>
+                                </ui:Button>
+                                <Separator Margin="2" />
+                                <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号+" Command="{Binding IncreaseLyricFontSizeCommand}">
+                                    <Helper:CustomIcon Kind="BigFont" IconSize="12" Margin="2,0,0,0"/>
+                                </ui:Button>
+                                <ui:TextBlock Text="{Binding LyricFontSize }"  Margin="2"    HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                <ui:Button CornerRadius="8" Margin="2"  Width="auto" ToolTip="字号-" Command="{Binding DecreaseLyricFontSizeCommand}">
+                                    <Helper:CustomIcon Kind="SmallFont" IconSize="12"  Margin="0,0,2,0"/>
+                                </ui:Button>
 
+                            </StackPanel>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>

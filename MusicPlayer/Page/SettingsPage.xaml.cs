@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using MusicPlayer.ViewModels;
 using MusicPlayer.Core.Interface;
+using MusicPlayer.Services.Messages;
 
 namespace MusicPlayer.Page
 {

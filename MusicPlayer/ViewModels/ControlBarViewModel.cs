@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Navigation;
 using MusicPlayer.Page;

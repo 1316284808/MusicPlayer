@@ -10,7 +10,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using MusicPlayer.Core.Interfaces;
 
 namespace MusicPlayer.ViewModels
 {
@@ -24,6 +23,7 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaybackContextService _playbackContextService;
         private readonly ICustomPlaylistService _customPlaylistService;
         private readonly IPlaylistCacheService _playlistCacheService;
+        private readonly INotificationService _notificationService;
 
         // 所有歌单列表
         private readonly ObservableCollection<Playlist> _allPlaylists = new();
@@ -54,7 +54,7 @@ namespace MusicPlayer.ViewModels
                 _currentPlaylist = value;
                 OnPropertyChanged(nameof(CurrentPlaylist));
                 // 加载歌单歌曲
-                LoadPlaylistSongsAsync();
+             LoadPlaylistSongsAsync();
             }
         }
 
@@ -172,13 +172,15 @@ namespace MusicPlayer.ViewModels
             IPlaylistDataService playlistDataService,
             IPlaybackContextService playbackContextService,
             ICustomPlaylistService customPlaylistService,
-            IPlaylistCacheService playlistCacheService)
+            IPlaylistCacheService playlistCacheService,
+            INotificationService notificationService)
         {
             _messagingService = messagingService;
             _playlistDataService = playlistDataService;
             _playbackContextService = playbackContextService;
             _customPlaylistService = customPlaylistService;
             _playlistCacheService = playlistCacheService;
+            _notificationService = notificationService;
 
             // 初始化命令
             PlayAllCommand = new RelayCommand(ExecutePlayAll);
@@ -198,14 +200,14 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Initialize()
         {
-            Initialize(null);
+           Initialize(null);
         }
         
         /// <summary>
         /// 初始化视图模型，支持导航参数
         /// </summary>
         /// <param name="params">导航参数</param>
-        public void Initialize( PlaylistDetailParams? @params)
+        public async Task Initialize( PlaylistDetailParams? @params)
         {
             // 优先使用导航参数
             if (@params != null)
@@ -218,7 +220,7 @@ namespace MusicPlayer.ViewModels
                     _currentContextType = PlaybackContextType.CustomPlaylist;
                     _currentContextIdentifier = @params.PlaylistId.Value.ToString();
                     _currentContextDisplayName = @params.PlaylistId.Value.ToString();
-                    LoadCurrentPlaylistAsync(@params.PlaylistId.Value);
+                   await LoadCurrentPlaylistAsync(@params.PlaylistId.Value);
                 }
                 else if (!string.IsNullOrEmpty(@params.ArtistName))
                 {
@@ -269,7 +271,7 @@ namespace MusicPlayer.ViewModels
                 {
                     if (int.TryParse(context.Identifier, out int playlistId))
                     {
-                        LoadCurrentPlaylistAsync(playlistId);
+                       await LoadCurrentPlaylistAsync(playlistId);
                     }
                 }
                 else if (context.Type == PlaybackContextType.Artist)
@@ -527,6 +529,7 @@ namespace MusicPlayer.ViewModels
                     // 发送播放消息
                     var firstSong = _filteredPlaylist.First();
                     _messagingService.Send(new SongSelectionMessage(firstSong, 0));
+                    _notificationService.ShowSuccess($"PlaylistViewModel: 播放全部开始: {firstSong.Title}");
                 }
             }
             catch (Exception ex)
@@ -561,7 +564,7 @@ namespace MusicPlayer.ViewModels
                     // 发送播放消息，播放随机排序后的第一首歌曲
                     var firstSong = shuffledSongs.First();
                     _messagingService.Send(new SongSelectionMessage(firstSong, 0));
-                    
+                    _notificationService.ShowSuccess($"PlaylistViewModel: 随机播放开始: {firstSong.Title}");
                     System.Diagnostics.Debug.WriteLine($"PlaylistDetailViewModel: 随机播放开始，第一首歌曲: {firstSong.Title}");
                 }
             }

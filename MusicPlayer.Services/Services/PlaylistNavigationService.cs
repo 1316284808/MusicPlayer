@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 
 namespace MusicPlayer.Services

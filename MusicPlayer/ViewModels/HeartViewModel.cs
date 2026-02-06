@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services.Messages;
 using System.Collections.ObjectModel;
@@ -67,6 +66,27 @@ namespace MusicPlayer.ViewModels
                     {
                         ExecuteSelectPlaylist(value);
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 音乐库统计信息
+        /// </summary>
+        private LibraryStatistics _libraryStatistics = LibraryStatistics.Empty;
+
+        /// <summary>
+        /// 音乐库统计信息
+        /// </summary>
+        public LibraryStatistics LibraryStatistics
+        {
+            get { return _libraryStatistics; }
+            set
+            {
+                if (_libraryStatistics != value)
+                {
+                    _libraryStatistics = value;
+                    OnPropertyChanged(nameof(LibraryStatistics));
                 }
             }
         }
@@ -191,6 +211,9 @@ namespace MusicPlayer.ViewModels
                     
                     // 更新歌单列表
                     await LoadPlaylistsAsync();
+                    
+                    // 刷新统计信息
+                    await LoadLibraryStatisticsAsync();
 
                     _notificationService.ShowSuccess($"成功添加 {songs.Count} 首歌曲");
                 }
@@ -212,6 +235,25 @@ namespace MusicPlayer.ViewModels
             SelectedPlaylist = null;
             // 加载歌单数据
             _ = LoadPlaylistsAsync();
+            // 加载统计信息
+            _ = LoadLibraryStatisticsAsync();
+        }
+
+        /// <summary>
+        /// 加载音乐库统计信息
+        /// </summary>
+        public async Task LoadLibraryStatisticsAsync()
+        {
+            try
+            {
+                var statistics = await _playlistCacheService.GetLibraryStatisticsAsync();
+                LibraryStatistics = statistics;
+                System.Diagnostics.Debug.WriteLine($"HeartViewModel: 加载统计信息 - 歌曲:{statistics.TotalSongs}, 歌单:{statistics.TotalPlaylists}, 歌手:{statistics.TotalArtists}, 专辑:{statistics.TotalAlbums}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"HeartViewModel: 加载统计信息失败: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -416,7 +458,11 @@ namespace MusicPlayer.ViewModels
                     playlist.SongCount = 0;
                     MusicGroups.Add(playlist);
                     _notificationService.ShowSuccess($"成功创建新歌单[{name}]");
-                    LoadPlaylistsAsync();
+                    await LoadPlaylistsAsync();
+                    
+                    // 刷新统计信息
+                    await LoadLibraryStatisticsAsync();
+                    
                     System.Diagnostics.Debug.WriteLine($"HeartViewModel: 成功创建新歌单: {name}");
                 }
             }
@@ -503,7 +549,11 @@ namespace MusicPlayer.ViewModels
                     await _playlistCacheService.DeletePlaylistAsync(playlist.Id);
 
                     // 重新加载歌单列表，确保UI同步
-                    await LoadPlaylistsAsync(); 
+                    await LoadPlaylistsAsync();
+                    
+                    // 刷新统计信息
+                    await LoadLibraryStatisticsAsync();
+                    
                     // 显示删除成功通知
                     _notificationService.ShowSuccess($"歌单 [{playlist.Name}] 已成功删除");
                 }

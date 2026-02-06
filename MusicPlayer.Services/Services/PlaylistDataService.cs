@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services.Messages;
-using MusicPlayer.Core.Interfaces;
+
 using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Services

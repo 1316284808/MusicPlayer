@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
+
 using MusicPlayer.Services.Messages;
 
 namespace MusicPlayer.Services.Handlers

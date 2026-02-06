@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services.Messages;
 

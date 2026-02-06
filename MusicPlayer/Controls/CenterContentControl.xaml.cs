@@ -151,18 +151,6 @@ namespace MusicPlayer.Controls
                 
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 已清理LyricsScrollBehavior");
             }
-            
-            // 清理StackPanelMouseBehavior
-            // 找到带有StackPanelMouseBehavior的StackPanel
-            var stackPanelWithMouseBehavior = FindVisualChild<StackPanel>(this);
-            if (stackPanelWithMouseBehavior != null)
-            {
-                // 通过将命令设置为null来清理StackPanelMouseBehavior
-                MusicPlayer.Helper.StackPanelMouseBehavior.SetMouseEnterCommand(stackPanelWithMouseBehavior, null);
-                MusicPlayer.Helper.StackPanelMouseBehavior.SetMouseLeaveCommand(stackPanelWithMouseBehavior, null);
-                
-                System.Diagnostics.Debug.WriteLine("CenterContentControl: 已清理StackPanelMouseBehavior");
-            }
         }
         
         // 获取ListBox中的ScrollViewer

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services;
 using MusicPlayer.Services.Messages; // 引入新的消息类型
@@ -13,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+
 
 namespace MusicPlayer.ViewModels
 {
@@ -773,6 +773,7 @@ namespace MusicPlayer.ViewModels
                     // 发送播放消息
                     var firstSong = _filteredPlaylist.First();
                     _messagingService.Send(new SongSelectionMessage(firstSong, 0));
+                    _notificationService.ShowSuccess($"播放全部开始: {firstSong.Title}");
                 }
             }
             catch (Exception ex)
@@ -804,7 +805,8 @@ namespace MusicPlayer.ViewModels
                     // 发送播放消息，播放随机排序后的第一首歌曲
                     var firstSong = shuffledSongs.First();
                     _messagingService.Send(new SongSelectionMessage(firstSong, 0));
-                    
+                    _notificationService.ShowSuccess($"随机播放开始: {firstSong.Title}");
+
                     System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 随机播放开始，第一首歌曲: {firstSong.Title}");
                 }
             }

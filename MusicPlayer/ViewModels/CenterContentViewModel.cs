@@ -31,8 +31,8 @@ namespace MusicPlayer.ViewModels
         private bool _isWindowMaximized = false;
         
         // 自动隐藏相关属性
-        private double _lyricSettingsOpacity = 1.0; // 控制歌词设置面板的透明度
-        private System.Timers.Timer _hideSettingsTimer; // 隐藏设置面板的计时器
+
+
 
         private ObservableCollection<Core.Models.LyricLine> _lyrics = new();
         private Core.Models.LyricLine? _currentLyricLine;
@@ -455,21 +455,7 @@ namespace MusicPlayer.ViewModels
             }
         }
         
-        /// <summary>
-        /// 歌词设置面板的透明度
-        /// </summary>
-        public double LyricSettingsOpacity
-        {
-            get => _lyricSettingsOpacity;
-            set
-            {
-                if (Math.Abs(_lyricSettingsOpacity - value) > 0.01)
-                {
-                    _lyricSettingsOpacity = value;
-                    OnPropertyChanged(nameof(LyricSettingsOpacity));
-                }
-            }
-        }
+
 
         public ObservableCollection<Core.Models.LyricLine> Lyrics
         {
@@ -543,8 +529,6 @@ namespace MusicPlayer.ViewModels
         public ICommand ToggleLyricAlignmentCommand { get; }
         public ICommand IncreaseLyricFontSizeCommand { get; }
         public ICommand DecreaseLyricFontSizeCommand { get; }
-        public ICommand MouseEnterCommand { get; }
-        public ICommand MouseLeaveCommand { get; }
 
 
 
@@ -574,14 +558,8 @@ namespace MusicPlayer.ViewModels
             ToggleLyricAlignmentCommand = new RelayCommand(ToggleLyricAlignment);
             IncreaseLyricFontSizeCommand = new RelayCommand(IncreaseLyricFontSize);
             DecreaseLyricFontSizeCommand = new RelayCommand(DecreaseLyricFontSize);
-            MouseEnterCommand = new RelayCommand(ExecuteMouseEnter);
-            MouseLeaveCommand = new RelayCommand(ExecuteMouseLeave);
 
-            // 初始化计时器
-            _hideSettingsTimer = new System.Timers.Timer(3000); // 3秒
-            _hideSettingsTimer.Elapsed += HideSettingsTimer_Elapsed;
-            _hideSettingsTimer.AutoReset = false;
-            _hideSettingsTimer.Start(); // 初始启动计时器
+
 
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
@@ -986,37 +964,9 @@ namespace MusicPlayer.ViewModels
             System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 歌词已清空");
         }
         
-        /// <summary>
-        /// 计时器事件处理 - 隐藏歌词设置面板
-        /// </summary>
-        private void HideSettingsTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            // 确保在UI线程上执行
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                LyricSettingsOpacity = 0.0;
-            });
-        }
+
         
-        /// <summary>
-        /// 执行鼠标进入操作
-        /// </summary>
-        private void ExecuteMouseEnter()
-        {
-            // 当鼠标进入时，停止计时器并显示设置面板
-            _hideSettingsTimer.Stop();
-            LyricSettingsOpacity = 1.0;
-        }
-        
-        /// <summary>
-        /// 执行鼠标离开操作
-        /// </summary>
-        private void ExecuteMouseLeave()
-        {
-            // 当鼠标离开时，启动计时器，3秒后隐藏设置面板
-            _hideSettingsTimer.Stop();
-            _hideSettingsTimer.Start();
-        }
+
 
         /// <summary>
         /// 清理ViewModel资源
@@ -1032,15 +982,7 @@ namespace MusicPlayer.ViewModels
             _messagingService.Unregister(this);
             System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已取消所有消息注册");
             
-            // 停止并释放计时器
-            if (_hideSettingsTimer != null)
-            {
-                _hideSettingsTimer.Stop();
-                _hideSettingsTimer.Elapsed -= HideSettingsTimer_Elapsed;
-                _hideSettingsTimer.Dispose();
-                _hideSettingsTimer = null;
-                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已释放计时器");
-            }
+
             
             // 清理歌词数据
             ClearLyrics();

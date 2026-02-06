@@ -27,7 +27,7 @@
 
             <Rectangle Stroke="Black" StrokeThickness="1" StrokeDashArray="4 2"
       RadiusX="8" RadiusY="8" />
-            <Border Background="Transparent" CornerRadius="8">
+            <Border Background="#40FFFFFF"  CornerRadius="8">
             <StackPanel Orientation="Vertical"   VerticalAlignment="Center">
 
 
@@ -44,6 +44,20 @@
                     <ui:TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.7"
 Text="将文件夹拖到此处，将自动识别文件导入到默认列表"/>
             </StackPanel>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E8E8E8" />
+                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                <Setter Property="BorderThickness" Value=" 1,0" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
             </Border>
         </Grid>
 
@@ -200,8 +214,123 @@ SelectionMode="Single" >
                     </ui:ListView.ItemTemplate>
                 </ui:ListView>
 
-                <Border Grid.Column="1" >
-                    
+                <Border Grid.Column="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- 标题 -->
+                       
+                        
+                        <!-- 统计卡片 -->
+                        <UniformGrid Grid.Row="0" VerticalAlignment="Top" Columns="2" Rows="2" >
+                            <!-- 总歌曲数 -->
+                            <Border Background="#40FFFFFF"  Width="200" Height="120" CornerRadius="8" Margin="5" Padding="15">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Helper:CustomIcon Kind="List" IconSize="24" 
+                                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding LibraryStatistics.TotalSongs}" 
+                                               FontSize="28" FontWeight="Bold" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="歌曲总数" FontSize="12" Opacity="0.8" 
+                                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E8E8E8" />
+                                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                                <Setter Property="BorderThickness" Value=" 1,0" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            
+                            <!-- 总歌单数 -->
+                            <Border Background="#40FFFFFF"  Width="200" Height="120" CornerRadius="8" Margin="5" Padding="15">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Helper:CustomIcon Kind="HeartFill" IconSize="24"  Foreground="Red"  
+                                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding LibraryStatistics.TotalPlaylists}" 
+                                               FontSize="28" FontWeight="Bold" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="歌单总数" FontSize="12" Opacity="0.8" 
+                                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E8E8E8" />
+                                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                                <Setter Property="BorderThickness" Value=" 1,0" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            
+                            <!-- 总歌手数 -->
+                            <Border Background="#40FFFFFF"  Width="200" Height="120" CornerRadius="8" Margin="5" Padding="15">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Helper:CustomIcon Kind="Person" IconSize="24"  
+                                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding LibraryStatistics.TotalArtists}" 
+                                               FontSize="28" FontWeight="Bold" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="歌手总数" FontSize="12" Opacity="0.8" 
+                                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E8E8E8" />
+                                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                                <Setter Property="BorderThickness" Value=" 1,0" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            
+                            <!-- 总专辑数 -->
+                            <Border Background="#40FFFFFF"  Width="200" Height="120" CornerRadius="8" Margin="5" Padding="15">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Helper:CustomIcon Kind="Album" IconSize="24"  
+                                                       HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding LibraryStatistics.TotalAlbums}" 
+                                               FontSize="28" FontWeight="Bold" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="专辑总数" FontSize="12" Opacity="0.8" 
+                                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                </StackPanel>
+
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E8E8E8" />
+                                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                                <Setter Property="BorderThickness" Value=" 1,0" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </UniformGrid>
+                    </Grid>
                 </Border>
             </Grid>
          

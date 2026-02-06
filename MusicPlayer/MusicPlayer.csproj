@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+	  <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -10,7 +11,15 @@
     <PackageIcon>MusicPlayer.png</PackageIcon>
     <ApplicationIcon>resources\MusicPlayer.ico</ApplicationIcon>
     <StartupObject></StartupObject>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="obj\wappublish\x64\**" />
+    <EmbeddedResource Remove="obj\wappublish\x64\**" />
+    <None Remove="obj\wappublish\x64\**" />
+    <Page Remove="obj\wappublish\x64\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Controls\WordByWordLyricControl.xaml.cs" />

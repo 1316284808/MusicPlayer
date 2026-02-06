@@ -42,17 +42,18 @@
                 <MenuItem   Command="{Binding ShowMainWindowCommand}" >
                     <MenuItem.Header>
                         <StackPanel Orientation="Horizontal">
-                            <Helper:CustomIcon Kind="BackHome"/>
+                            <Helper:CustomIcon Kind="BackHome" FontWeight="Normal"/>
                             <Separator Margin="2"/>
                             <ui:TextBlock Text="显示主窗口" FontWeight="SemiBold"/>
                         </StackPanel>
                     </MenuItem.Header>
                 </MenuItem>
+                
                 <Separator /> 
                 <MenuItem   Command="{Binding PreviousTrackCommand}" >
                     <MenuItem.Header>
                         <StackPanel Orientation="Horizontal">
-                            <Helper:CustomIcon Kind="Previous"/>
+                            <Helper:CustomIcon Kind="Previous"  FontWeight="Normal"/>
                             <Separator Margin="2"/>
                             <ui:TextBlock Text="上一曲" FontWeight="SemiBold"/>
                         </StackPanel>
@@ -61,7 +62,7 @@
                 <MenuItem  Command="{Binding TogglePlayPauseCommand}" >
                         <MenuItem.Header>
                             <StackPanel Orientation="Horizontal">
-                                <Helper:CustomIcon Kind="Play"/>
+                            <Helper:CustomIcon Kind="Play"  FontWeight="Normal"/>
                                 <Separator Margin="2"/>
                                 <ui:TextBlock Text="播放/暂停" FontWeight="SemiBold"/>
                             </StackPanel>
@@ -70,7 +71,7 @@
                 <MenuItem  Command="{Binding NextTrackCommand}" >
                             <MenuItem.Header>
                                 <StackPanel Orientation="Horizontal">
-                            <Helper:CustomIcon Kind="Next"/>
+                            <Helper:CustomIcon Kind="Next"  FontWeight="Normal"/>
                                     <Separator Margin="2"/>
                                     <ui:TextBlock Text="下一曲" FontWeight="SemiBold"/>
                                 </StackPanel>
@@ -81,7 +82,7 @@
                 <MenuItem  Command="{Binding ExitApplicationCommand}" >
                                 <MenuItem.Header>
                                     <StackPanel Orientation="Horizontal">
-                                        <Helper:CustomIcon Kind="Close" Foreground="Red"/>
+                            <Helper:CustomIcon Kind="Close"  FontWeight="Normal" Foreground="Red"/>
                                         <Separator Margin="2"/>
                             <ui:TextBlock Text="退出" FontWeight="SemiBold" Foreground="Red"/>
                                     </StackPanel>

@@ -54,8 +54,10 @@ namespace MusicPlayer.Core.Interface
                 IconKind.Text => "\uE8D3",//文本文件
                 IconKind.InPerson => "\uE77B",//空心歌手头像
                 IconKind.Person => "\uea8c",//实心歌手头像
+                IconKind.Artist => "\ue77b",//歌手图标 
                 IconKind.Album => "\ue735",//实心专辑封面
                 IconKind.InAlbum => "\ue734",//空心专辑封面
+                IconKind.Playlist => "\ue8d5",//播放列表图标（使用List图标）
                 IconKind.Time => "\uEe93",//时间
                 IconKind.Storage => "\uE8F1",//文件柜
                 IconKind.InSettings => "\ue713",//空心设置-开

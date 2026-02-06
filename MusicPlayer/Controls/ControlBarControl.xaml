@@ -51,7 +51,10 @@
                                 <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.3"/>
                             </Border.Effect>
                             <Border.RenderTransform>
-                                <RotateTransform x:Name="ControlBarAlbumArtRotateTransform" CenterX="30" CenterY="30"/>
+                                <TransformGroup>
+                                    <RotateTransform x:Name="ControlBarAlbumArtRotateTransform" CenterX="30" CenterY="30"/>
+                                    <TranslateTransform x:Name="ControlBarAlbumArtTranslateTransform" X="0" Y="0"/>
+                                </TransformGroup>
                             </Border.RenderTransform>
                             <Ellipse>
                                 <Ellipse.Fill>
@@ -60,10 +63,66 @@
                             </Ellipse>
                             <Border.Style>
                                 <Style TargetType="Border">
+                                    <Setter Property="Opacity" Value="1"/>
                                     <Style.Triggers>
-                                        <!-- 当在PlayerPage时隐藏旋转封面 -->
+                                        <!-- 当在PlayerPage时优雅隐藏旋转封面（滑动+淡出） -->
                                         <DataTrigger Binding="{Binding IsPlayerPage}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <!-- 淡出 -->
+                                                        <DoubleAnimation 
+                                                            Storyboard.TargetProperty="Opacity"
+                                                            From="1" To="0" 
+                                                            Duration="0:0:0.2">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <QuadraticEase EasingMode="EaseIn"/>
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                        <!-- 向左滑动 -->
+                                                        <DoubleAnimation 
+                                                            Storyboard.TargetProperty="RenderTransform.Children[1].X"
+                                                            From="0" To="-20" 
+                                                            Duration="0:0:0.2">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <QuadraticEase EasingMode="EaseIn"/>
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                        <!-- 动画完成后设置 Visibility 为 Collapsed -->
+                                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                            <DiscreteObjectKeyFrame KeyTime="0:0:0.2" Value="{x:Static Visibility.Collapsed}"/>
+                                                        </ObjectAnimationUsingKeyFrames>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <!-- 先将 Visibility 设置回 Visible -->
+                                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                                        </ObjectAnimationUsingKeyFrames>
+                                                        <!-- 淡入 -->
+                                                        <DoubleAnimation 
+                                                            Storyboard.TargetProperty="Opacity"
+                                                            From="0" To="1" 
+                                                            Duration="0:0:0.2">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <QuadraticEase EasingMode="EaseOut"/>
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                        <!-- 向右滑回 -->
+                                                        <DoubleAnimation 
+                                                            Storyboard.TargetProperty="RenderTransform.Children[1].X"
+                                                            From="-20" To="0" 
+                                                            Duration="0:0:0.2">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <QuadraticEase EasingMode="EaseOut"/>
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.ExitActions>
                                         </DataTrigger>
                                         <!-- 播放时旋转 -->
                                         <DataTrigger Binding="{Binding IsPlaying}" Value="True">
@@ -71,7 +130,7 @@
                                                 <BeginStoryboard Name="ControlBarSpinningStoryboard">
                                                     <Storyboard>
                                                         <DoubleAnimation 
-                                                Storyboard.TargetProperty="RenderTransform.Angle"  
+                                                Storyboard.TargetProperty="RenderTransform.Children[0].Angle"  
                                                 From="0" To="360" 
                                                 Duration="0:01:30" 
                                                 RepeatBehavior="Forever"/>

@@ -38,8 +38,10 @@ namespace MusicPlayer.Core.Enums
         Text,
         Person,
         InPerson,
+        Artist,
         Album,
         InAlbum,
+        Playlist,
         Time,
         Storage, 
         Heart,// 心形图标，表示收藏或喜欢 /关

@@ -13,7 +13,6 @@ using MusicPlayer.Logging;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Helper;
 using CommunityToolkit.Mvvm.Messaging;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Enums;
 using System.Linq;
 using MusicPlayer.Navigation;

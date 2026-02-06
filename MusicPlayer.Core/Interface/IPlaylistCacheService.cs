@@ -1,7 +1,7 @@
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Models;
 
-namespace MusicPlayer.Core.Interfaces;
+namespace MusicPlayer.Core.Interface;
 
 /// <summary>
 /// 播放列表缓存服务接口
@@ -174,6 +174,16 @@ public interface IPlaylistCacheService
     /// <param name="songId">歌曲ID</param>
     /// <returns>歌曲是否在播放列表中</returns>
     Task<bool> IsSongInPlaylistAsync(int playlistId, int songId);
+
+    #endregion
+
+    #region 统计方法
+
+    /// <summary>
+    /// 获取音乐库统计信息
+    /// </summary>
+    /// <returns>包含总歌曲数、总歌单数、总歌手数、总专辑数的统计对象</returns>
+    Task<LibraryStatistics> GetLibraryStatisticsAsync();
 
     #endregion
 }

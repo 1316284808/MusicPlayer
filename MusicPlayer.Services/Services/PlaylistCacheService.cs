@@ -1,7 +1,6 @@
 using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
-using MusicPlayer.Core.Interfaces;
 using MusicPlayer.Core.Models;
 using System.IO;
 using System.Runtime.Caching;
@@ -728,6 +727,65 @@ public class PlaylistCacheService : IPlaylistCacheService
             return (List<Playlist>)_cache.Get(PlaylistsKey);
         }
         return new List<Playlist>();
+    }
+
+    #endregion
+
+    #region 统计方法实现
+
+    /// <summary>
+    /// 获取音乐库统计信息
+    /// </summary>
+    /// <returns>包含总歌曲数、总歌单数、总歌手数、总专辑数的统计对象</returns>
+    public async Task<LibraryStatistics> GetLibraryStatisticsAsync()
+    {
+        return await Task.Run(() =>
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    // 获取所有歌曲
+                    var songs = GetPlaylist();
+                    var totalSongs = songs.Count;
+
+                    // 计算不重复的歌手数（去除空字符串）
+                    var totalArtists = songs
+                        .Where(s => !string.IsNullOrWhiteSpace(s.Artist))
+                        .Select(s => s.Artist.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Count();
+
+                    // 计算不重复的专辑数（去除空字符串）
+                    var totalAlbums = songs
+                        .Where(s => !string.IsNullOrWhiteSpace(s.Album))
+                        .Select(s => s.Album.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Count();
+
+                    // 获取所有播放列表
+                    var playlists = GetPlaylistsFromCache();
+                    var totalPlaylists = playlists.Count;
+
+                    var statistics = new LibraryStatistics
+                    {
+                        TotalSongs = totalSongs,
+                        TotalPlaylists = totalPlaylists,
+                        TotalArtists = totalArtists,
+                        TotalAlbums = totalAlbums
+                    };
+
+                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取音乐库统计 - 歌曲:{totalSongs}, 歌单:{totalPlaylists}, 歌手:{totalArtists}, 专辑:{totalAlbums}");
+
+                    return statistics;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"PlaylistCacheService: 获取音乐库统计失败: {ex.Message}");
+                    return LibraryStatistics.Empty;
+                }
+            }
+        });
     }
 
     #endregion

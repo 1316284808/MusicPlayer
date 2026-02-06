@@ -7,7 +7,6 @@ using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Enums;
 using MusicPlayer.Services.Messages;
 
-using MusicPlayer.Core.Interfaces;
 
 namespace MusicPlayer.Services
 {

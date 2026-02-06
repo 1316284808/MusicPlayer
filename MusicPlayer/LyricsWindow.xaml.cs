@@ -26,10 +26,9 @@ namespace MusicPlayer
         private readonly IMessagingService _messagingService;
 
         // 配置项：一键修改，无需改逻辑
-        private readonly int _fontSize = 28;                                 // 字体大小
         private readonly SolidColorBrush _blackBrush = Brushes.Black;          // 底层黑色
         private readonly SolidColorBrush _blueBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF0078D7"));    // 顶层蓝色
-        private readonly int _charSpacing = 0;                                 // 字符间距，防止粘连
+                       
 
         // 歌词显示控件
         //private Helper.HighlightTextBlock tbLyricEN = null!;
