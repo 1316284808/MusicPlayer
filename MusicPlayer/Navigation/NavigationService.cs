@@ -72,6 +72,7 @@ namespace MusicPlayer.Navigation
                     // 获取Transient ViewModel
                     var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
                     newPage = new PlaylistPage(playlistViewModel);
+                    playlistViewModel.Initialize();
                 }
                 else if (pageUri.Contains("PlaylistDetailPage.xaml"))
                 {
@@ -86,11 +87,13 @@ namespace MusicPlayer.Navigation
                 {
                     var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
                     newPage = new SettingsPage(settingsViewModel);
+                    settingsViewModel.Initialize();
                 }
                 else if (pageUri.Contains("PlayerPage.xaml"))
                 {
                     var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
                     newPage = new PlayerPage(centerContentViewModel);
+                    centerContentViewModel.Initialize();
                 }
                 else if (pageUri.Contains("AlbumPage.xaml"))
                 {
@@ -219,6 +222,7 @@ namespace MusicPlayer.Navigation
                 {
                     var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
                     newPage = new PlaylistPage(playlistViewModel);
+                    playlistViewModel.Initialize();
                 }
                 else if (previousPage.Contains("PlaylistDetailPage.xaml"))
                 {
@@ -230,11 +234,13 @@ namespace MusicPlayer.Navigation
                 {
                     var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
                     newPage = new SettingsPage(settingsViewModel);
+                    settingsViewModel.Initialize();
                 }
                 else if (previousPage.Contains("PlayerPage.xaml"))
                 {
                     var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
                     newPage = new PlayerPage(centerContentViewModel);
+                    centerContentViewModel.Initialize();
                 }
                 else if (previousPage.Contains("AlbumPage.xaml"))
                 {
@@ -284,6 +290,7 @@ namespace MusicPlayer.Navigation
                 {
                     var playlistViewModel = _serviceProvider.GetRequiredService<IPlaylistViewModel>();
                     var playlistPage = new PlaylistPage(playlistViewModel);
+                    playlistViewModel.Initialize();
                     _mainFrame.Navigate(playlistPage);
                 }
                 else if (nextPage.Contains("PlaylistDetailPage.xaml"))
@@ -297,12 +304,14 @@ namespace MusicPlayer.Navigation
                 {
                     var settingsViewModel = _serviceProvider.GetRequiredService<ISettingsPageViewModel>();
                     var settingsPage = new SettingsPage(settingsViewModel);
+                    settingsViewModel.Initialize();
                     _mainFrame.Navigate(settingsPage);
                 }
                 else if (nextPage.Contains("PlayerPage.xaml"))
                 {
                     var centerContentViewModel = _serviceProvider.GetRequiredService<ICenterContentViewModel>();
                     var playerPage = new PlayerPage(centerContentViewModel);
+                    centerContentViewModel.Initialize();
                     _mainFrame.Navigate(playerPage);
                 }
                 else if (nextPage.Contains("AlbumPage.xaml"))

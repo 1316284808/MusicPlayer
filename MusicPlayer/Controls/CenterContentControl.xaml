@@ -236,8 +236,8 @@ IsChecked="{Binding IsLyricTranslationEnabled, Mode=TwoWay}"/>
                                     <Setter TargetName="TranslatedLyric" Property="HorizontalAlignment" Value="Stretch"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBoxItem}}" Value="True">
-                                    <Setter TargetName="OriginalLyric" Property="HighlightWidth" Value="0.2"/>
-                                    <Setter TargetName="TranslatedLyric" Property="HighlightWidth" Value="0.2"/>
+                                    <Setter TargetName="OriginalLyric" Property="HighlightWidth" Value="0.1"/>
+                                    <Setter TargetName="TranslatedLyric" Property="HighlightWidth" Value="0.1"/>
                                     <Setter TargetName="OriginalLyric" Property="FontSize" Value="{Binding SelectedLyricFontSize}"/>
                                     <Setter TargetName="OriginalLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>
                                     <Setter TargetName="TranslatedLyric" Property="TextAlignment" Value="{Binding LyricTextAlignment}"/>

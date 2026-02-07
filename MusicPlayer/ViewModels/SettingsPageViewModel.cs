@@ -29,6 +29,21 @@ namespace MusicPlayer.ViewModels
         }
 
         /// <summary>
+        /// 初始化ViewModel
+        /// </summary>
+        public void Initialize()
+        {
+            System.Diagnostics.Debug.WriteLine("SettingsPageViewModel: 开始执行Initialize方法");
+
+            // 初始化子ViewModel
+            (_windowSettingsViewModel as MusicPlayer.ViewModels.ObservableObject)?.Initialize();
+            (_playlistSettingViewModel as MusicPlayer.ViewModels.ObservableObject)?.Initialize();
+            (_soundSettingsViewModel as MusicPlayer.ViewModels.ObservableObject)?.Initialize();
+
+            System.Diagnostics.Debug.WriteLine("SettingsPageViewModel: Initialize方法执行完成");
+        }
+
+        /// <summary>
         /// 窗体设置视图模型
         /// </summary>
         public IWindowSettingsViewModel WindowSettingsViewModel => _windowSettingsViewModel;

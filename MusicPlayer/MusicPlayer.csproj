@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Compile Remove="Controls\WordByWordLyricControl.xaml.cs" />
+    <Compile Remove="Controls\WordByWordLyricItem.xaml.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,7 @@
 
   <ItemGroup>
     <Page Remove="Controls\WordByWordLyricControl.xaml" />
+    <Page Remove="Controls\WordByWordLyricItem.xaml" />
     <Page Remove="Styles\TreeViewStyles.xaml" />
   </ItemGroup>
 

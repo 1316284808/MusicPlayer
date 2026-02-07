@@ -196,15 +196,15 @@ namespace MusicPlayer.Controls
                         }
                         
                         // 通过VisualTreeHelper获取所有WordByWordLyricItem
-                        var lyricItems = FindAllVisualChildren<WordByWordLyricItem>(listBoxItem);
-                        foreach (var lyricItem in lyricItems)
-                        {
-                            if (lyricItem is IDisposable disposableLyricItem)
-                            {
-                                disposableLyricItem.Dispose();
-                                System.Diagnostics.Debug.WriteLine("CenterContentControl: 已释放歌词项资源");
-                            }
-                        }
+                        //var lyricItems = FindAllVisualChildren<WordByWordLyricItem>(listBoxItem);
+                        //foreach (var lyricItem in lyricItems)
+                        //{
+                        //    if (lyricItem is IDisposable disposableLyricItem)
+                        //    {
+                        //        disposableLyricItem.Dispose();
+                        //        System.Diagnostics.Debug.WriteLine("CenterContentControl: 已释放歌词项资源");
+                        //    }
+                        //}
                         
                         // 清空ListBoxItem的Content和DataContext
                         listBoxItem.Content = null;

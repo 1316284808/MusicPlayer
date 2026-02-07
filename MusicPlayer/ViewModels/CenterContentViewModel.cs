@@ -545,6 +545,20 @@ namespace MusicPlayer.ViewModels
             _playlistService = playlistService;
             _lyricsService = lyricsService;
 
+            // 初始化命令
+            PlayPauseCommand = new RelayCommand(ExecutePlayPause);
+            ToggleLyricAlignmentCommand = new RelayCommand(ToggleLyricAlignment);
+            IncreaseLyricFontSizeCommand = new RelayCommand(IncreaseLyricFontSize);
+            DecreaseLyricFontSizeCommand = new RelayCommand(DecreaseLyricFontSize);
+        }
+
+        /// <summary>
+        /// 初始化ViewModel
+        /// </summary>
+        public void Initialize()
+        {
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始执行Initialize方法");
+
             // 从配置中初始化歌词样式
             _lyricFontSize = _configurationService.CurrentConfiguration.LyricFontSize;
             _lyricTextAlignment = _configurationService.CurrentConfiguration.LyricTextAlignment;
@@ -553,19 +567,13 @@ namespace MusicPlayer.ViewModels
             // 初始化默认歌曲信息
             InitializeDefaultSongInfo();
 
-            // 初始化命令
-            PlayPauseCommand = new RelayCommand(ExecutePlayPause);
-            ToggleLyricAlignmentCommand = new RelayCommand(ToggleLyricAlignment);
-            IncreaseLyricFontSizeCommand = new RelayCommand(IncreaseLyricFontSize);
-            DecreaseLyricFontSizeCommand = new RelayCommand(DecreaseLyricFontSize);
-
-
-
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
 
             // 从PlayerStateService获取当前播放状态并初始化（异步）
             InitializeFromPlayerStateAsync();
+
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: Initialize方法执行完成");
         }
 
         /// <summary>
