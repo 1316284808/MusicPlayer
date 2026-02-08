@@ -53,8 +53,8 @@
                         <Separator Margin="2" />
                         <TextBlock Text="频谱显示"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
-                        <Border Background="Pink" CornerRadius="4" Margin="10,0" Padding="2" Opacity="0.7" >
-                            <TextBlock Text="⚠GPU高占用"  HorizontalAlignment="Left" VerticalAlignment="Center" FontStretch="Normal" FontSize="10" FontWeight="SemiBold"   Foreground="Red"  />
+                        <Border Background="#FC94AF" CornerRadius="4" Margin="10,0" Padding="2" Opacity="0.7" >
+                            <TextBlock Text="⚠GPU高占用"  HorizontalAlignment="Left" Margin="5,0" VerticalAlignment="Center" FontStretch="Normal" FontSize="10" FontWeight="SemiBold"   Foreground="Red"  />
                         </Border>
                     </StackPanel>
                    

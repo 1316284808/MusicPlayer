@@ -254,7 +254,7 @@ SelectionMode="Single" >
                             <!-- 总歌单数 -->
                             <Border Background="#40FFFFFF"  Width="200" Height="120" CornerRadius="8" Margin="5" Padding="15">
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Helper:CustomIcon Kind="HeartFill" IconSize="24"  Foreground="Red"  
+                                    <Helper:CustomIcon Kind="HeartFill" IconSize="24"  Foreground="#FC94AF"  
                                                        HorizontalAlignment="Center" Margin="0,0,0,8"/>
                                     <TextBlock Text="{Binding LibraryStatistics.TotalPlaylists}" 
                                                FontSize="28" FontWeight="Bold" 

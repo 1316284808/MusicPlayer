@@ -165,7 +165,7 @@
 
                 <StackPanel  Orientation="Horizontal" VerticalAlignment="Center"     >
                 <ui:Button Command="{Binding ToggleFavoriteCommand}" ToolTip="{Binding IsCurrentSongFavorited, Converter={StaticResource BoolToFavoriteTextConverter}}"  Width="auto" >
-                    <Helper:CustomIcon Foreground="Red"   IconSize="18">
+                        <Helper:CustomIcon Foreground="#FC94AF"   IconSize="18">
                         <Helper:CustomIcon.Style>
                             <Style TargetType="Helper:CustomIcon" BasedOn="{StaticResource {x:Type Helper:CustomIcon }}">
                                 <Setter Property="Kind">

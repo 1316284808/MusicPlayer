@@ -249,6 +249,11 @@ namespace MusicPlayer.Services
         {
             lock (_audioLock)
             {
+                // 记录切歌前内存使用情况
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var memoryBefore = process.WorkingSet64 / (1024 * 1024); // 转换为MB
+                System.Diagnostics.Debug.WriteLine($"切歌前内存使用: {memoryBefore} MB");
+                
                 // 重置下一首触发标志
                 _hasTriggeredNextSong = false;
                 
@@ -305,6 +310,13 @@ namespace MusicPlayer.Services
                     
                     System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 高清封面资源释放完成");
                     _currentlyLoadedSong = null;
+                }
+                
+                // 确保在加载新歌曲前所有旧资源都已释放
+                System.Diagnostics.Debug.WriteLine("验证所有旧资源已释放");
+                if (_playlistDataService.CurrentSong != null && _playlistDataService.CurrentSong != song)
+                {
+                    System.Diagnostics.Debug.WriteLine("警告：旧歌曲资源可能未完全释放");
                 }
 
                 // 完全停止并清理当前音频资源
@@ -385,6 +397,12 @@ namespace MusicPlayer.Services
                     GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
                     GC.WaitForPendingFinalizers();
                     GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                    
+                    // 记录清理后内存使用情况
+                    var process = System.Diagnostics.Process.GetCurrentProcess();
+                    var memoryAfter = process.WorkingSet64 / (1024 * 1024); // 转换为MB
+                    System.Diagnostics.Debug.WriteLine($"清理后内存使用: {memoryAfter} MB");
+                    
                     System.Diagnostics.Debug.WriteLine("异步内存清理完成");
                 });
             }
@@ -529,10 +547,31 @@ namespace MusicPlayer.Services
                     }
                 }
                 
-                // 调用垃圾回收器
-                GC.Collect();
+                // 清理封面资源引用
+                if (_currentlyLoadedSong != null)
+                {
+                    try
+                    {
+                        if (_currentlyLoadedSong.OriginalAlbumArt != null)
+                        {
+                            _currentlyLoadedSong.OriginalAlbumArt.Freeze();
+                            _currentlyLoadedSong.OriginalAlbumArt = null;
+                            System.Diagnostics.Debug.WriteLine("PlayerService: 已清理当前加载歌曲的封面资源");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"清理封面资源时出错: {ex.Message}");
+                        _currentlyLoadedSong.OriginalAlbumArt = null;
+                    }
+                }
+                
+                // 调用垃圾回收器 - 使用更优化的方式
+                System.Diagnostics.Debug.WriteLine("PlayerService: 执行垃圾回收");
+                GC.Collect(2, GCCollectionMode.Optimized, true, true);
                 GC.WaitForPendingFinalizers();
-                System.Diagnostics.Debug.WriteLine("PlayerService: 已执行垃圾回收");
+                GC.Collect(0, GCCollectionMode.Optimized, false, true);
+                System.Diagnostics.Debug.WriteLine("PlayerService: 垃圾回收完成");
             }
             catch (Exception ex)
             {
@@ -542,19 +581,37 @@ namespace MusicPlayer.Services
 
         private void StopAudio()
         {
+            System.Diagnostics.Debug.WriteLine("开始停止音频并释放资源");
+            
+            // 停止定时器
+            try
+            {
+                _timer.Stop();
+                System.Diagnostics.Debug.WriteLine("已停止定时器");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"停止定时器时出错: {ex.Message}");
+            }
+            
             // 安全地停止和释放音频设备
             try
             {
                 if (_waveOut != null)
                 {
                     // 停止播放
-                    _waveOut.Stop();
+                    if (_waveOut.PlaybackState == PlaybackState.Playing)
+                    {
+                        _waveOut.Stop();
+                    }
                     // 释放资源
                     _waveOut.Dispose();
                     _waveOut = null;
+                    System.Diagnostics.Debug.WriteLine("已释放音频输出设备");
                 }
                 
                 _audioEngineManager.Dispose();
+                System.Diagnostics.Debug.WriteLine("已释放音频引擎管理器");
             }
             catch (Exception ex)
             {
@@ -569,6 +626,7 @@ namespace MusicPlayer.Services
                 {
                     _audioFileReader.Dispose();
                     _audioFileReader = null;
+                    System.Diagnostics.Debug.WriteLine("已释放音频文件读取器");
                 }
             }
             catch (Exception ex)
@@ -624,7 +682,7 @@ namespace MusicPlayer.Services
                 System.Diagnostics.Debug.WriteLine($"清理频谱数据缓冲区时出错: {ex.Message}");
             }
             
-            _timer.Stop();
+            System.Diagnostics.Debug.WriteLine("音频资源释放完成");
         }
         /// <summary>
         /// 仅初始化一次
@@ -930,9 +988,12 @@ namespace MusicPlayer.Services
                             // 释放旧缓冲区（如果存在）
                             if (_spectrumDataBuffer != null)
                             {
+                                Array.Clear(_spectrumDataBuffer, 0, _spectrumDataBuffer.Length);
                                 _spectrumDataBuffer = null;
+                                System.Diagnostics.Debug.WriteLine("已释放旧频谱数据缓冲区");
                             }
                             _spectrumDataBuffer = new float[_spectrumDataLength];
+                            System.Diagnostics.Debug.WriteLine($"已创建新频谱数据缓冲区，长度: {_spectrumDataLength}");
                         }
                         
                         // 清空旧数据，避免残留
@@ -947,6 +1008,23 @@ namespace MusicPlayer.Services
             {
                 System.Diagnostics.Debug.WriteLine($"频谱分析器错误: {spectrumEx.Message}");
                 
+                // 在异常情况下清理缓冲区，避免内存泄漏
+                try
+                {
+                    lock (_spectrumLock)
+                    {
+                        if (_spectrumDataBuffer != null)
+                        {
+                            Array.Clear(_spectrumDataBuffer, 0, _spectrumDataBuffer.Length);
+                            _spectrumDataBuffer = null;
+                            System.Diagnostics.Debug.WriteLine("异常情况下已清理频谱数据缓冲区");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"清理频谱数据缓冲区时出错: {ex.Message}");
+                }
             }
         }
 
