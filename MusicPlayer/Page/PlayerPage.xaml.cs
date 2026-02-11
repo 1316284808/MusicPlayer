@@ -40,6 +40,23 @@ namespace MusicPlayer.Page
             this.CenterContentControl.DataContext = centerContentViewModel;
             // 使用命名方法代替匿名方法，以便能够取消订阅
             Unloaded += PlayerPage_Unloaded;
+            
+            // 添加内存监控
+            LogMemoryUsage("PlayerPage创建");
+        }
+        
+        /// <summary>
+        /// 记录内存使用情况
+        /// </summary>
+        private void LogMemoryUsage(string context)
+        {
+            try
+            {
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var memoryMB = process.WorkingSet64 / (1024 * 1024);
+                System.Diagnostics.Debug.WriteLine($"[PlayerPage内存监控] {context}: {memoryMB} MB");
+            }
+            catch { }
         }
         
         // 命名的Unloaded事件处理方法
@@ -60,14 +77,17 @@ namespace MusicPlayer.Page
             // 取消Unloaded事件订阅
             Unloaded -= PlayerPage_Unloaded;
             
-            // 清空CenterContentControl的DataContext
+            // 1. 释放CenterContentControl（新增：先调用Dispose）
             if (CenterContentControl != null)
             {
+                System.Diagnostics.Debug.WriteLine("PlayerPage: 调用CenterContentControl.Dispose");
+                CenterContentControl.Dispose();
+                
                 System.Diagnostics.Debug.WriteLine("PlayerPage: 清空CenterContentControl的DataContext");
                 CenterContentControl.DataContext = null;
             }
             
-            // 释放ViewModel
+            // 2. 释放ViewModel
             if (_centerContentViewModel is IDisposable disposableVm)
             {
                 System.Diagnostics.Debug.WriteLine("PlayerPage: 释放ViewModel资源");
@@ -76,26 +96,21 @@ namespace MusicPlayer.Page
                 // 但Dispose方法会释放其内部资源
             }
             
-            // 释放CenterContentControl资源
-            if (CenterContentControl != null)
-            {
-                System.Diagnostics.Debug.WriteLine("PlayerPage: 释放CenterContentControl资源");
-                CenterContentControl.Dispose();
-            }
-            
-            // 清空DataContext，解除Page对ViewModel的强引用
+            // 3. 清空DataContext和内容
             System.Diagnostics.Debug.WriteLine("PlayerPage: 清空Page的DataContext");
             this.DataContext = null;
             
-            // 清空页面内容，释放UI资源
             System.Diagnostics.Debug.WriteLine("PlayerPage: 清空页面内容");
             this.Content = null;
             
-            // 强制垃圾回收，尝试回收释放的资源
-            System.Diagnostics.Debug.WriteLine("PlayerPage: 执行垃圾回收");
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            System.Diagnostics.Debug.WriteLine("PlayerPage: 垃圾回收完成");
+            // 4. 强制垃圾回收三次，确保所有资源被回收
+            System.Diagnostics.Debug.WriteLine("PlayerPage: 执行三次垃圾回收");
+            for (int i = 0; i < 3; i++)
+            {
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                GC.WaitForPendingFinalizers();
+                System.Diagnostics.Debug.WriteLine($"PlayerPage: 第{i+1}次垃圾回收完成");
+            }
             
             _disposed = true;
             System.Diagnostics.Debug.WriteLine("PlayerPage: Dispose方法执行完成");

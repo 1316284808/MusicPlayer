@@ -1,11 +1,5 @@
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using MusicPlayer.Core.Data;
-using MusicPlayer.Core.Interface;
 
 namespace MusicPlayer.Core.Models
 {
@@ -61,20 +55,6 @@ namespace MusicPlayer.Core.Models
         /// <summary>是否已删除（逻辑删除，不实际删除文件）</summary>
         [ObservableProperty]
         private bool _isDeleted = false;
-
-        /// <summary>
-        /// 专辑封面图像（可选）
-        /// </summary>
-        [property: LiteDB.BsonIgnore]
-        [ObservableProperty]
-        private BitmapImage? _albumArt;
-        
-        /// <summary>
-        /// 原图专辑封面（用于旋转封面等需要高清显示的场合）
-        /// </summary>
-        [property: LiteDB.BsonIgnore]
-        [ObservableProperty]
-        private BitmapImage? _originalAlbumArt;
         /// <summary>
         /// 音频格式（文件扩展名）
         /// </summary>
@@ -106,12 +86,11 @@ namespace MusicPlayer.Core.Models
         }
         
         /// <summary>
-        /// 清理Song对象中的资源，特别是BitmapImage资源
-        /// 注意：只清理OriginalAlbumArt（高清大图），保留AlbumArt（缩略图）供播放列表显示
+        /// 清理Song对象中的资源（现在Song不再持有BitmapImage，此方法保留用于兼容性）
         /// </summary>
         public void Cleanup()
         { 
-                OriginalAlbumArt = null;   
+            // Song不再持有BitmapImage资源，此方法留空用于向后兼容
         }
     }
 }

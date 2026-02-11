@@ -650,13 +650,11 @@ namespace MusicPlayer.ViewModels
                 CurrentSongTitle = CurrentSong.Title ?? string.Empty;
                 CurrentSongArtist = CurrentSong.Artist ?? string.Empty;
 
-                // 确保封面已加载
-                CurrentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(CurrentSong.FilePath);
-
-                // 延迟更新封面，确保加载完成
+                // 通过AlbumArtConverter动态加载封面（Song不再持有AlbumArt）
+                // 直接更新ViewModel的封面属性
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    CurrentSongAlbumArt = CurrentSong.AlbumArt;
+                    CurrentSongAlbumArt = AlbumArtLoader.LoadAlbumArt(CurrentSong.FilePath);
                 }));
 
                 // 更新收藏状态相关属性

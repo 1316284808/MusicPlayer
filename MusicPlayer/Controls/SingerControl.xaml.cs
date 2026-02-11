@@ -32,14 +32,6 @@ namespace MusicPlayer.Controls
                 {
                     // 取消消息订阅
                     WeakReferenceMessenger.Default.UnregisterAll(this); 
-                    
-                    // 清理SingerAlbumArtBehavior资源
-                    if (SingerListBox != null)
-                    {
-                        // 禁用SingerAlbumArtBehavior
-                        Helper.SingerAlbumArtBehavior.SetIsEnabled(SingerListBox, false);
-                    }
-                    
                     this.DataContext = null; // 核心：清空DataContext，解除Page对ViewModel的强引用
                     this.Content = null;     // 清空页面内容，释放UI资源
                 }

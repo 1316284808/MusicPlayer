@@ -262,26 +262,10 @@ namespace MusicPlayer.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"开始释放旧歌曲 {_playlistDataService.CurrentSong.Title} 的资源");
                     
-                    // 释放旧歌曲的高清封面资源（保留缩略图供播放列表显示）
-                    if (_playlistDataService.CurrentSong.OriginalAlbumArt != null)
-                    {
-                        try
-                        {
-                            _playlistDataService.CurrentSong.OriginalAlbumArt.Freeze(); // 冻结BitmapImage，减少内存占用
-                            _playlistDataService.CurrentSong.OriginalAlbumArt = null;
-                            System.Diagnostics.Debug.WriteLine("已释放旧歌曲高清封面资源");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"释放旧歌曲高清封面资源时出错: {ex.Message}");
-                            _playlistDataService.CurrentSong.OriginalAlbumArt = null;
-                        }
-                    }
+                    // 注意：Song不再持有BitmapImage资源，无需清理封面
+                    // 所有封面通过AlbumArtConverter动态加载，内存占用极低
                     
-                    // 注意：保留缩略图资源(AlbumArt)，因为播放列表中的歌曲可能引用同一个对象
-                    // 缩略图内存占用较小，不需要在切歌时立即释放
-                    
-                    System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 高清封面资源释放完成");
+                    System.Diagnostics.Debug.WriteLine($"旧歌曲 {_playlistDataService.CurrentSong.Title} 资源释放完成");
                 }
                 
                 // 清理_currentlyLoadedSong的资源
@@ -289,26 +273,10 @@ namespace MusicPlayer.Services
                 {
                     System.Diagnostics.Debug.WriteLine($"开始释放_currentlyLoadedSong {_currentlyLoadedSong.Title} 的资源");
                     
-                    // 释放旧歌曲的高清封面资源（保留缩略图供播放列表显示）
-                    if (_currentlyLoadedSong.OriginalAlbumArt != null)
-                    {
-                        try
-                        {
-                            _currentlyLoadedSong.OriginalAlbumArt.Freeze();
-                            _currentlyLoadedSong.OriginalAlbumArt = null;
-                            System.Diagnostics.Debug.WriteLine("已释放_currentlyLoadedSong高清封面资源");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"释放_currentlyLoadedSong高清封面资源时出错: {ex.Message}");
-                            _currentlyLoadedSong.OriginalAlbumArt = null;
-                        }
-                    }
+                    // 注意：Song不再持有BitmapImage资源，无需清理封面
+                    // 所有封面通过AlbumArtConverter动态加载，内存占用极低
                     
-                    // 注意：保留缩略图资源(AlbumArt)，因为播放列表中的歌曲可能引用同一个对象
-                    // 缩略图内存占用较小，不需要在切歌时立即释放
-                    
-                    System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 高清封面资源释放完成");
+                    System.Diagnostics.Debug.WriteLine($"_currentlyLoadedSong {_currentlyLoadedSong.Title} 资源释放完成");
                     _currentlyLoadedSong = null;
                 }
                 
@@ -547,24 +515,8 @@ namespace MusicPlayer.Services
                     }
                 }
                 
-                // 清理封面资源引用
-                if (_currentlyLoadedSong != null)
-                {
-                    try
-                    {
-                        if (_currentlyLoadedSong.OriginalAlbumArt != null)
-                        {
-                            _currentlyLoadedSong.OriginalAlbumArt.Freeze();
-                            _currentlyLoadedSong.OriginalAlbumArt = null;
-                            System.Diagnostics.Debug.WriteLine("PlayerService: 已清理当前加载歌曲的封面资源");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"清理封面资源时出错: {ex.Message}");
-                        _currentlyLoadedSong.OriginalAlbumArt = null;
-                    }
-                }
+                // 注意：Song不再持有BitmapImage资源，无需清理封面
+                // 所有封面通过AlbumArtConverter动态加载，内存占用极低
                 
                 // 调用垃圾回收器 - 使用更优化的方式
                 System.Diagnostics.Debug.WriteLine("PlayerService: 执行垃圾回收");

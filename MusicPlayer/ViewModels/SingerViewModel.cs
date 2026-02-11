@@ -154,13 +154,6 @@ namespace MusicPlayer.ViewModels
         {
             System.Diagnostics.Debug.WriteLine("SingerViewModel: Cleanup 方法被调用");
             _messagingService.Unregister(this);
-
-            // 主动清理所有已加载的封面图像
-            foreach (var singer in _singers)
-            {
-                singer.CoverImage = null;
-            }
-
             _singers.Clear();
             _filteredSingers.Clear();
         }
@@ -188,7 +181,6 @@ namespace MusicPlayer.ViewModels
                     {
                         Name = group.Key,
                         SongCount = group.Count(),
-                        CoverImage = null, // 初始时不加载封面，支持懒加载
                         FirstSongFilePath = firstSong?.FilePath // 保存第一首歌的路径，用于懒加载
                     };
                 })

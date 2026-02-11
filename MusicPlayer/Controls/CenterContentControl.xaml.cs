@@ -18,13 +18,7 @@ namespace MusicPlayer.Controls
         public CenterContentControl()
         {
             InitializeComponent();
-            
-            // 注册歌词更新消息，在歌词更新前清理旧资源
-            WeakReferenceMessenger.Default.Register<MusicPlayer.Services.Messages.LyricsUpdatedMessage>(this, (recipient, message) =>
-            {
-                System.Diagnostics.Debug.WriteLine("CenterContentControl: 收到歌词更新消息，开始清理旧歌词资源");
-                CleanupLyricItems();
-            });
+            // 注意：不再订阅LyricsUpdatedMessage，清理工作完全由CenterContentViewModel.SetLyrics()处理
         }
 
        

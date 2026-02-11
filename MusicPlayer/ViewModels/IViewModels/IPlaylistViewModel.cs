@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
-using MusicPlayer.Core.Models;
-
 using MusicPlayer.Config;
+using MusicPlayer.Core.Models;
 
 namespace MusicPlayer.ViewModels
 {
@@ -20,12 +19,5 @@ namespace MusicPlayer.ViewModels
         /// 过滤后的播放列表
         /// </summary>
         ObservableCollection<Core.Models.Song> FilteredPlaylist { get; }
-
-        /// <summary>
-        /// 专辑加载请求事件
-        /// </summary>
-        event EventHandler<AlbumLoadRequestEventArgs> AlbumLoadRequested;
-
-        
     }
 }

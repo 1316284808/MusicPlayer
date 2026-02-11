@@ -24,6 +24,8 @@
   <ItemGroup>
     <Compile Remove="Controls\WordByWordLyricControl.xaml.cs" />
     <Compile Remove="Controls\WordByWordLyricItem.xaml.cs" />
+    <Compile Remove="Helper\Behavior\NewPlaylistAlbumArtBehavior.cs" />
+    <Compile Remove="Helper\Behavior\PlaylistAlbumArtBehavior.cs" />
   </ItemGroup>
 
   <ItemGroup>

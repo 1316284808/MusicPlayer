@@ -163,6 +163,9 @@ namespace MusicPlayer.ViewModels
             {
                 if (_currentSong != value)
                 {
+                    // 记录切歌前的内存使用情况
+                    LogMemoryUsage($"切歌前 - 当前歌曲: {_currentSong?.Title ?? "无"}");
+                    
                     // 清理旧歌曲的资源
                     CleanupOldSongResources(_currentSong);
                     
@@ -178,6 +181,9 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(CurrentSongAlbumArt));
                     OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
                     
+                    // 记录清理后的内存使用情况
+                    LogMemoryUsage("清理旧歌曲资源后");
+                    
                     // 延迟设置新歌曲，确保UI有足够时间更新
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => 
                     {
@@ -188,6 +194,9 @@ namespace MusicPlayer.ViewModels
 
                             // 更新缓存的歌曲信息属性
                             UpdateSongProperties();
+                            
+                            // 记录切歌后的内存使用情况
+                            LogMemoryUsage($"切歌后 - 新歌曲: {value?.Title ?? "无"}");
                         }
                         catch (Exception ex)
                         {
@@ -296,11 +305,7 @@ namespace MusicPlayer.ViewModels
                             {
                                 if (song != null && CurrentSong == song)
                                 {
-                                    // 更新歌曲对象的封面
-                                    song.AlbumArt = albumArt;
-                                    song.OriginalAlbumArt = originalAlbumArt;
-                                    
-                                    // 更新ViewModel的封面属性
+                                    // 更新ViewModel的封面属性（Song不再持有封面，直接更新ViewModel）
                                     CurrentSongAlbumArt = albumArt;
                                     CurrentSongOriginalAlbumArt = originalAlbumArt;
                                     
@@ -609,11 +614,7 @@ namespace MusicPlayer.ViewModels
                             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
                             {
                                 if (currentSong != null)
-                                {
-                                    currentSong.AlbumArt = albumArt;
-                                    currentSong.OriginalAlbumArt = originalAlbumArt;
-                                    
-                                    // 更新ViewModel的封面属性
+                                { 
                                     CurrentSongAlbumArt = albumArt;
                                     CurrentSongOriginalAlbumArt = originalAlbumArt;
                                     System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步加载专辑封面完成");
@@ -853,6 +854,11 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public void SetLyrics(ObservableCollection<Core.Models.LyricLine> lyrics)
         {
+            // 记录GC前内存
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var memoryBeforeGC = process.WorkingSet64 / (1024 * 1024);
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel.SetLyrics: GC前内存 = {memoryBeforeGC} MB");
+            
             // 关键修复：先深度清理旧歌词数据，断开所有引用关系
             DeepCleanupLyrics();
             
@@ -927,6 +933,17 @@ namespace MusicPlayer.ViewModels
             {
                 CurrentLyricLine = null;
             }
+            
+            // 替换整个集合后，执行单次GC回收旧控件（优化：从3次减少为1次）
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel.SetLyrics: 执行单次GC回收旧控件");
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            
+            // 记录GC后内存
+            process = System.Diagnostics.Process.GetCurrentProcess();
+            var memoryAfterGC = process.WorkingSet64 / (1024 * 1024);
+            var memoryReclaimed = memoryBeforeGC - memoryAfterGC;
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel.SetLyrics: GC后内存 = {memoryAfterGC} MB, 回收了 {memoryReclaimed} MB");
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel.SetLyrics: 歌词更新完成");
         }
         
         /// <summary>
@@ -1076,14 +1093,26 @@ namespace MusicPlayer.ViewModels
                 GC.Collect();
                 
                 // 记录清理后的内存使用情况
-                var process = System.Diagnostics.Process.GetCurrentProcess();
-                var memoryAfter = process.WorkingSet64 / (1024 * 1024); // 转换为MB
-                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 已完成BitmapImage资源清理和垃圾回收，清理后内存使用: {memoryAfter} MB");
+                LogMemoryUsage("BitmapImage资源清理后");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 清理BitmapImage资源失败: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// 记录内存使用情况
+        /// </summary>
+        private void LogMemoryUsage(string context)
+        {
+            try
+            {
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var memoryMB = process.WorkingSet64 / (1024 * 1024);
+                System.Diagnostics.Debug.WriteLine($"[内存监控] {context}: 内存使用 = {memoryMB} MB");
+            }
+            catch { }
         }
     }
 }

@@ -5,40 +5,25 @@ using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Services;
-using MusicPlayer.Services.Messages; // 引入新的消息类型
-using System;
+using MusicPlayer.Services.Messages;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-
 namespace MusicPlayer.ViewModels
 {
     /// <summary>
-    /// 专辑加载请求事件参数
+    /// 播放列表视图模型 - UI层
+    /// 
+    /// 数据流设计：
+    /// 1. 初始化时：清空本地集合，确保不维护重复缓存
+    /// 2. 数据访问：通过PlaylistDataService.DataSource获取临时数据，使用后立即清空
+    /// 3. UI显示：仅维护FilteredPlaylist用于UI绑定
+    /// 
+    /// 注意：不应维护本地播放列表缓存，始终通过数据服务获取最新数据
     /// </summary>
-    public class AlbumLoadRequestEventArgs : EventArgs
-    {
-        public Song Song { get; }
-
-        public AlbumLoadRequestEventArgs(Song song)
-        {
-            Song = song;
-        }
-    }
-
-/// <summary>
-/// 播放列表视图模型 - UI层
-/// 
-/// 数据流设计：
-/// 1. 初始化时：清空本地集合，确保不维护重复缓存
-/// 2. 数据访问：通过PlaylistDataService.DataSource获取临时数据，使用后立即清空
-/// 3. UI显示：仅维护FilteredPlaylist用于UI绑定
-/// 
-/// 注意：不应维护本地播放列表缓存，始终通过数据服务获取最新数据
-/// </summary>
     public class PlaylistViewModel : ObservableObject, IPlaylistViewModel
     {
         private readonly IMessagingService _messagingService;
@@ -61,11 +46,6 @@ namespace MusicPlayer.ViewModels
         private Song? _currentSong;
         private bool _isSearchExpanded = false;
 
-        /// <summary>
-        /// 专辑加载请求事件
-        /// </summary>
-        public event EventHandler<AlbumLoadRequestEventArgs>? AlbumLoadRequested;
-
         public Song? CurrentSong
         {
             get => _currentSong;
@@ -76,12 +56,8 @@ namespace MusicPlayer.ViewModels
                     _currentSong = value;
                     OnPropertyChanged(nameof(CurrentSong));
                     
-                    // 确保在设置歌曲时，专辑封面已加载（懒加载）
-                    if (_currentSong != null)
-                    {
-                        // 使用AlbumArtLoader直接加载封面
-                        _currentSong.AlbumArt = AlbumArtLoader.LoadAlbumArt(_currentSong.FilePath);
-                    }
+                    // 注意：不再在设置CurrentSong时加载专辑封面
+                    // 封面通过AlbumArtConverter在需要时动态加载
                 }
             }
         }
@@ -668,15 +644,9 @@ namespace MusicPlayer.ViewModels
         /// <param name="song">需要加载封面的歌曲</param>
         public void RequestAlbumLoad(Song song)
         {
-            // 确保取消延迟加载设置
-
-            
-            // 如果还没有加载封面，触发事件
-            if (song.AlbumArt == null)
-            {
-                System.Diagnostics.Debug.WriteLine($"RequestAlbumLoad: 触发加载歌曲 {song.Title} 的封面");
-                AlbumLoadRequested?.Invoke(this, new AlbumLoadRequestEventArgs(song));
-            }
+            // 注意：Song不再持有AlbumArt，封面通过AlbumArtConverter动态加载
+            // 此方法保留用于兼容性，实际封面加载由转换器处理
+            System.Diagnostics.Debug.WriteLine($"RequestAlbumLoad: 封面通过转换器动态加载，无需预加载: {song.Title}");
         }
 
         /// <summary>

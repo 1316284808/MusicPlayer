@@ -452,16 +452,12 @@ namespace MusicPlayer.Navigation
                     }
                 }
                 
-                // 3. 重置页面引用
-                System.Diagnostics.Debug.WriteLine("NavigationService: 重置Frame的Content");
-                _mainFrame.Content = null;
-                
-                // 4. 强制垃圾回收
+                // 3. 强制垃圾回收（不重置Frame.Content，避免影响新页面显示）
                 System.Diagnostics.Debug.WriteLine("NavigationService: 执行垃圾回收");
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 
-                System.Diagnostics.Debug.WriteLine("NavigationService: 页面资源清理完成");
+                System.Diagnostics.Debug.WriteLine("NavigationService: 页面资源清理完成（未重置Frame.Content）");
             }
             catch (Exception ex)
             {

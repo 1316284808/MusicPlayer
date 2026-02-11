@@ -355,13 +355,6 @@ namespace MusicPlayer.ViewModels
         {
             System.Diagnostics.Debug.WriteLine("AlbumViewModel: Cleanup 方法被调用");
             _messagingService.Unregister(this);
-
-            // 主动清理所有已加载的封面图像
-            foreach (var album in _albums)
-            {
-                album.CoverImage = null;
-            }
-
             _albums.Clear();
             _filteredAlbums.Clear();
         }

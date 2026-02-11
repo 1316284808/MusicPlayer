@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Windows.Media;
 using Windows.Storage.Streams;
+using MusicPlayer.Core.Data;
 using MusicPlayer.Core.Models;
 using MusicPlayer.Core.Interface;
 
@@ -107,12 +108,13 @@ namespace MusicPlayer.Helper
                     _displayUpdater.MusicProperties.Artist = song.Artist ?? "未知艺术家";
                     _displayUpdater.MusicProperties.AlbumTitle = song.Album ?? "";
 
-                    // 设置专辑封面
+                    // 设置专辑封面（从文件路径动态加载）
                     try
                     {
-                        if (song.AlbumArt != null)
+                        var albumArt = AlbumArtLoader.LoadAlbumArt(song.FilePath);
+                        if (albumArt != null)
                         {
-                            var thumbnail = await CreateThumbnailFromBitmapImageAsync(song.AlbumArt);
+                            var thumbnail = await CreateThumbnailFromBitmapImageAsync(albumArt);
                             _displayUpdater.Thumbnail = thumbnail;
                         }
                         else

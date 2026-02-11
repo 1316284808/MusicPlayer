@@ -12,6 +12,7 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
+        <converters:ArtistCoverConverter x:Key="ArtistCoverConverter"/>
     </UserControl.Resources>
 
     <Grid >
@@ -130,8 +131,6 @@
                    ScrollViewer.CanContentScroll="True"
                    VirtualizingPanel.IsVirtualizing="True"
                    VirtualizingPanel.VirtualizationMode="Recycling"
-                  Helper:SingerAlbumArtBehavior.IsEnabled="True"
-                    Helper:SingerAlbumArtBehavior.ViewModel="{Binding }"
                  >
            
             <ListBox.ItemsPanel>
@@ -182,7 +181,7 @@ IsGridLayoutEnabled="True" />
                                 </Border.Effect>
                                 
                                 <!-- 专辑封面图片 -->
-                                <Image Source="{Binding CoverImage}" Margin="10"
+                                <Image Source="{Binding ., Converter={StaticResource ArtistCoverConverter}}" Margin="10"
                                       Stretch="UniformToFill">
                                     <!-- 如果没有封面图片，显示默认封面 -->
                                     <Image.Clip>

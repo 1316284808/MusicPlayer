@@ -53,8 +53,8 @@ namespace MusicPlayer.Controls
             if (PlaylistListBox != null)
             {
                 PlaylistScrollBehavior.SetIsEnabled(PlaylistListBox, false);
-                NewPlaylistAlbumArtBehavior.SetIsEnabled(PlaylistListBox, false);
-                NewPlaylistAlbumArtBehavior.SetViewModel(PlaylistListBox, null);
+                //NewPlaylistAlbumArtBehavior.SetIsEnabled(PlaylistListBox, false);
+                //NewPlaylistAlbumArtBehavior.SetViewModel(PlaylistListBox, null);
                 PlaylistInteractionBehavior.SetIsEnabled(PlaylistListBox, false);
                 PlaylistScrollToCurrentSongBehavior.SetIsEnabled(PlaylistListBox, false);
             }

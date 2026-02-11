@@ -64,7 +64,6 @@ public partial class HighlightTextBlock : UserControl, IDisposable
         /// </summary>
         public void Cleanup()
         {
-            
             // 彻底清除所有数据绑定
             BindingOperations.ClearAllBindings(this);
             
@@ -110,8 +109,6 @@ public partial class HighlightTextBlock : UserControl, IDisposable
             Loaded -= OnLoaded;
             SizeChanged -= OnSizeChanged;
             Unloaded -= OnUnloaded;
-            
-            // 强制立即回收，释放FormattedText相关的非托管资源
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
         }
         

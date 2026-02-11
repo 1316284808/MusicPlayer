@@ -31,7 +31,8 @@ public sealed class ProgresiveHighlightEffect : ShaderEffect, IDisposable
         UpdateShaderValue(HighlightColorProperty);
         UpdateShaderValue(UseAdditiveProperty);
         UpdateShaderValue(HighlightIntensityProperty);
-    }
+        
+        }
 
     #endregion
     
@@ -43,21 +44,31 @@ public sealed class ProgresiveHighlightEffect : ShaderEffect, IDisposable
     {
         if (!_disposed)
         {
-            // 清理PixelShader资源
-            // 注意：静态的_pixelShader由所有实例共享，不应在此处释放
-            // 这里释放的是实例级别的资源
-            
-            // 清理依赖属性
-            ClearValue(InputProperty);
-            ClearValue(HighlightPosProperty);
-            ClearValue(HighlightWidthProperty);
-            ClearValue(HighlightColorProperty);
-            ClearValue(UseAdditiveProperty);
-            ClearValue(HighlightIntensityProperty);
-            
+           
+            Cleanup();
             _disposed = true;
             GC.SuppressFinalize(this);
         }
+    }
+    
+    /// <summary>
+    /// 清理资源 - 可被多次调用
+    /// </summary>
+    public void Cleanup()
+    {
+        // 追踪日志：记录特效对象清理
+        System.Diagnostics.Debug.WriteLine($"ProgresiveHighlightEffect: 清理特效对象 [ID:{GetHashCode()}]");
+        
+        // 清理依赖属性
+        ClearValue(InputProperty);
+        ClearValue(HighlightPosProperty);
+        ClearValue(HighlightWidthProperty);
+        ClearValue(HighlightColorProperty);
+        ClearValue(UseAdditiveProperty);
+        ClearValue(HighlightIntensityProperty);
+        
+        // 清除输入纹理引用
+        Input = null;
     }
     
     #endregion

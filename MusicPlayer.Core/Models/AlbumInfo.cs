@@ -9,8 +9,6 @@ namespace MusicPlayer.Core.Models
     {
         private string _name = string.Empty;
         private int _songCount;
-        private System.Windows.Media.Imaging.BitmapImage? _coverImage;
-        private bool _coverImageLoaded = false;
         private string? _firstSongFilePath; // 用于懒加载时获取歌曲文件
         private bool _isPlaying = false;
 
@@ -40,23 +38,6 @@ namespace MusicPlayer.Core.Models
             }
         }
 
-        public System.Windows.Media.Imaging.BitmapImage? CoverImage
-        {
-            get => _coverImage;
-            set
-            {
-                if (_coverImage != value)
-                {
-                    _coverImage = value;
-                    _coverImageLoaded = value != null;
-                    OnPropertyChanged(nameof(CoverImage));
-                    OnPropertyChanged(nameof(HasCoverImage));
-                }
-            }
-        }
-
-        public bool HasCoverImage => _coverImageLoaded;
-
         public string? FirstSongFilePath
         {
             get => _firstSongFilePath;
@@ -69,6 +50,8 @@ namespace MusicPlayer.Core.Models
                 }
             }
         }
+
+      
 
         public bool IsPlaying
         {

@@ -13,6 +13,8 @@
         <converters:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
         <!-- 搜索框宽度转换器 -->
         <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
+        <!-- 专辑封面转换器 -->
+        <converters:AlbumArtConverter x:Key="AlbumArtConverter"/>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -110,9 +112,7 @@ Padding="5" Margin="5">
                             VirtualizingStackPanel.CacheLength="1"
                             VirtualizingStackPanel.CacheLengthUnit="Item"
                             Helper:PlaylistScrollBehavior.IsEnabled="True" 
-                            SelectionMode="Single"
-                            Helper:NewPlaylistAlbumArtBehavior.IsEnabled="True"
-                            Helper:NewPlaylistAlbumArtBehavior.ViewModel="{Binding}"
+                            SelectionMode="Single" 
                               Helper:PlaylistInteractionBehavior.IsEnabled="True"
                             Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
 
@@ -164,7 +164,7 @@ Padding="5" Margin="5">
                                         <Style TargetType="Border">
                                             <Style.Triggers>
                                                 <!-- 当专辑封面为空时显示默认图标 -->
-                                                <DataTrigger Binding="{Binding AlbumArt}" Value="{x:Null}">
+                                                <DataTrigger Binding="{Binding ., Converter={StaticResource AlbumArtConverter}}" Value="{x:Null}">
                                                     <Setter Property="Background" Value="#33FFFFFF"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -174,12 +174,10 @@ Padding="5" Margin="5">
                                     <Grid>
 
                                         <Helper:CustomIcon Kind="MusicNote"   IconSize="20"  
-                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                            Visibility="{Binding AlbumArt, Converter={StaticResource NotNullToBooleanConverter}, ConverterParameter=Invert}"/>
+                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                                         <!-- 实际专辑封面 -->
-                                        <Image Source="{Binding AlbumArt}" Stretch="Fill" 
-                                 Visibility="{Binding AlbumArt, Converter={StaticResource NotNullToBooleanConverter}}">
+                                        <Image Source="{Binding ., Converter={StaticResource AlbumArtConverter}}" Stretch="Fill">
                                             <Image.Clip>
                                                 <RectangleGeometry   RadiusX="8"   RadiusY="8" Rect="0,0,39,39" />
                                             </Image.Clip>
