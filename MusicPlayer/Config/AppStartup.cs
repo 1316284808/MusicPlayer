@@ -73,7 +73,8 @@ namespace MusicPlayer.Config
                 if (_host != null)
                 {
                     await _host.StopAsync();
-                    await _host.WaitForShutdownAsync();
+                    // 移除WaitForShutdownAsync()调用，因为它会一直等待关闭信号，导致应用程序无法正常退出
+                    // await _host.WaitForShutdownAsync();
                 }
 
                 System.Diagnostics.Debug.WriteLine("Application services stopped successfully");

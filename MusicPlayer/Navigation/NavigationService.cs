@@ -390,10 +390,41 @@ namespace MusicPlayer.Navigation
                 }
                 else if (currentPage is PlayerPage playerPage)
                 {
+                    // 检查页面本身的DataContext
                     if (playerPage.DataContext is MusicPlayer.ViewModels.ObservableObject playerViewModel)
                     {
                         playerViewModel.Cleanup();
                         System.Diagnostics.Debug.WriteLine("NavigationService: 已清理PlayerPage的ViewModel");
+                    }
+                    // 检查CenterContentControl的DataContext（PlayerPage的特殊处理）
+                    else
+                    {
+                        try
+                        {
+                            // 使用反射获取CenterContentControl
+                            var centerContentControlProperty = playerPage.GetType().GetProperty("CenterContentControl");
+                            if (centerContentControlProperty != null)
+                            {
+                                var centerContentControl = centerContentControlProperty.GetValue(playerPage);
+                                if (centerContentControl != null)
+                                {
+                                    var dataContextProperty = centerContentControl.GetType().GetProperty("DataContext");
+                                    if (dataContextProperty != null)
+                                    {
+                                        var centerContentViewModel = dataContextProperty.GetValue(centerContentControl);
+                                        if (centerContentViewModel is MusicPlayer.ViewModels.ObservableObject observableViewModel)
+                                        {
+                                            observableViewModel.Cleanup();
+                                            System.Diagnostics.Debug.WriteLine("NavigationService: 已清理PlayerPage的CenterContentViewModel");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"NavigationService: 清理PlayerPage的CenterContentViewModel时出错: {ex.Message}");
+                        }
                     }
                 }
                 else if (currentPage is AlbumPage albumPage)

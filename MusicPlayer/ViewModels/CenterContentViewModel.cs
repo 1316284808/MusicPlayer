@@ -290,38 +290,46 @@ namespace MusicPlayer.ViewModels
                     }
                     
                     // 在UI线程更新封面
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
-                    {
-                        try
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => 
                         {
-                            if (song != null && CurrentSong == song)
+                            try
                             {
-                                // 更新歌曲对象的封面
-                                song.AlbumArt = albumArt;
-                                song.OriginalAlbumArt = originalAlbumArt;
-                                
-                                // 更新ViewModel的封面属性
-                                CurrentSongAlbumArt = albumArt;
-                                CurrentSongOriginalAlbumArt = originalAlbumArt;
-                                
-                                // 触发属性变更通知
-                                OnPropertyChanged(nameof(CurrentSongAlbumArt));
-                                OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
-                                
-                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面完成 - {song.Title}");
+                                if (song != null && CurrentSong == song)
+                                {
+                                    // 更新歌曲对象的封面
+                                    song.AlbumArt = albumArt;
+                                    song.OriginalAlbumArt = originalAlbumArt;
+                                    
+                                    // 更新ViewModel的封面属性
+                                    CurrentSongAlbumArt = albumArt;
+                                    CurrentSongOriginalAlbumArt = originalAlbumArt;
+                                    
+                                    // 触发属性变更通知
+                                    OnPropertyChanged(nameof(CurrentSongAlbumArt));
+                                    OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
+                                    
+                                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 异步更新专辑封面完成 - {song.Title}");
+                                }
+                                else
+                                {
+                                    // 如果歌曲已不再是当前歌曲，明确释放资源
+                                    System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 歌曲已变更，放弃封面更新并释放资源");
+                                    // 明确释放BitmapImage资源
+                                    albumArt = null;
+                                    originalAlbumArt = null;
+                                    // 强制垃圾回收，确保资源被及时释放
+                                    GC.Collect();
+                                    GC.WaitForPendingFinalizers();
+                                }
                             }
-                            else
+                            catch (Exception uiEx)
                             {
-                                // 如果歌曲已不再是当前歌曲，释放资源
-                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 歌曲已变更，放弃封面更新");
-                                // BitmapImage将在GC时被回收
+                                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 更新封面UI失败: {uiEx.Message}");
+                                // 发生异常时也释放资源
+                                albumArt = null;
+                                originalAlbumArt = null;
                             }
-                        }
-                        catch (Exception uiEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 更新封面UI失败: {uiEx.Message}");
-                        }
-                    });
+                        });
                 });
             }
             catch (Exception ex)
@@ -981,7 +989,10 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public override void Cleanup()
         {
-            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始执行Cleanup方法");
+            // 记录清理前的内存使用情况
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var memoryBefore = process.WorkingSet64 / (1024 * 1024); // 转换为MB
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 开始执行Cleanup方法，清理前内存使用: {memoryBefore} MB");
             
             // 关键修复：先深度清理歌词，断开所有绑定引用
             DeepCleanupLyrics();
@@ -989,6 +1000,20 @@ namespace MusicPlayer.ViewModels
             // 取消注册所有消息处理器
             _messagingService.Unregister(this);
             System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已取消所有消息注册");
+            
+            // 验证消息订阅是否被正确取消
+            bool isCurrentSongChangedRegistered = _messagingService.IsRegistered<MusicPlayer.Services.Messages.CurrentSongChangedMessage>(this);
+            bool isPlaybackStateChangedRegistered = _messagingService.IsRegistered<MusicPlayer.Services.Messages.PlaybackStateChangedMessage>(this);
+            bool isPlaybackProgressRegistered = _messagingService.IsRegistered<MusicPlayer.Services.Messages.PlaybackProgressMessage>(this);
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 消息订阅状态 - CurrentSongChanged: {isCurrentSongChangedRegistered}, PlaybackStateChanged: {isPlaybackStateChangedRegistered}, PlaybackProgress: {isPlaybackProgressRegistered}");
+            
+            // 确保所有消息订阅都被取消
+            if (isCurrentSongChangedRegistered || isPlaybackStateChangedRegistered || isPlaybackProgressRegistered)
+            {
+                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 重新尝试取消所有消息注册");
+                _messagingService.Unregister(this);
+                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已重新取消所有消息注册");
+            }
             
 
             
@@ -1006,7 +1031,10 @@ namespace MusicPlayer.ViewModels
             // 清理BitmapImage资源
             CleanupBitmapResources();
             
-            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: Cleanup方法执行完成");
+            // 记录清理完成后的内存使用情况
+            var finalProcess = System.Diagnostics.Process.GetCurrentProcess();
+            var memoryFinal = finalProcess.WorkingSet64 / (1024 * 1024); // 转换为MB
+            System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: Cleanup方法执行完成，最终内存使用: {memoryFinal} MB");
         }
         
         /// <summary>
@@ -1047,7 +1075,10 @@ namespace MusicPlayer.ViewModels
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
                 
-                System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已完成BitmapImage资源清理和垃圾回收");
+                // 记录清理后的内存使用情况
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var memoryAfter = process.WorkingSet64 / (1024 * 1024); // 转换为MB
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 已完成BitmapImage资源清理和垃圾回收，清理后内存使用: {memoryAfter} MB");
             }
             catch (Exception ex)
             {

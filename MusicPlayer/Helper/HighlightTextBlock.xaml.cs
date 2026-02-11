@@ -3,11 +3,12 @@ using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MusicPlayer.Helper;
 
-public partial class HighlightTextBlock : UserControl
+public partial class HighlightTextBlock : UserControl, IDisposable
 {
     private ProgresiveHighlightEffect _effect;
 
@@ -63,22 +64,64 @@ public partial class HighlightTextBlock : UserControl
         /// </summary>
         public void Cleanup()
         {
-            // 清理ShaderEffect，避免内存泄漏
+            
+            // 彻底清除所有数据绑定
+            BindingOperations.ClearAllBindings(this);
+            
+            // 清理并释放ShaderEffect的非托管资源，避免内存泄漏
+            if (_effect != null)
+            {
+                _effect.Dispose();
+                _effect = null;
+            }
+            
             if (PART_Rectangle != null)
             {
                 PART_Rectangle.Effect = null;
+                
             }
             
-            // 清理Geometry对象
+            // 清理Geometry对象（FormattedText.BuildGeometry创建的对象）
             if (PART_Rectangle != null)
             {
                 PART_Rectangle.Clip = null;
+                
             }
+            
+            // 使用ClearValue清除所有自定义依赖属性值
+            ClearValue(TextProperty);
+            ClearValue(TextWrappingProperty);
+            ClearValue(TextAlignmentProperty);
+            ClearValue(TextTrimmingProperty);
+            ClearValue(LineHeightProperty);
+            ClearValue(HighlightPosProperty);
+            ClearValue(HighlightWidthProperty);
+            ClearValue(HighlightColorProperty);
+            
+            // 清除继承的依赖属性值
+            ClearValue(FontFamilyProperty);
+            ClearValue(FontSizeProperty);
+            ClearValue(FontWeightProperty);
+            ClearValue(FontStyleProperty);
+            ClearValue(FontStretchProperty);
+            ClearValue(ForegroundProperty);
             
             // 移除事件订阅
             Loaded -= OnLoaded;
             SizeChanged -= OnSizeChanged;
             Unloaded -= OnUnloaded;
+            
+            // 强制立即回收，释放FormattedText相关的非托管资源
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
+        }
+        
+        /// <summary>
+        /// IDisposable接口实现 - 调用Cleanup清理资源
+        /// </summary>
+        public void Dispose()
+        {
+            Cleanup();
+            GC.SuppressFinalize(this);
         }
         
         /// <summary>
@@ -88,6 +131,9 @@ public partial class HighlightTextBlock : UserControl
         {
             try
             {
+                // 清除所有绑定，确保状态干净
+                BindingOperations.ClearAllBindings(this);
+                
                 // 重新创建ShaderEffect
                 _effect = new ProgresiveHighlightEffect
                 {
@@ -109,8 +155,12 @@ public partial class HighlightTextBlock : UserControl
                     SizeChanged += OnSizeChanged;
                     Unloaded += OnUnloaded;
                 }
+                
+                   }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"HighlightTextBlock.ResetEffect: 重置失败 - {ex.Message}");
             }
-            catch { }
         }
 
     #region Text
@@ -218,7 +268,7 @@ public partial class HighlightTextBlock : UserControl
 
     private static void OnHighlightPosChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is HighlightTextBlock c)
+        if (d is HighlightTextBlock c && c._effect != null)
         {
             c._effect.HighlightPos = (double)e.NewValue;
         }
@@ -246,7 +296,7 @@ public partial class HighlightTextBlock : UserControl
 
     private static void OnHighlightWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is HighlightTextBlock c)
+        if (d is HighlightTextBlock c && c._effect != null)
         {
             var newWidth = (double)e.NewValue;
             c._effect.HighlightWidth = newWidth;
@@ -281,7 +331,7 @@ public partial class HighlightTextBlock : UserControl
 
     private static void OnHighlightColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is HighlightTextBlock c)
+        if (d is HighlightTextBlock c && c._effect != null)
         {
             c._effect.HighlightColor = (Color)e.NewValue;
         }
@@ -305,7 +355,7 @@ public partial class HighlightTextBlock : UserControl
 
     private static void OnUseAdditiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is HighlightTextBlock c)
+        if (d is HighlightTextBlock c && c._effect != null)
         {
             c._effect.UseAdditive = (bool)e.NewValue;
         }
@@ -326,7 +376,7 @@ public partial class HighlightTextBlock : UserControl
 
     private static void OnHighlightIntensityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is HighlightTextBlock c)
+        if (d is HighlightTextBlock c && c._effect != null)
         {
             c._effect.HighlightIntensity = (double)e.NewValue;
         }

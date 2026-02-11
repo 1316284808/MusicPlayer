@@ -134,6 +134,11 @@ namespace MusicPlayer.Controls
             // 清理LyricsScrollBehavior
             if (LyricsListBox != null)
             {
+                // 清除LyricsScrollBehavior的所有附加属性绑定
+                LyricsListBox.ClearValue(MusicPlayer.Helper.LyricsScrollBehavior.IsManualScrollingProperty);
+                LyricsListBox.ClearValue(MusicPlayer.Helper.LyricsScrollBehavior.AutoScrollToCenterProperty);
+                LyricsListBox.ClearValue(MusicPlayer.Helper.LyricsScrollBehavior.ScrollOnLoadProperty);
+                
                 // 重置手动滚动状态
                 MusicPlayer.Helper.LyricsScrollBehavior.SetIsManualScrolling(LyricsListBox, false);
                 
@@ -145,6 +150,8 @@ namespace MusicPlayer.Controls
                 var scrollViewer = GetScrollViewer(LyricsListBox);
                 if (scrollViewer != null)
                 {
+                    // 清除ScrollViewer的绑定
+                    BindingOperations.ClearAllBindings(scrollViewer);
                     // 重置滚动位置
                     scrollViewer.ScrollToVerticalOffset(0);
                 }
@@ -169,110 +176,66 @@ namespace MusicPlayer.Controls
             return null;
         }
         /// <summary>
-        /// 清理歌词项
+        /// 记录内存使用情况
+        /// </summary>
+        private void LogMemoryUsage(string context)
+        {
+            try
+            {
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var memoryMB = process.WorkingSet64 / (1024 * 1024);
+                System.Diagnostics.Debug.WriteLine($"[内存监控] {context}: 内存使用 = {memoryMB} MB");
+            }
+            catch { }
+        }
+        
+        /// <summary>
+        /// 清理歌词项 - 清理可见项的绑定，保留ItemsSource
         /// </summary> 
         private void CleanupLyricItems()
         {
             if (LyricsListBox != null)
             {
+                LogMemoryUsage("清理歌词项前");
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 开始清理歌词项资源");
                 
-                // 先遍历所有ListBoxItem容器，调用Dispose方法释放资源
-                for (int i = LyricsListBox.Items.Count - 1; i >= 0; i--)
-                {
-                    var listBoxItem = LyricsListBox.ItemContainerGenerator.ContainerFromIndex(i) as ListBoxItem;
-                    if (listBoxItem != null)
-                    {
-                        // 获取DataTemplate中的所有MultiLineLyricControl并清理绑定
-                        var lyricControls = FindAllVisualChildren<MultiLineLyricControl>(listBoxItem);
-                        foreach (var lyricControl in lyricControls)
-                        {
-                            try
-                            {
-                                // 调用Cleanup方法清理内部资源（包含绑定清理）
-                                lyricControl.Cleanup();
-                            }
-                            catch { }
-                        }
-                        
-                        // 通过VisualTreeHelper获取所有WordByWordLyricItem
-                        //var lyricItems = FindAllVisualChildren<WordByWordLyricItem>(listBoxItem);
-                        //foreach (var lyricItem in lyricItems)
-                        //{
-                        //    if (lyricItem is IDisposable disposableLyricItem)
-                        //    {
-                        //        disposableLyricItem.Dispose();
-                        //        System.Diagnostics.Debug.WriteLine("CenterContentControl: 已释放歌词项资源");
-                        //    }
-                        //}
-                        
-                        // 清空ListBoxItem的Content和DataContext
-                        listBoxItem.Content = null;
-                        listBoxItem.DataContext = null;
-                        
-                        // 从视觉树中移除ListBoxItem
-                        if (listBoxItem.Parent is Panel parentPanel)
-                        {
-                            parentPanel.Children.Remove(listBoxItem);
-                        }
-                    }
-                }
-                
-                // 智能清理策略：临时设置为null并立即重新绑定
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 执行智能清理策略");
-                    
-                    // 保存当前的DataContext，确保重新绑定时使用正确的上下文
-                    var currentDataContext = LyricsListBox.DataContext;
-                    
-                    // 临时设置ItemsSource为null，触发UI清理旧项
-                    LyricsListBox.ItemsSource = null;
-                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 临时设置ItemsSource为null");
-                    
-                    // 强制UI更新，确保清理生效
-                    LyricsListBox.UpdateLayout();
-                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 强制UI更新");
-                    
-                    // 立即重新绑定到Lyrics属性，保持数据绑定关系
-                    if (currentDataContext != null)
+                    // 第一步：尝试清理可见的ListBoxItem（虚拟化项可能无法获取）
+                    int cleanedItems = 0;
+                    for (int i = 0; i < LyricsListBox.Items.Count; i++)
                     {
-                        // 使用Binding对象重新绑定，确保与XAML中的绑定一致
-                        var binding = new Binding("Lyrics");
-                        binding.Source = currentDataContext;
-                        LyricsListBox.SetBinding(ListBox.ItemsSourceProperty, binding);
-                        System.Diagnostics.Debug.WriteLine("CenterContentControl: 重新绑定到Lyrics属性");
+                        var listBoxItem = LyricsListBox.ItemContainerGenerator.ContainerFromIndex(i) as ListBoxItem;
+                        if (listBoxItem != null)
+                        {
+                            // 清除ListBoxItem的所有绑定
+                            BindingOperations.ClearAllBindings(listBoxItem);
+                            
+                            // 清理DataTemplate中的MultiLineLyricControl
+                            var lyricControls = FindAllVisualChildren<MultiLineLyricControl>(listBoxItem);
+                            foreach (var lyricControl in lyricControls)
+                            {
+                                lyricControl.Cleanup();
+                            }
+                            
+                            // 清空ListBoxItem的Content和DataContext
+                            listBoxItem.Content = null;
+                            listBoxItem.DataContext = null;
+                            cleanedItems++;
+                        }
                     }
+                    System.Diagnostics.Debug.WriteLine($"CenterContentControl: 已清理{cleanedItems}个可见ListBoxItem");
                     
-                    // 再次强制UI更新，确保歌词正常显示
+                    // 第二步：强制UI更新，释放虚拟化缓存
                     LyricsListBox.UpdateLayout();
-                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 再次强制UI更新");
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 已强制UI更新");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"CenterContentControl: 智能清理策略执行失败: {ex.Message}");
-                    // 清理失败时，尝试恢复绑定
-                    try
-                    {
-                        var currentDataContext = LyricsListBox.DataContext;
-                        if (currentDataContext != null)
-                        {
-                            var binding = new Binding("Lyrics");
-                            binding.Source = currentDataContext;
-                            LyricsListBox.SetBinding(ListBox.ItemsSourceProperty, binding);
-                            LyricsListBox.UpdateLayout();
-                        }
-                    }
-                    catch { }
+                    System.Diagnostics.Debug.WriteLine($"CenterContentControl: 清理过程中出错 - {ex.Message}");
                 }
                 
-                // 添加强制垃圾回收，确保资源及时释放
-                System.Diagnostics.Debug.WriteLine("CenterContentControl: 执行垃圾回收");
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-                System.Diagnostics.Debug.WriteLine("CenterContentControl: 垃圾回收完成");
-                
+                LogMemoryUsage("清理歌词项后");
                 System.Diagnostics.Debug.WriteLine("CenterContentControl: 歌词项资源清理完成");
             }
         }

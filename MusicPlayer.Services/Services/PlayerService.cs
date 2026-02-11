@@ -610,8 +610,9 @@ namespace MusicPlayer.Services
                     System.Diagnostics.Debug.WriteLine("已释放音频输出设备");
                 }
                 
-                _audioEngineManager.Dispose();
-                System.Diagnostics.Debug.WriteLine("已释放音频引擎管理器");
+                // 注意：不再在这里释放音频引擎管理器，改为在Dispose()中统一释放
+                // 这样可以确保AudioEngineManager在整个播放器生命周期中保持活跃
+                System.Diagnostics.Debug.WriteLine("音频引擎管理器将在Dispose()中统一释放");
             }
             catch (Exception ex)
             {
@@ -1168,13 +1169,17 @@ namespace MusicPlayer.Services
                         _mediaTransportService.NextRequested -= OnNextRequested;
                         _mediaTransportService.PreviousRequested -= OnPreviousRequested;
                         System.Diagnostics.Debug.WriteLine("PlayerService: 已取消所有SMTC事件订阅");
-                         
+                          
                         // 释放 SMTC 服务
                         _mediaTransportService?.Dispose();
                         
                         // 取消订阅所有消息
                         _messagingService.Unregister(this);
                         System.Diagnostics.Debug.WriteLine("PlayerService: 已取消所有消息订阅");
+                        
+                        // 释放音频引擎管理器
+                        _audioEngineManager.Dispose();
+                        System.Diagnostics.Debug.WriteLine("PlayerService: 已释放音频引擎管理器");
                         
                         // 重置单例标志，允许重新创建实例（线程安全）
                         lock (_initLock)

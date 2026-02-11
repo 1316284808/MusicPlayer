@@ -53,33 +53,39 @@ namespace MusicPlayer.Controls
         {
             try
             {
-                // 先断开所有数据绑定，防止卸载后继续更新
+                   // 先断开所有数据绑定，防止卸载后继续更新
                 BindingOperations.ClearAllBindings(this);
-                
-                // 移除事件订阅
+              // 移除事件订阅
                 Unloaded -= MultiLineLyricControl_Unloaded;
                 Loaded -= MultiLineLyricControl_Loaded;
                 SizeChanged -= MultiLineLyricControl_SizeChanged;
-                
+               
                 // 清空所有活动的文本块
                 ClearAllLines();
+          
                 
-                // 清空对象池
+                // 清空并彻底清理对象池中的所有对象
+                int poolItemsCleared = 0;
                 while (_textBlockPool.Count > 0)
                 {
                     var textBlock = _textBlockPool.Dequeue();
                     if (textBlock != null)
                     {
+                        // 调用子控件清理
+                        textBlock.Cleanup();
+                        // 清除所有绑定
                         BindingOperations.ClearAllBindings(textBlock);
+                        // 清除所有依赖属性值
                         textBlock.ClearValue(Helper.HighlightTextBlock.TextProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.FontSizeProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.TextAlignmentProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.HighlightPosProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.HighlightWidthProperty);
+                        poolItemsCleared++;
                     }
                 }
-
-                // 清理自身的依赖属性绑定
+               
+                // 清理自身的依赖属性绑定（再次确保）
                 BindingOperations.ClearAllBindings(this);
                 ClearValue(TextProperty);
                 ClearValue(FontSizeProperty);
@@ -90,12 +96,12 @@ namespace MusicPlayer.Controls
                 ClearValue(ProgressProperty);
                 ClearValue(HighlightWidthProperty);
                 ClearValue(LineHeightProperty);
-
+               
                 // 清空父容器
                 if (LyricLinesPanel != null)
                 {
                     LyricLinesPanel.Children.Clear();
-                }
+                       }
                 
                 // 重置状态
                 _originalText = string.Empty;
@@ -106,8 +112,11 @@ namespace MusicPlayer.Controls
                 
                 // 强制立即回收，防止延迟绑定
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
+                  }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MultiLineLyricControl.Cleanup: 清理失败 - {ex.Message}");
             }
-            catch { }
         }
         
         /// <summary>
@@ -117,8 +126,7 @@ namespace MusicPlayer.Controls
         {
             Cleanup();
             GC.SuppressFinalize(this);
-            System.Diagnostics.Debug.WriteLine("MultiLineLyricControl: Dispose被调用");
-        }
+               }
 
         private void MultiLineLyricControl_Unloaded(object sender, RoutedEventArgs e)
         {
@@ -150,6 +158,10 @@ namespace MusicPlayer.Controls
                 textBlock.ResetEffect();
                 textBlock.HighlightPos = 0;
                 textBlock.HighlightWidth = 0;
+                
+                // 彻底清除所有绑定，确保状态干净
+                BindingOperations.ClearAllBindings(textBlock);
+                 
                 return textBlock;
             }
             
@@ -171,8 +183,11 @@ namespace MusicPlayer.Controls
             {
                 try
                 {
-                    // 清理资源，避免内存泄漏
+                    // 调用Cleanup清理内部资源
                     textBlock.Cleanup();
+                    
+                    // 彻底清除所有绑定
+                    BindingOperations.ClearAllBindings(textBlock);
                     
                     // 重置状态
                     textBlock.Text = string.Empty;
@@ -182,10 +197,24 @@ namespace MusicPlayer.Controls
                     textBlock.HighlightPos = 0;
                     textBlock.HighlightWidth = 0;
                     
+                    // 使用ClearValue清除所有依赖属性值
+                    textBlock.ClearValue(Helper.HighlightTextBlock.TextProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.FontSizeProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.FontWeightProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.ForegroundProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.HighlightColorProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.TextAlignmentProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.HighlightPosProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.HighlightWidthProperty);
+                    textBlock.ClearValue(Helper.HighlightTextBlock.LineHeightProperty);
+                    
                     // 归还到池中
                     _textBlockPool.Enqueue(textBlock);
+                   }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"MultiLineLyricControl: 归还对象池失败 - {ex.Message}");
                 }
-                catch { }
             }
         }
 
@@ -498,8 +527,7 @@ namespace MusicPlayer.Controls
             catch (Exception ex)
             {
                 // 如果出错，回退到单行显示
-                Debug.WriteLine($"MultiLineLyricControl: 更新歌词行时出错: {ex.Message}");
-                _cachedLines = new[] { _originalText };
+                 _cachedLines = new[] { _originalText };
                 CreateSingleLine(_originalText);
             }
         }

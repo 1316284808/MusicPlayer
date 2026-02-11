@@ -5,7 +5,7 @@ using System.Windows.Media.Effects;
 
 namespace MusicPlayer.Helper.Shaders.Impl;
 
-public sealed class ProgresiveHighlightEffect : ShaderEffect
+public sealed class ProgresiveHighlightEffect : ShaderEffect, IDisposable
 {
     #region Shader
 
@@ -33,6 +33,33 @@ public sealed class ProgresiveHighlightEffect : ShaderEffect
         UpdateShaderValue(HighlightIntensityProperty);
     }
 
+    #endregion
+    
+    #region IDisposable
+    
+    private bool _disposed = false;
+    
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            // 清理PixelShader资源
+            // 注意：静态的_pixelShader由所有实例共享，不应在此处释放
+            // 这里释放的是实例级别的资源
+            
+            // 清理依赖属性
+            ClearValue(InputProperty);
+            ClearValue(HighlightPosProperty);
+            ClearValue(HighlightWidthProperty);
+            ClearValue(HighlightColorProperty);
+            ClearValue(UseAdditiveProperty);
+            ClearValue(HighlightIntensityProperty);
+            
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
+    }
+    
     #endregion
 
     #region Input (s0)
