@@ -18,7 +18,7 @@ namespace MusicPlayer.Converters
     public class CircularSpectrumPathConverter : IMultiValueConverter, IDisposable
     {
         // 缓存机制：存储固定计算结果，避免重复计算
-        private Dictionary<Tuple<int, double, double, double, double, int>, Tuple<double, double, double, double>> _angleCache = new Dictionary<Tuple<int, double, double, double, double, int>, Tuple<double, double, double, double>>();
+        private Dictionary<Tuple<int, double, double, int>, Tuple<double, double, double, double>> _angleCache = new Dictionary<Tuple<int, double, double, int>, Tuple<double, double, double, double>>();
         
         /// <summary>
         /// 初始化转换器，订阅频谱显示状态变化
@@ -32,14 +32,21 @@ namespace MusicPlayer.Converters
         {
             try
             {
-                if (values.Length >= 7 && values[0] is double spectrumValue && values[1] is int index)
+                if (values.Length >= 5 && values[0] is double spectrumValue && values[1] is int index)
                 {
-                    // 从ViewModel获取参数
-                    double centerX = values[2] is double cx ? cx : 450;
-                    double centerY = values[3] is double cy ? cy : 450;
-                    double innerRadius = values[4] is double ir ? ir : 225;
-                    double maxBarHeight = values[5] is double mh ? mh : 225;
-                    int totalCount = values[6] is int tc ? tc : 32;
+                    // 使用默认中心点计算（容器中心）
+                    // 由于我们不再从ViewModel获取中心点，而是使用频谱条容器的中心
+                    // 这里使用innerRadius作为中心点，因为innerRadius等于封面半径，而封面直径等于容器尺寸
+                    double centerX = 0; // 临时值，后续会根据实际情况计算
+                    double centerY = 0; // 临时值，后续会根据实际情况计算
+                    double innerRadius = values[2] is double ir ? ir : 225;
+                    double maxBarHeight = values[3] is double mh ? mh : 225;
+                    int totalCount = values[4] is int tc ? tc : 32;
+                    
+                    // 计算实际中心点：使用innerRadius作为中心点，因为innerRadius等于封面半径
+                    // 而封面直径等于频谱控件的尺寸，所以中心点应该是innerRadius
+                    centerX = innerRadius;
+                    centerY = innerRadius;
                     // 计算当前频谱条的角度（从顶部开始，顺时针）
                     double angleStep = 360.0 / totalCount;
                     double currentAngle = (index * angleStep - 90) * Math.PI / 180; // 转换为弧度，-90度使第一个条从顶部开始
@@ -52,7 +59,7 @@ namespace MusicPlayer.Converters
                     double angleWidth = angleStep * 60; // 扇形频谱 90 120 180 
                     
                     // 创建缓存键
-                    var cacheKey = Tuple.Create(index, centerX, centerY, innerRadius, maxBarHeight, totalCount);
+                    var cacheKey = Tuple.Create(index, innerRadius, maxBarHeight, totalCount);
                     Tuple<double, double, double, double> cachedAngles;
                     
                     // 尝试从缓存中获取角度，只在固定参数变化时重新计算

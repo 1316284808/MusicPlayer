@@ -23,6 +23,17 @@
             <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="Black" Opacity="0.2"/>
         </Border.Effect>
         <Grid>
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="Grid.SizeChanged">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                           From="0.7" To="1" 
+                                           Duration="0:0:0.15"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
             <Grid.RowDefinitions>
                 <!--内容 -->
                 <RowDefinition Height="*"/>

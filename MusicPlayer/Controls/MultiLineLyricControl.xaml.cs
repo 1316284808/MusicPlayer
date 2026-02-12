@@ -72,16 +72,8 @@ namespace MusicPlayer.Controls
                     var textBlock = _textBlockPool.Dequeue();
                     if (textBlock != null)
                     {
-                        // 追踪日志：记录从对象池清理HighlightTextBlock
-                        System.Diagnostics.Debug.WriteLine($"MultiLineLyricControl.Cleanup: 从对象池清理HighlightTextBlock [ID:{textBlock.GetHashCode()}]");
-                        
-                        // 调用子控件清理（会释放ProgresiveHighlightEffect）
                         textBlock.Cleanup();
-                        
-                        // 清除所有绑定
                         BindingOperations.ClearAllBindings(textBlock);
-                        
-                        // 清除所有依赖属性值
                         textBlock.ClearValue(Helper.HighlightTextBlock.TextProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.FontSizeProperty);
                         textBlock.ClearValue(Helper.HighlightTextBlock.TextAlignmentProperty);
@@ -92,12 +84,6 @@ namespace MusicPlayer.Controls
                     }
                 }
                 
-                // 在切歌时强制清空对象池，防止内存堆积
-                if (forceClearPool)
-                {
-                    System.Diagnostics.Debug.WriteLine($"MultiLineLyricControl.Cleanup: 强制清空对象池，共清理 {poolItemsCleared} 个HighlightTextBlock对象");
-                }
-               
                 // 清理自身的依赖属性绑定（再次确保）
                 BindingOperations.ClearAllBindings(this);
                 ClearValue(TextProperty);

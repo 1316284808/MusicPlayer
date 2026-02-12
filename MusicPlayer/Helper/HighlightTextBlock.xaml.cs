@@ -109,7 +109,6 @@ public partial class HighlightTextBlock : UserControl, IDisposable
             Loaded -= OnLoaded;
             SizeChanged -= OnSizeChanged;
             Unloaded -= OnUnloaded;
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
         }
         
         /// <summary>

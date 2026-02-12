@@ -163,8 +163,7 @@ namespace MusicPlayer.ViewModels
             {
                 if (_currentSong != value)
                 {
-                    // 记录切歌前的内存使用情况
-                    LogMemoryUsage($"切歌前 - 当前歌曲: {_currentSong?.Title ?? "无"}");
+                    
                     
                     // 清理旧歌曲的资源
                     CleanupOldSongResources(_currentSong);
@@ -181,8 +180,6 @@ namespace MusicPlayer.ViewModels
                     OnPropertyChanged(nameof(CurrentSongAlbumArt));
                     OnPropertyChanged(nameof(CurrentSongOriginalAlbumArt));
                     
-                    // 记录清理后的内存使用情况
-                    LogMemoryUsage("清理旧歌曲资源后");
                     
                     // 延迟设置新歌曲，确保UI有足够时间更新
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() => 
@@ -194,9 +191,7 @@ namespace MusicPlayer.ViewModels
 
                             // 更新缓存的歌曲信息属性
                             UpdateSongProperties();
-                            
-                            // 记录切歌后的内存使用情况
-                            LogMemoryUsage($"切歌后 - 新歌曲: {value?.Title ?? "无"}");
+                           
                         }
                         catch (Exception ex)
                         {
@@ -568,7 +563,7 @@ namespace MusicPlayer.ViewModels
         /// <summary>
         /// 初始化ViewModel
         /// </summary>
-        public void Initialize()
+        public new void Initialize()
         {
             System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 开始执行Initialize方法");
 
@@ -583,10 +578,37 @@ namespace MusicPlayer.ViewModels
             // 注册消息处理器 - 通过消息系统接收状态更新
             RegisterMessageHandlers();
 
+            // 主动查询当前窗口状态，避免因为窗口已经最大化但没有触发消息导致的尺寸不匹配问题
+            InitializeWindowState();
+
             // 从PlayerStateService获取当前播放状态并初始化（异步）
             InitializeFromPlayerStateAsync();
 
             System.Diagnostics.Debug.WriteLine("CenterContentViewModel: Initialize方法执行完成");
+        }
+        
+        /// <summary>
+        /// 初始化窗口状态 - 主动查询当前窗口状态
+        /// </summary>
+        private void InitializeWindowState()
+        {
+            try
+            {
+                // 在UI线程上查询窗口状态
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        _isWindowMaximized = mainWindow.WindowState == System.Windows.WindowState.Maximized;
+                        System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 初始化窗口状态为 {(_isWindowMaximized ? "最大化" : "正常")}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CenterContentViewModel: 初始化窗口状态失败 - {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -1091,9 +1113,6 @@ namespace MusicPlayer.ViewModels
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
-                
-                // 记录清理后的内存使用情况
-                LogMemoryUsage("BitmapImage资源清理后");
             }
             catch (Exception ex)
             {
@@ -1101,18 +1120,7 @@ namespace MusicPlayer.ViewModels
             }
         }
         
-        /// <summary>
-        /// 记录内存使用情况
-        /// </summary>
-        private void LogMemoryUsage(string context)
-        {
-            try
-            {
-                var process = System.Diagnostics.Process.GetCurrentProcess();
-                var memoryMB = process.WorkingSet64 / (1024 * 1024);
-                System.Diagnostics.Debug.WriteLine($"[内存监控] {context}: 内存使用 = {memoryMB} MB");
-            }
-            catch { }
-        }
+       
+      
     }
 }

@@ -31,6 +31,34 @@ namespace MusicPlayer.Controls
             // 添加尺寸变化事件处理
             this.SizeChanged += CircularSpectrumControl_SizeChanged;
             
+            // 添加Loaded事件处理，确保在控件加载时更新尺寸
+            this.Loaded += CircularSpectrumControl_Loaded;
+        }
+        
+        /// <summary>
+        /// 控件加载完成后更新尺寸参数
+        /// </summary>
+        private void CircularSpectrumControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_spectrumViewModel != null)
+                {
+                    // 延迟更新，确保所有绑定和布局已完成
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        UpdateSpectrumDimensionsForCurrentWindowState();
+                        System.Diagnostics.Debug.WriteLine("CircularSpectrumControl: Loaded事件处理完成，已更新频谱参数");
+                    }, System.Windows.Threading.DispatcherPriority.Loaded);
+                }
+                
+                // 移除Loaded事件订阅，避免重复触发
+                this.Loaded -= CircularSpectrumControl_Loaded;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CircularSpectrumControl: Loaded事件处理失败 - {ex.Message}");
+            }
         }
         
         /// <summary>
@@ -107,32 +135,30 @@ namespace MusicPlayer.Controls
                 }
                 
                 // 更新ViewModel的窗口状态
-                if (_spectrumViewModel.IsWindowMaximized != actualIsMaximized)
+                bool windowStateChanged = _spectrumViewModel.IsWindowMaximized != actualIsMaximized;
+                if (windowStateChanged)
                 {
                     _spectrumViewModel.IsWindowMaximized = actualIsMaximized;
                 }
                 
-                // 更新尺寸参数
-                bool isMaximized = _spectrumViewModel.IsWindowMaximized;
+                // 总是更新尺寸参数，确保与当前窗口状态一致
+                bool isMaximized = actualIsMaximized; // 使用实际状态，而不是ViewModel的状态
                 if (isMaximized)
                 {
-                    _spectrumViewModel.CenterX = 225;
-                    _spectrumViewModel.CenterY = 225;
                     _spectrumViewModel.InnerRadius = 225;  // 内径等于封面半径，使频谱从封面边缘开始
                     _spectrumViewModel.MaxBarHeight = 125; // 最大条高度为封面半径的一半
                 }
                 else
                 {
-                    // 正常时：频谱直径300，中心点(150,150)，内径150(封面半径)，最大高度75
-                    _spectrumViewModel.CenterX = 150;
-                    _spectrumViewModel.CenterY = 150;
+                    // 正常时：频谱直径300，内径150(封面半径)，最大高度75
                     _spectrumViewModel.InnerRadius = 150;  // 内径等于封面半径，使频谱从封面边缘开始
                     _spectrumViewModel.MaxBarHeight = 75; // 最大条高度为封面半径的一半
                 }
                 
                 // 添加调试信息
                 System.Diagnostics.Debug.WriteLine($"CircularSpectrumControl: 窗口状态为{(isMaximized ? "最大化" : "正常")}，" +
-                    $"更新频谱参数 - 中心点({_spectrumViewModel.CenterX},{_spectrumViewModel.CenterY})，内径{_spectrumViewModel.InnerRadius}，最大高度{_spectrumViewModel.MaxBarHeight}");
+                    $"更新频谱参数 - 内径{_spectrumViewModel.InnerRadius}，最大高度{_spectrumViewModel.MaxBarHeight}");
+                // 注意：中心点现在由CircularSpectrumPathConverter内部计算，使用innerRadius作为中心点
             }
             catch (Exception ex)
             {

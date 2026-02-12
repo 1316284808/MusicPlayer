@@ -139,8 +139,8 @@ namespace MusicPlayer.ViewModels
             
             System.Diagnostics.Debug.WriteLine($"SpectrumAnalyzerViewModel: 窗口状态变化，更新频谱尺寸为 {(IsWindowMaximized ? "最大化" : "正常")}，" +
                 $"中心点({CenterX},{CenterY})，内径{InnerRadius}，最大高度{MaxBarHeight}");
-                
-            // 强制刷新频谱数据，触发UI更新
+
+            //// 强制刷新频谱数据，触发UI更新
             for (int i = 0; i < SpectrumData.Count; i++)
             {
                 OnPropertyChanged($"SpectrumData[{i}]");
@@ -159,8 +159,40 @@ namespace MusicPlayer.ViewModels
             // 注册消息处理器
             RegisterMessageHandlers();
             
-           
-         }
+            // 主动查询当前窗口状态并初始化尺寸参数
+            InitializeWindowStateAndDimensions();
+            
+            System.Diagnostics.Debug.WriteLine("SpectrumAnalyzerViewModel: 构造函数执行完成");
+        }
+        
+        /// <summary>
+        /// 初始化窗口状态和频谱尺寸参数
+        /// </summary>
+        private void InitializeWindowStateAndDimensions()
+        {
+            try
+            {
+                // 在UI线程上查询窗口状态
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        _isWindowMaximized = mainWindow.WindowState == System.Windows.WindowState.Maximized;
+                        System.Diagnostics.Debug.WriteLine($"SpectrumAnalyzerViewModel: 初始化窗口状态为 {(_isWindowMaximized ? "最大化" : "正常")}");
+                        
+                        // 根据窗口状态更新频谱尺寸参数
+                        UpdateSpectrumDimensions();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SpectrumAnalyzerViewModel: 初始化窗口状态失败 - {ex.Message}");
+                // 如果初始化失败，使用默认尺寸（正常窗口）
+                UpdateSpectrumDimensions();
+            }
+        }
 
         /// <summary>
         /// 初始化频谱数据

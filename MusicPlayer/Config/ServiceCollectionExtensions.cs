@@ -39,8 +39,8 @@ namespace MusicPlayer.Config
                 builder.AddConsole();
                 builder.AddDebug();
                 builder.SetMinimumLevel(LogLevel.Error);
-                // 添加文件日志，使用启动时间作为文件名
-                builder.AddFileWithTimestamp(Paths.LogsDirectory, LogLevel.Error);
+                // 添加文件日志，使用日期作为文件名
+                builder.AddFileWithDate(Paths.LogsDirectory, LogLevel.Error);
             });
             services.AddMessageServices();
             services.AddCoreServices();

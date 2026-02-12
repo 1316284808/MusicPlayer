@@ -26,8 +26,6 @@
                     <MultiBinding Converter="{StaticResource CircularSpectrumPathConverter}">
                         <Binding Path="."/>
                         <Binding Path="(ItemsControl.AlternationIndex)" RelativeSource="{RelativeSource TemplatedParent}"/>
-                        <Binding Path="DataContext.CenterX" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                        <Binding Path="DataContext.CenterY" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                         <Binding Path="DataContext.InnerRadius" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                         <Binding Path="DataContext.MaxBarHeight" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                         <Binding Path="Items.Count" RelativeSource="{RelativeSource AncestorType=ItemsControl}"/>

@@ -57,5 +57,22 @@ namespace MusicPlayer.Logging
             var fileName = $"{DateTime.Now:yyyy-MM-dd-HHmmss}.log";
             return builder.AddFile(logsDirectory, fileName, minLogLevel);
         }
+
+        /// <summary>
+        /// 添加文件日志提供程序，使用日期作为文件名
+        /// </summary>
+        /// <param name="builder">日志构建器</param>
+        /// <param name="logsDirectory">日志目录路径</param>
+        /// <param name="minLogLevel">最小日志级别，默认为 Error</param>
+        /// <returns>日志构建器</returns>
+        public static ILoggingBuilder AddFileWithDate(
+            this ILoggingBuilder builder,
+            string logsDirectory,
+            LogLevel minLogLevel = LogLevel.Error)
+        {
+            // 生成文件名：yyyy-MM-dd.log
+            var fileName = $"{DateTime.Now:yyyy-MM-dd}.log";
+            return builder.AddFile(logsDirectory, fileName, minLogLevel);
+        }
     }
 }

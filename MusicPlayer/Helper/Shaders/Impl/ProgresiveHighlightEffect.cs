@@ -55,10 +55,7 @@ public sealed class ProgresiveHighlightEffect : ShaderEffect, IDisposable
     /// 清理资源 - 可被多次调用
     /// </summary>
     public void Cleanup()
-    {
-        // 追踪日志：记录特效对象清理
-        System.Diagnostics.Debug.WriteLine($"ProgresiveHighlightEffect: 清理特效对象 [ID:{GetHashCode()}]");
-        
+    { 
         // 清理依赖属性
         ClearValue(InputProperty);
         ClearValue(HighlightPosProperty);

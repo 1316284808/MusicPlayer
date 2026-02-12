@@ -219,8 +219,7 @@ namespace MusicPlayer.Services
                 Timestamp = DateTime.Now
             };
 
-            // 使用Error级别记录警告，确保写入到日志文件
-            _logger.LogError("[WARNING] [{Source}] {Message} - Details: {Details}", source, message, details);
+            // 警告级别消息不记录到日志文件，只通过消息系统传递
             _messagingService.Send(new WarningMessage(warningInfo));
         }
 
@@ -236,14 +235,7 @@ namespace MusicPlayer.Services
                 Timestamp = DateTime.Now
             };
 
-            // 只在关键信息时记录到日志文件，使用Error级别
-            if (source.Contains("ApplicationInitialization") || 
-                source.Contains("ApplicationShutdown") ||
-                message.Contains("started") ||
-                message.Contains("shutdown"))
-            {
-                _logger.LogError("[INFO] [{Source}] {Message}", source, message);
-            }
+            // 信息级别消息不记录到日志文件，只通过消息系统传递
             
             _messagingService.Send(new InfoMessage(infoData));
         }
