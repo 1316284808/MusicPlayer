@@ -33,6 +33,7 @@ namespace MusicPlayer.ViewModels
         private readonly IPlaybackContextService _playbackContextService;
         private readonly INotificationService _notificationService;
         private readonly IPlaylistCacheService _playlistCacheService;
+        private readonly IPlayQueueService _playQueueService;
         
         // 所有歌单列表
         private readonly ObservableCollection<Playlist> _allPlaylists = new();
@@ -186,6 +187,11 @@ namespace MusicPlayer.ViewModels
         /// </summary>
         public ICommand ShufflePlayCommand { get; }
         
+        /// <summary>
+        /// 下一首播放命令（将歌曲添加到播放队列）
+        /// </summary>
+        public ICommand PlayNextCommand { get; }
+        
 
         /// <summary>
         /// 排序命令
@@ -261,7 +267,7 @@ namespace MusicPlayer.ViewModels
             }
         }
 
-        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null, INotificationService? notificationService = null, IPlaylistCacheService? playlistCacheService = null)
+        public PlaylistViewModel(IMessagingService messagingService, IConfigurationService? configurationService = null, IPlaylistDataService? playlistDataService = null, ICustomPlaylistService? customPlaylistService = null, IPlaybackContextService? playbackContextService = null, INotificationService? notificationService = null, IPlaylistCacheService? playlistCacheService = null, IPlayQueueService? playQueueService = null)
         {
             _messagingService = messagingService ?? throw new ArgumentNullException(nameof(messagingService));
             _configurationService = configurationService;
@@ -270,6 +276,7 @@ namespace MusicPlayer.ViewModels
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _playlistCacheService = playlistCacheService ?? throw new ArgumentNullException(nameof(playlistCacheService));
+            _playQueueService = playQueueService ?? throw new ArgumentNullException(nameof(playQueueService));
             
             // 监听配置变化
             if (_configurationService != null)
@@ -289,6 +296,7 @@ namespace MusicPlayer.ViewModels
             AddSongToPlaylistCommand = new RelayCommand<object>(ExecuteAddSongToPlaylist);
             PlayAllCommand = new RelayCommand(ExecutePlayAll);
             ShufflePlayCommand = new RelayCommand(ExecuteShufflePlay);
+            PlayNextCommand = new RelayCommand<Song>(ExecutePlayNext);
           
          
             
@@ -783,6 +791,30 @@ namespace MusicPlayer.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 随机播放歌曲失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 将歌曲添加到下一首播放队列
+        /// </summary>
+        private void ExecutePlayNext(Song? song)
+        {
+            if (song == null)
+            {
+                System.Diagnostics.Debug.WriteLine("PlaylistViewModel: ExecutePlayNext - 歌曲为空，操作已忽略");
+                return;
+            }
+
+            try
+            {
+                _playQueueService.EnqueueSong(song);
+                _notificationService.ShowSuccess($"已将 '{song.Title}' 添加到下一首播放");
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 已将歌曲添加到下一首播放队列 - {song.Title}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PlaylistViewModel: 添加歌曲到下一首播放队列失败: {ex.Message}");
+                _notificationService.ShowError($"添加失败: {ex.Message}");
             }
         }
 

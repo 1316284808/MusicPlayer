@@ -242,4 +242,17 @@ namespace MusicPlayer.Services.Messages
             Theme = theme;
         }
     }
+
+    /// <summary>
+    /// 将歌曲添加到下一首播放队列的消息
+    /// </summary>
+    public class EnqueueNextSongMessage : RequestMessage<bool>
+    {
+        public Song Song { get; }
+
+        public EnqueueNextSongMessage(Song song)
+        {
+            Song = song;
+        }
+    }
 }

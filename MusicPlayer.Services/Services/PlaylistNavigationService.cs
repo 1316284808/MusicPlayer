@@ -9,25 +9,38 @@ namespace MusicPlayer.Services
     /// <summary>
     /// 播放列表导航服务实现
     /// 职责：处理播放列表中的导航逻辑（上一首、下一首）
+    /// 支持插队播放队列，优先返回插队歌曲
     /// </summary>
     public class PlaylistNavigationService : IPlaylistNavigationService
     {
         private readonly IPlaybackContextService _playbackContextService;
         private readonly IPlaylistCacheService _cacheService;
+        private readonly IPlayQueueService _playQueueService;
 
         public PlaylistNavigationService(
             IPlaybackContextService playbackContextService,
-            IPlaylistCacheService cacheService)
+            IPlaylistCacheService cacheService,
+            IPlayQueueService playQueueService)
         {
             _playbackContextService = playbackContextService ?? throw new ArgumentNullException(nameof(playbackContextService));
             _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+            _playQueueService = playQueueService ?? throw new ArgumentNullException(nameof(playQueueService));
         }
 
         /// <summary>
         /// 获取下一首歌曲
+        /// 优先返回插队队列中的歌曲
         /// </summary>
         public Song? GetNextSong(PlayMode playMode = PlayMode.RepeatAll, Song? currentSong = null)
         {
+            // 首先检查插队队列是否有歌曲
+            if (_playQueueService.HasSongs)
+            {
+                var queuedSong = _playQueueService.DequeueSong();
+                Debug.WriteLine($"PlaylistNavigationService: GetNextSong - 从插队队列获取歌曲: {queuedSong?.Title}");
+                return queuedSong;
+            }
+            
             // 获取当前播放上下文
             var context = _playbackContextService.CurrentPlaybackContext;
             var actualCurrentSong = currentSong;

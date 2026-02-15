@@ -6,8 +6,8 @@
              xmlns:vm="clr-namespace:MusicPlayer.ViewModels"
                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:controls="clr-namespace:MusicPlayer.Helper"
-             mc:Ignorable="d"
-             Background="Transparent" >
+             mc:Ignorable="d"  
+              >
     <Border>
         <Border.Effect>
             <DropShadowEffect ShadowDepth="1" BlurRadius="8" Color="Black" Opacity="0.2"/>
@@ -22,19 +22,20 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" >
-                <ui:Button x:Name="BackButton"   Background="Transparent"   HorizontalAlignment="Left"    Width="auto"
+                <ui:Button x:Name="BackButton"      HorizontalAlignment="Left"    Width="auto"
                    Cursor="Hand" ToolTip="返回上一页" Padding="0"    Command="{Binding GoBackCommand}">
                     <StackPanel   Orientation="Horizontal"  HorizontalAlignment="Left"  >
                         <controls:CustomIcon HorizontalAlignment="Left"   Kind="Back" Margin="5,2" />
                         <Separator Margin="2" />
-                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"  Margin="5,2" FontSize="14" FontWeight="SemiBold" />
+                        <ui:TextBlock  Text="{Binding Title}" VerticalAlignment="Center"  Margin="5,2" FontSize="14" FontWeight="SemiBold" />
 
                     </StackPanel>
                 </ui:Button>
             </StackPanel>
 
             <!-- 标题区域（可拖拽窗口） -->
-            <Grid Grid.Column="1" Background="Transparent" x:Name="DragArea"
+            <Grid Grid.Column="1"  x:Name="DragArea"
+              Background="Transparent"
               MouseDown="DragArea_MouseDown" MouseMove="DragArea_MouseMove"
               MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
             </Grid>
@@ -42,7 +43,7 @@
             <!-- 窗口控制按钮组 -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- 最小化按钮 -->
-                <ui:Button  Margin="5,0,0,0" Command="{Binding MinimizeWindowCommand}" ToolTip="最小化" Background="Transparent">
+                <ui:Button  Margin="5,0,0,0" Command="{Binding MinimizeWindowCommand}" ToolTip="最小化" >
                     <controls:CustomIcon Kind="Minimize"  IconSize="12"      />
                 </ui:Button>
                 <!-- 最大化/还原按钮 - 根据窗口状态显示不同图标 -->

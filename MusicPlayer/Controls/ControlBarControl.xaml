@@ -148,10 +148,10 @@
 
                         <!-- 歌曲信息 - 垂直排列的面板 -->
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="10,0,10,0">
-                            <TextBlock Text="{Binding CurrentSongTitle, FallbackValue='未播放歌曲'}" 
+                            <ui:TextBlock  Text="{Binding CurrentSongTitle, FallbackValue='未播放歌曲'}" 
                            FontSize="14" FontWeight="SemiBold" 
                            TextTrimming="CharacterEllipsis" MaxWidth="200"/>
-                            <TextBlock Text="{Binding CurrentSongArtist, FallbackValue='未知歌手'}" 
+                            <ui:TextBlock  Text="{Binding CurrentSongArtist, FallbackValue='未知歌手'}" 
                            FontSize="12" Opacity="0.7" 
                            TextTrimming="CharacterEllipsis" MaxWidth="200"/>
                         </StackPanel>
@@ -234,7 +234,7 @@
                             <Slider Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" 
                            Orientation="Vertical" Height="120" Width="20"  
                            Style="{StaticResource VerticalSliderStyle}" ToolTip="音量调节"  />
-                            <TextBlock Text="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
+                            <ui:TextBlock  Text="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
                              FontWeight="Bold"     FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
@@ -243,7 +243,11 @@
                     <!-- 音量按钮 - icon视觉效果比较小，所以size给到18 -->
                         <ui:Button  x:Name="VolumeButton" Grid.Row="1" 
                                     ToolTip="{Binding Volume, Converter={StaticResource VolumeToPercentageConverter}}" 
-                                    Command="{Binding ToggleVolumePopupCommand}"    >
+                                    Command="{Binding ToggleVolumePopupCommand}"
+                                    Helper:VolumeWheelBehavior.IsEnabled="True"
+                                    Helper:VolumeWheelBehavior.Step="0.05">
+                            
+                           
                         <Helper:CustomIcon   IconSize="18">
                             <Helper:CustomIcon.Kind>
                                 <MultiBinding Converter="{StaticResource VolumeIconConverter}">
@@ -310,17 +314,15 @@
                         <Border  Background="#E6FFFFFF" 
                                 BorderBrush="#d0d0d0" BorderThickness="1"
                                 CornerRadius="8" >
-                            <Grid Width="320" Height="500"  >
+                            <Grid Width="320" Height="550"  >
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
                                 <!-- 播放队列标题 -->
-                                <StackPanel Margin="10" Grid.Row="0"  VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding QueueTitle}" FontSize="14" 
-                    FontWeight="Bold"  HorizontalAlignment="Left"
-                    TextWrapping="Wrap"   />
+                                <StackPanel Margin="10"   Grid.Row="0"  VerticalAlignment="Center">
+                                    <ui:TextBlock  Text="{Binding QueueTitle}" FontSize="14"  FontWeight="SemiBold"  HorizontalAlignment="Left"  TextWrapping="Wrap"   />
                                     <Separator Margin="2"/>
                                 </StackPanel>
 
@@ -370,13 +372,16 @@
                                         <DataTemplate> 
                                                 <!-- 歌曲信息 -->
                                                 <StackPanel VerticalAlignment="Center" Width="290">
-                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" MaxWidth="280"  TextTrimming="CharacterEllipsis"  />
-                                                <TextBlock Text="{Binding Artist}" FontSize="11" Opacity="0.7"   MaxWidth="280"  TextTrimming="CharacterEllipsis"/> 
+                                                    <ui:TextBlock  Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" MaxWidth="280"  TextTrimming="CharacterEllipsis"  />
+                                                <ui:TextBlock  Text="{Binding Artist}" FontSize="11" Opacity="0.7"   MaxWidth="280"  TextTrimming="CharacterEllipsis"/> 
                                                 </StackPanel>  
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-
+                                <ui:Button Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5" Width="40" Height="40" CornerRadius="20"   ToolTip="定位当前播放歌曲"
+            Command="{Binding ScrollToCurrentSongCommand}">
+                                    <Helper:CustomIcon  Kind="Position" ></Helper:CustomIcon>
+                                </ui:Button>
 
                                 <StackPanel Margin="5" Grid.Row="2" VerticalAlignment="Center">
 

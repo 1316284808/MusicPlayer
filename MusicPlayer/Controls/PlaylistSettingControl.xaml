@@ -28,18 +28,18 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Photo"  Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text=" 封面缓存"  FontSize="14" FontWeight="SemiBold"   />
+                         <ui:TextBlock Text=" 封面缓存"  FontSize="14" FontWeight="SemiBold"   />
                           <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0" Text="启用封面缓存可以提高页面加载歌曲封面的加载速度，禁用将导致歌曲封面加载变慢页面卡顿" />
+                     <ui:TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0" Text="启用封面缓存可以提高页面加载歌曲封面的加载速度，禁用将导致歌曲封面加载变慢页面卡顿" />
 
-                    <TextBlock FontWeight="Normal" FontSize="12"  Margin="20,5,0,0" TextWrapping="Wrap"  >
+                     <ui:TextBlock FontWeight="Normal" FontSize="12"  Margin="20,5,0,0" TextWrapping="Wrap"  >
                         <Run Text="缓存目录:"/> 
                         <Run Text="[" FontWeight="Bold"/>
                         <Run Text="{Binding AlbumArtCachePath,Mode=OneWay }" FontWeight="Normal" Foreground="#FF0078D7"/>
                         <Run Text="]" FontWeight="Bold"/>
-                    </TextBlock>
+                    </ui:TextBlock>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <ui:Button Padding="0" ToolTip="打开缓存目录"    Width="50"  Margin="5,0,5,0" 
@@ -65,17 +65,17 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Lyrics"  Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="歌词文件目录"  FontSize="14" FontWeight="SemiBold"   />
+                         <ui:TextBlock Text="歌词文件目录"  FontSize="14" FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0" Text="歌曲若无内嵌歌词，则检索指定目录" />
-                    <TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0"> 
+                     <ui:TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0" Text="歌曲若无内嵌歌词，则检索指定目录" />
+                     <ui:TextBlock FontWeight="Normal" FontSize="12"   Margin="20,5,0,0"> 
                          <Run Text="指定目录:"/> 
                         <Run Text="[" FontWeight="Bold"/>
                         <Run Text="{Binding LyricDirectory, FallbackValue='未设置'}" FontWeight="Normal" Foreground="#FF0078D7"/>
                         <Run Text="]" FontWeight="Bold"/>
-                    </TextBlock>
+                    </ui:TextBlock>
                 </StackPanel>
                 <ui:Button Padding="0" ToolTip="选择目录" Grid.Column="1" 
                            Width="50" 
@@ -96,11 +96,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="ClearList"  Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="清空播放列表"  FontSize="14" FontWeight="SemiBold"   />
+                         <ui:TextBlock Text="清空播放列表"  FontSize="14" FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="将删除播放列表中的所有歌曲，但不会影响电脑本地文件"  FontWeight="Normal" FontSize="12"   Margin="20,5,0,0"/>
+                     <ui:TextBlock Text="将删除播放列表中的所有歌曲，但不会影响电脑本地文件"  FontWeight="Normal" FontSize="12"   Margin="20,5,0,0"/>
                 </StackPanel> 
 
                 <ui:Button Grid.Column="1" 

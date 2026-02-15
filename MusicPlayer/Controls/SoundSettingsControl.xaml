@@ -30,11 +30,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="RoBot" Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="音频引擎"  FontSize="14" FontWeight="SemiBold" />
+                         <ui:TextBlock Text="音频引擎"  FontSize="14" FontWeight="SemiBold" />
                         <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="可以切换不同的音频引擎：Auto(由程序自主选择音频引擎)、 DirectX(DirectSound)、 Windows会话(WASAPI)" 
+                     <ui:TextBlock Text="可以切换不同的音频引擎：Auto(由程序自主选择音频引擎)、 DirectX(DirectSound)、 Windows会话(WASAPI)" 
                               FontSize="12" FontWeight="Normal"  Margin="20,5,0,0"/>
                 </StackPanel>
                 <ComboBox x:Name="AudioEngineComboBox" FontWeight="Normal" Grid.Column="1" 
@@ -43,7 +43,7 @@
                           SelectedItem="{Binding CurrentAudioEngine, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource AudioEngineToStringConverter}}"/>
+                             <ui:TextBlock Text="{Binding Converter={StaticResource AudioEngineToStringConverter}}"/>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -66,11 +66,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Equalizer" Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="均衡器"  FontSize="14" FontWeight="SemiBold" />
+                         <ui:TextBlock Text="均衡器"  FontSize="14" FontWeight="SemiBold" />
                         <Separator Margin="2" />
                     </StackPanel>
 
-                        <TextBlock Text="启用后可以切换不同调音风格 " FontSize="12" FontWeight="Normal"  Margin="20,5,0,0"/>
+                         <ui:TextBlock Text="启用后可以切换不同调音风格 " FontSize="12" FontWeight="Normal"  Margin="20,5,0,0"/>
  
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
@@ -151,14 +151,14 @@
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="+12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Red"/>
-                            <TextBlock Grid.Row="1" Text="0dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" Foreground="Blue"/>
-                            <TextBlock Grid.Row="2" Text="-12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Green"/>
+                             <ui:TextBlock Grid.Row="0" Text="+12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Red"/>
+                             <ui:TextBlock Grid.Row="1" Text="0dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" Foreground="Blue"/>
+                             <ui:TextBlock Grid.Row="2" Text="-12dB" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center"  VerticalAlignment="Center" Opacity="0.7"   Foreground="Green"/>
 
                         </Grid>
 
                         <StackPanel Grid.Column="1" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="32Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="32Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 32Hz -->
                             <Slider x:Name="Slider32Hz" Height="200" Style="{StaticResource VerticalSliderStyle}" 
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -167,12 +167,12 @@
                     Helper:SliderBehavior.HandleDrag="True" />
 
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain0, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain0, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="64Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="64Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 64Hz -->
                             <Slider x:Name="Slider64Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -180,12 +180,12 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain1 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain1, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain1, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
 
                         <StackPanel Grid.Column="3" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="125Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="125Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 125Hz -->
                             <Slider x:Name="Slider125Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -193,12 +193,12 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain2 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain2, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain2, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
 
                         <StackPanel Grid.Column="4" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="250Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="250Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 250Hz -->
                             <Slider x:Name="Slider250Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -206,11 +206,11 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain3 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain3, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain3, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                         <StackPanel Grid.Column="5" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="500Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="500Hz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 500Hz -->
                             <Slider x:Name="Slider500Hz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -218,12 +218,12 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain4 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain4, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain4, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
 
                         <StackPanel Grid.Column="6" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="1kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="1kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 1kHz -->
                             <Slider x:Name="Slider1kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -231,11 +231,11 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain5 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain5, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain5, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                         <StackPanel Grid.Column="7" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="2kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="2kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 2kHz -->
                             <Slider x:Name="Slider2kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -243,11 +243,11 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain6 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain6, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain6, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                         <StackPanel Grid.Column="8" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="4kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="4kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 4kHz -->
                             <Slider x:Name="Slider4kHz"  Height="200" Style="{StaticResource VerticalSliderStyle}"
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -255,11 +255,11 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain7 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain7, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain7, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                         <StackPanel Grid.Column="9" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="8kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="8kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 8kHz -->
 
                             <Slider x:Name="Slider8kHz" Height="200" Style="{StaticResource VerticalSliderStyle}"
@@ -268,11 +268,11 @@
                 Orientation="Vertical"  ToolTip="{Binding BandGain8 }"
                 Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain8, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain8, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                         <StackPanel   Grid.Column="10" HorizontalAlignment="Center" Orientation="Vertical">
-                            <TextBlock   Width="40"    Text="16kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="16kHz" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
                             <!-- 16kHz -->
                             <Slider x:Name="Slider16kHz"  Height="200" Style="{StaticResource VerticalSliderStyle}" 
                     Minimum="-12" Maximum="12" TickFrequency="3" IsSnapToTickEnabled="True" HorizontalAlignment="Center"
@@ -280,7 +280,7 @@
                     Orientation="Vertical"  ToolTip="{Binding BandGain9 }"
                     Helper:SliderBehavior.HandleDrag="True" />
 
-                            <TextBlock   Width="40"    Text="{Binding BandGain9, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                             <ui:TextBlock   Width="40"    Text="{Binding BandGain9, StringFormat={}{0:F1}dB}" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
 
                         </StackPanel>
                     </Grid>

@@ -43,11 +43,11 @@
         </Grid.Triggers>
         <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Center"  VerticalAlignment="Bottom" Margin="0,10,0,10"  TextBlock.TextAlignment="Center">
 
-            <TextBlock x:Name="TitleTextBlock" Text="{Binding CurrentSongTitle}"    FontSize="24" FontWeight="Bold"/>
+             <ui:TextBlock x:Name="TitleTextBlock" Text="{Binding CurrentSongTitle}"    FontSize="24" FontWeight="Bold"/>
             
-                <TextBlock x:Name="AlbumTextBlock" Text="{Binding CurrentSongAlbum}"    FontSize="14" Opacity="0.6"/>
+                 <ui:TextBlock x:Name="AlbumTextBlock" Text="{Binding CurrentSongAlbum}"    FontSize="14" Opacity="0.6"/>
                  
-                <TextBlock x:Name="ArtistTextBlock" Text="{Binding CurrentSongArtist}"    FontSize="16" Opacity="0.8"/> 
+                 <ui:TextBlock x:Name="ArtistTextBlock" Text="{Binding CurrentSongArtist}"    FontSize="16" Opacity="0.8"/> 
          </StackPanel>
       
         <Grid Grid.Row="1">

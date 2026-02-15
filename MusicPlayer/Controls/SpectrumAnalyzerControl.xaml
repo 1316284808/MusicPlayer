@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:converters="clr-namespace:MusicPlayer.Converters"
              xmlns:behaviors="clr-namespace:MusicPlayer.Helper"
+              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d"
              d:DesignHeight="150" d:DesignWidth="400">
 
@@ -17,7 +18,7 @@
           Visibility="{Binding IsSpectrumVisible, Converter={StaticResource BoolToVis}}">
         <Grid Margin="10">
             <!-- 音频频谱标题 -->
-            <TextBlock Text=" " FontSize="12" FontWeight="SemiBold" 
+             <ui:TextBlock Text=" " FontSize="12" FontWeight="SemiBold" 
                      HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0.7"/>
             <!-- 频谱数据显示控件 -->
             <ItemsControl ItemsSource="{Binding SpectrumData}">

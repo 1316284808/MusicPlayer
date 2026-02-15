@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Controls\SpectrumAnalyzerControl.xaml.cs" />
     <Compile Remove="Controls\WordByWordLyricControl.xaml.cs" />
     <Compile Remove="Controls\WordByWordLyricItem.xaml.cs" />
     <Compile Remove="Helper\Behavior\NewPlaylistAlbumArtBehavior.cs" />
@@ -33,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Remove="Controls\SpectrumAnalyzerControl.xaml" />
     <Page Remove="Controls\WordByWordLyricControl.xaml" />
     <Page Remove="Controls\WordByWordLyricItem.xaml" />
     <Page Remove="Styles\TreeViewStyles.xaml" />

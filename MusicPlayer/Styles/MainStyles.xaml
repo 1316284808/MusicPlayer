@@ -471,36 +471,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- 歌词项样式 -->
-    <Style x:Key="LyricItemStyle" TargetType="ListBoxItem">
-        <Setter Property="Focusable" Value="False"/>
-        <Setter Property="Padding" Value="5"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="ItemBorder" Background="Transparent" Padding="{TemplateBinding Padding}">
-                        <ui:TextBlock Text="{Binding Text}" FontSize="16" TextAlignment="Center"
-                                   Opacity="0.6" FontWeight="Normal"  TextWrapping="Wrap"
-                                   LineHeight="20" MaxWidth="400" Margin="10,5"
-                                   x:Name="LyricTextBlock">
-                        </ui:TextBlock>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="LyricTextBlock" Property="Foreground" Value="#0078D4"/>
-                            <Setter TargetName="LyricTextBlock" Property="FontSize" Value="18"/>
-                            <Setter TargetName="LyricTextBlock" Property="FontWeight" Value="Bold"/>
-                            <Setter TargetName="LyricTextBlock" Property="Opacity" Value="1"/>
-                            <Setter TargetName="ItemBorder" Property="Background" Value="#0AFFFFFF"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+   
 
     <!-- 背景容器样式 -->
     <Style x:Key="BackgroundContainerStyle" TargetType="Border">
@@ -531,15 +502,8 @@
         </Style.Triggers>
     </Style>
 
-    <!-- 全局文本样式 - 为整个程序提供统一的文本样式 -->
-    <Style x:Key="LabelStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush }"/>
-    </Style>
-
-    <!-- 全局文本样式 - 让整个程序的文本都使用LabelStyle -->
-    <!--<Style TargetType="TextBlock" BasedOn="{StaticResource LabelStyle}"/>
-    <Style TargetType="ui:TextBlock" BasedOn="{StaticResource LabelStyle}"/>
-    <Style TargetType="Label" BasedOn="{StaticResource LabelStyle}"/>-->
+    
+   
     <!-- 控件颜色定义 -->
     <Color x:Key="PrimaryColor">#007ACC</Color>
     <Color x:Key="AccentColor">#FF0078D7</Color>

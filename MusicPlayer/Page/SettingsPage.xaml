@@ -31,7 +31,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Settings" Margin="2" />
                         <Separator Margin="2" />
-                        <TextBlock Text="外观设置" FontSize="14"    FontWeight="Bold"/>
+                         <ui:TextBlock Text="外观设置" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
@@ -43,7 +43,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Sound" Margin="2" />
                         <Separator Margin="2" />
-                        <TextBlock Text="音频设置" FontSize="14"    FontWeight="Bold"/>
+                         <ui:TextBlock Text="音频设置" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">
@@ -55,7 +55,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="List" Margin="2" />
                         <Separator Margin="2" />
-                        <TextBlock Text="数据管理" FontSize="14"    FontWeight="Bold"/>
+                         <ui:TextBlock Text="数据管理" FontSize="14"    FontWeight="Bold"/>
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Disabled" Padding="20">

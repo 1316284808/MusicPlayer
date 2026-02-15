@@ -24,7 +24,7 @@
 
         <!-- 标题栏 -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">   
-            <TextBlock Text="歌手列表" FontSize="24" FontWeight="Bold" Margin="10" /> 
+             <ui:TextBlock Text="歌手列表" FontSize="24" FontWeight="Bold" Margin="10" /> 
         </StackPanel>
         <StackPanel Grid.Row="1" VerticalAlignment="Center"  HorizontalAlignment="Right" Orientation="Horizontal"> 
             <ui:Button   Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
@@ -82,13 +82,12 @@
                      HorizontalAlignment="Right">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding}" 
+                         <ui:TextBlock Text="{Binding}" 
                                    FontSize="12" 
                                    FontWeight="Normal" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Center"
                                    Cursor="Hand"
-                                   Foreground="Black"
                                    Margin="0,1,0,1">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -104,7 +103,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
-                        </TextBlock>
+                        </ui:TextBlock>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
                 <ListBox.ItemContainerStyle>
@@ -193,7 +192,7 @@ IsGridLayoutEnabled="True" />
                             
                             <StackPanel Grid.Column="1"  HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10"> 
                             <!-- 歌手名称 -->
-                                <TextBlock  
+                                 <ui:TextBlock  
                                     Text="{Binding Name}"
                                     FontSize="14"
                                     FontWeight="SemiBold"
@@ -208,7 +207,7 @@ IsGridLayoutEnabled="True" />
                                     Height="60" MaxHeight="80"/>   
 
                                 <!-- 歌曲数量 -->
-                            <TextBlock  
+                             <ui:TextBlock  
                                       Text="{Binding SongCount, StringFormat='{}{0} 首歌曲'}"
                                       FontSize="12"
                                       Foreground="Gray"

@@ -12,34 +12,35 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Helper
 {
     /// <summary>
-    /// ButtonControl.xaml 的交互逻辑
-    /// 音质徽标显示控件，根据音频文件格式显示HiRes或SQ徽标
+    /// QualityLevelControl.xaml 的交互逻辑
+    /// 音质徽标显示控件，根据音频质量等级显示HiRes或SQ徽标
     /// </summary>
-    public partial class ButtonControl : UserControl, IDisposable
+    public partial class QualityLevelControl : UserControl, IDisposable
     {
         private bool _disposed = false;
 
         /// <summary>
-        /// 音频格式依赖属性，用于绑定数据源
+        /// 音质等级依赖属性，用于绑定数据源
         /// </summary>
-        public static readonly DependencyProperty AudioFormatProperty = 
-            DependencyProperty.Register("AudioFormat", typeof(string), typeof(ButtonControl), 
-                new PropertyMetadata(string.Empty));
+        public static readonly DependencyProperty QualityLevelProperty = 
+            DependencyProperty.Register("QualityLevel", typeof(AudioQualityLevel), typeof(QualityLevelControl), 
+                new PropertyMetadata(AudioQualityLevel.HQ));
 
         /// <summary>
-        /// 音频格式属性，表示当前音频文件的格式
+        /// 音质等级属性，表示当前音频文件的质量等级
         /// </summary>
-        public string AudioFormat
+        public AudioQualityLevel QualityLevel
         {
-            get { return (string)GetValue(AudioFormatProperty); }
-            set { SetValue(AudioFormatProperty, value); }
+            get { return (AudioQualityLevel)GetValue(QualityLevelProperty); }
+            set { SetValue(QualityLevelProperty, value); }
         }
 
-        public ButtonControl()
+        public QualityLevelControl()
         {
             InitializeComponent();
         }

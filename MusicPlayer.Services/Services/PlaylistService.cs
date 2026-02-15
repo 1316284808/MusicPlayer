@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
+using MusicPlayer.Core.Enums;
 using MusicPlayer.Core.Interface;
 using MusicPlayer.Core.Models;
+using MusicPlayer.Core.Utils;
 using TagLib;
 
 namespace MusicPlayer.Services
@@ -69,7 +71,10 @@ namespace MusicPlayer.Services
                         Duration = TimeSpan.Zero,
                         FileSize = new FileInfo(filePath).Length,
                         AddedTime = DateTime.Now,
-
+                        SampleRate = 0,
+                        BitsPerSample = null,
+                        Bitrate = 0,
+                        QualityLevel = AudioQualityLevel.HQ
                     };
                 }
                 catch (Exception ex)
@@ -86,7 +91,10 @@ namespace MusicPlayer.Services
                         Duration = TimeSpan.Zero,
                         FileSize = new FileInfo(filePath).Length,
                         AddedTime = DateTime.Now,
-
+                        SampleRate = 0,
+                        BitsPerSample = null,
+                        Bitrate = 0,
+                        QualityLevel = AudioQualityLevel.HQ
                     };
                 }
 
@@ -100,8 +108,17 @@ namespace MusicPlayer.Services
                     Duration = tagFile?.Properties?.Duration ?? TimeSpan.Zero,
                     FileSize = new FileInfo(filePath).Length,
                     AddedTime = DateTime.Now,
-
+                    SampleRate = tagFile?.Properties?.AudioSampleRate ?? 0,
+                    BitsPerSample = tagFile?.Properties?.BitsPerSample,
+                    Bitrate = tagFile?.Properties?.AudioBitrate ?? 0
                 };
+                
+                // 计算音质等级
+                song.QualityLevel = AudioQualityCalculator.Calculate(
+                    Path.GetExtension(filePath),
+                    song.SampleRate,
+                    song.BitsPerSample
+                );
                 
                 // 注释：专辑封面数据将在需要时通过懒加载机制加载，而不是在导入时全部加载
                 // song.AlbumArtData = LoadAlbumArtData(tagFile);

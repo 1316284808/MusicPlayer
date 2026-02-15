@@ -26,11 +26,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Theme" Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="主题切换"   FontSize="14"  FontWeight="SemiBold"   />
+                         <ui:TextBlock Text="主题切换"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
 
-                    <TextBlock Text="可以切换四种不同的主题：None、Acrylic、Mica、Mica Alt  " FontSize="12"   FontWeight="Normal"  Margin="20,5,0,0"/>
+                     <ui:TextBlock Text="可以切换四种不同的主题：None、Acrylic、Mica、Mica Alt  " FontSize="12"   FontWeight="Normal"  Margin="20,5,0,0"/>
                     </StackPanel>
 
                     <!-- 右侧：开关控件 -->
@@ -51,14 +51,14 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="Spectrum" Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="频谱显示"   FontSize="14"  FontWeight="SemiBold"   />
+                         <ui:TextBlock Text="频谱显示"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                         <Border Background="#FC94AF" CornerRadius="4" Margin="10,0" Padding="2" Opacity="0.7" >
-                            <TextBlock Text="⚠GPU高占用"  HorizontalAlignment="Left" Margin="5,0" VerticalAlignment="Center" FontStretch="Normal" FontSize="10" FontWeight="SemiBold"   Foreground="Red"  />
+                             <ui:TextBlock Text="⚠GPU高占用"  HorizontalAlignment="Left" Margin="5,0" VerticalAlignment="Center" FontStretch="Normal" FontSize="10" FontWeight="SemiBold"   Foreground="Red"  />
                         </Border>
                     </StackPanel>
                    
-                    <TextBlock Text="启用后在音乐播放界面显示音频频谱可视化效果" FontSize="12"  FontWeight="Normal"   Margin="20,5,0,0"/>
+                     <ui:TextBlock Text="启用后在音乐播放界面显示音频频谱可视化效果" FontSize="12"  FontWeight="Normal"   Margin="20,5,0,0"/>
                 </StackPanel>
 
                 <!-- 右侧：开关控件 -->
@@ -80,10 +80,10 @@
                     <StackPanel Orientation="Horizontal">
                         <Helper:CustomIcon Kind="AppIcon" Margin="2"/>
                         <Separator Margin="2" />
-                        <TextBlock Text="程序托盘"   FontSize="14"  FontWeight="SemiBold"   />
+                         <ui:TextBlock Text="程序托盘"   FontSize="14"  FontWeight="SemiBold"   />
                         <Separator Margin="2" />
                     </StackPanel>
-                    <TextBlock Text="启用后点击关闭主窗口自动最小化到程序托盘" FontSize="12"  FontWeight="Normal"  Margin="20,5,0,0"/>
+                     <ui:TextBlock Text="启用后点击关闭主窗口自动最小化到程序托盘" FontSize="12"  FontWeight="Normal"  Margin="20,5,0,0"/>
                 </StackPanel>
 
                 <!-- 右侧：开关控件 -->

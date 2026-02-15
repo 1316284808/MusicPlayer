@@ -1,5 +1,6 @@
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MusicPlayer.Core.Enums;
 
 namespace MusicPlayer.Core.Models
 {
@@ -55,6 +56,23 @@ namespace MusicPlayer.Core.Models
         /// <summary>是否已删除（逻辑删除，不实际删除文件）</summary>
         [ObservableProperty]
         private bool _isDeleted = false;
+
+        /// <summary>音频采样率（Hz）</summary>
+        [ObservableProperty]
+        private int _sampleRate;
+
+        /// <summary>音频位深（bits），某些格式可能不支持此属性</summary>
+        [ObservableProperty]
+        private int? _bitsPerSample;
+
+        /// <summary>音频码率（kbps）</summary>
+        [ObservableProperty]
+        private int _bitrate;
+
+        /// <summary>音质等级（基于采样率、位深、格式计算）</summary>
+        [ObservableProperty]
+        private AudioQualityLevel _qualityLevel = AudioQualityLevel.HQ;
+
         /// <summary>
         /// 音频格式（文件扩展名）
         /// </summary>

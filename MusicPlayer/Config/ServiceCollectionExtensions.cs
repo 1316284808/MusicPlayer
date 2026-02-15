@@ -77,6 +77,9 @@ namespace MusicPlayer.Config
             // 播放列表缓存服务 - 全部使用单例模式
             services.AddSingleton<IPlaylistCacheService, PlaylistCacheService>();
             
+            // 播放队列服务 - 单例模式（管理插队播放歌曲）
+            services.AddSingleton<IPlayQueueService, PlayQueueService>();
+            
             // 播放列表服务 - 单例模式（负责歌曲信息提取）
             services.AddSingleton<IPlaylistService>(provider => new PlaylistService(
                 provider.GetRequiredService<IConfigurationService>()));
@@ -88,8 +91,11 @@ namespace MusicPlayer.Config
             // 播放列表状态服务 - 单例模式
             services.AddSingleton<IPlaylistStateService, PlaylistStateService>();
             
-            // 播放列表导航服务 - 单例模式
-            services.AddSingleton<IPlaylistNavigationService, PlaylistNavigationService>();
+            // 播放列表导航服务 - 单例模式（注入播放队列服务支持插队播放）
+            services.AddSingleton<IPlaylistNavigationService>(provider => new PlaylistNavigationService(
+                provider.GetRequiredService<IPlaybackContextService>(),
+                provider.GetRequiredService<IPlaylistCacheService>(),
+                provider.GetRequiredService<IPlayQueueService>()));
             
             // 播放列表业务服务 - 单例模式
             services.AddSingleton<IPlaylistBusinessService, PlaylistBusinessService>();

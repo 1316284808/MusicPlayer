@@ -19,6 +19,12 @@
         <converters:SearchBoxWidthConverter x:Key="SearchBoxWidthConverter"/>
         <!-- 专辑封面转换器 -->
         <converters:AlbumArtConverter x:Key="AlbumArtConverter"/>
+        <!-- 文件大小转换器 -->
+        <converters:FileSizeConverter x:Key="FileSizeConverter"/>
+        <!-- 采样率转换器 -->
+        <converters:SampleRateConverter x:Key="SampleRateConverter"/>
+        <!-- 歌曲信息格式化转换器 -->
+        <converters:SongInfoFormatConverter x:Key="SongInfoFormatConverter"/>
         <CollectionViewSource x:Key="PlaylistCollectionViewSource" Source="{Binding AllPlaylists}" />
     </UserControl.Resources>
 
@@ -33,7 +39,7 @@
 
 
         <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"   Grid.Row="0" >
-            <TextBlock  Text="全部歌曲" FontSize="24" FontWeight="Bold"  Margin="10"   />
+             <ui:TextBlock  Text="全部歌曲" FontSize="24" FontWeight="Bold"  Margin="10"   />
             </StackPanel>
 
 
@@ -69,7 +75,7 @@ Padding="5" Margin="5">
                 <!-- 排序下拉按钮 -->
 
                 <ComboBox 
-                 Background="Transparent"
+                  Background="Transparent"
                  Margin="0,0,5,0" 
                   BorderThickness="0" 
                  Width="40" Height="35"
@@ -82,7 +88,7 @@ Padding="5" Margin="5">
                  VerticalContentAlignment="Center"/>
 
 
-                <ui:Button   Width="auto" ToolTip="搜索" Margin="0,0,5,0" Background="Transparent" BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
+                <ui:Button   Width="auto" ToolTip="搜索" Margin="0,0,5,0"  BorderThickness="0" Command="{Binding SearchButtonClickCommand}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Helper:CustomIcon Kind="Search" />
                     <Separator Margin="2" />
@@ -118,7 +124,7 @@ Padding="5" Margin="5">
 
 
         <!-- 播放列表内容区域 -->
-        <Border x:Name="ContentBorder" Grid.Row="2" CornerRadius="0,8,8,0" Background="Transparent" 
+        <Border x:Name="ContentBorder" Grid.Row="2" CornerRadius="0,8,8,0"  
                HorizontalAlignment="Stretch" >
             <Border.Effect>
                 <DropShadowEffect BlurRadius="8" ShadowDepth="2" Color="Black" Opacity="0.1"/>
@@ -132,7 +138,7 @@ Padding="5" Margin="5">
                
                 <!-- 播放列表 - 优化虚拟化设置，减少内存占用 -->
                 <ui:ListView x:Name="PlaylistListBox" Grid.Row="1"    ItemsSource="{Binding FilteredPlaylist}" SelectedItem="{Binding CurrentPlaylistItem, Mode=TwoWay}" 
-                           Background="Transparent" BorderThickness="0" AlternationCount="2"  
+                            BorderThickness="0" AlternationCount="2"  
                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                            ScrollViewer.VerticalScrollBarVisibility="Auto"
                            ScrollViewer.CanContentScroll="True"
@@ -145,15 +151,16 @@ Padding="5" Margin="5">
                            SelectionMode="Single" 
                              Helper:PlaylistInteractionBehavior.IsEnabled="True"
                            Helper:PlaylistScrollToCurrentSongBehavior.IsEnabled="True">
-                    <ui:ListView.ContextMenu>
-                        <ContextMenu>
+                    <ui:ListView.ContextMenu >
+                        <ContextMenu Background="#E6FFFFFF">
                           
                             <MenuItem Header="添加到" ItemsSource="{Binding PlacementTarget.DataContext.AllPlaylists, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
                                 <MenuItem.Icon>
-                                    <Helper:CustomIcon Kind="HeartFill"  Foreground="Red" />
+                                    <Helper:CustomIcon Kind="HeartFill" Foreground="#FC94AF" />
                                 </MenuItem.Icon>
                                 <MenuItem.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
+                                        <Setter Property="Background" Value="#E6FFFFFF"/>
                                         <Setter Property="Header" Value="{Binding Name}" />
                                         <Setter Property="Command" Value="{Binding PlacementTarget.DataContext.AddSongToPlaylistCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                         <Setter Property="CommandParameter">
@@ -169,6 +176,51 @@ Padding="5" Margin="5">
                                         </Setter>
                                     </Style>
                                 </MenuItem.ItemContainerStyle>
+                            </MenuItem>
+                            <Separator Margin="2"/>
+                            <MenuItem Header="歌曲信息" >
+                                <MenuItem.Icon>
+                                    <Helper:CustomIcon Kind="MusicNote"/>
+                                </MenuItem.Icon>
+                                <MenuItem.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <!-- 确保IsEnabled=False时也能正常显示 --><!--
+                                        <Style.Triggers>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="1"/>
+                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Setter Property="Background" Value="Transparent"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                        <Setter Property="StaysOpenOnClick" Value="True"/>
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="Opacity" Value="1"/>-->
+                                        <Setter Property="Background" Value="#E6FFFFFF"/>
+                                    </Style>
+                                </MenuItem.ItemContainerStyle>
+                                <!-- 歌曲名 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.Title, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='歌曲名'}"/>
+                                <!-- 歌手 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.Artist, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='歌手'}"/>
+                                <!-- 时长 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.TotalTimeText, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='时长'}"/>
+                                <!-- 码率 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.Bitrate, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='码率'}"/>
+                                <!-- 位深 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.BitsPerSample, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='位深'}"/>
+                                <!-- 采样率 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.SampleRate, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SampleRateConverter}, ConverterParameter='采样率'}"/>
+                                <!-- 文件大小 -->
+                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.FileSize, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource FileSizeConverter}, ConverterParameter='文件大小'}"/>
+                            </MenuItem>
+                            <Separator Margin="2"/>
+                            <MenuItem Header="下一首播放" 
+                                      Command="{Binding PlayNextCommand}"
+                                      CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}">
+                                <MenuItem.Icon>
+                                    <Helper:CustomIcon Kind="Add"/>
+                                </MenuItem.Icon>
                             </MenuItem>
                             <Separator Margin="2"/>
                             <MenuItem Header="删除此项"  Command="{Binding DeleteSelectedSongCommand}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"   >
@@ -213,14 +265,12 @@ Padding="5" Margin="5">
                         <DataTemplate >
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
-                                    
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/> 
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
-                               
-                                <!-- 专辑封面缩略图 -->
+                                  <!-- 专辑封面缩略图 -->
                                 <Border Grid.Column="0"  Width="40" Height="40" CornerRadius="8" Background="#1AFFFFFF" Margin="0,0,8,0">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -249,21 +299,21 @@ Padding="5" Margin="5">
  
                                 <!-- 歌曲信息 -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
+                                     <ui:TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,2"/>
                                    
-                                        <TextBlock Text="{Binding Artist}" FontSize="12"      Opacity="0.7"   />
+                                         <ui:TextBlock Text="{Binding Artist}" FontSize="12"      Opacity="0.7"   />
 
                                 </StackPanel>
-                                
+                                <!--专辑信息-->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal"  VerticalAlignment="Center">
                                     <Separator Margin="5,0" />
-                                    <TextBlock Text="{Binding Album}" FontSize="12" Width="300" TextWrapping="Wrap"   />
+                                     <ui:TextBlock Text="{Binding Album}" FontSize="12" Width="300" TextWrapping="Wrap"   />
                                  </StackPanel>
                                
                                 <!--歌曲时长，音质图标-->
                                 <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,25,0">
                                     <ui:TextBlock Text="{Binding TotalTimeText}"   FontSize="12"  VerticalAlignment="Center"  />
-                                    <Helper:ButtonControl AudioFormat="{Binding AudioFormat}"></Helper:ButtonControl>
+                                    <Helper:QualityLevelControl QualityLevel="{Binding QualityLevel}"></Helper:QualityLevelControl>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
