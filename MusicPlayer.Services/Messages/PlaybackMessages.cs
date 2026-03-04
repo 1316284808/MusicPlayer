@@ -197,6 +197,15 @@ namespace MusicPlayer.Services.Messages
     }
 
     /// <summary>
+    /// 重置歌词滚动位置消息
+    /// 在歌词集合更新时发送，通知UI重置滚动位置到顶部
+    /// </summary>
+    public class ResetLyricsScrollMessage
+    {
+        public ResetLyricsScrollMessage() { }
+    }
+
+    /// <summary>
     /// 配置查询消息 - 用于获取当前配置
     /// </summary>
     public class ConfigurationQueryMessage : RequestMessage<bool>

@@ -53,7 +53,7 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="4.5*"/>
-                <ColumnDefinition Width="5.5*"/>
+                <ColumnDefinition Width="5.5*" />
             </Grid.ColumnDefinitions>
             
             <!-- 圆形频谱和封面容器 -->
@@ -112,7 +112,7 @@
             </Grid>
 
             <!-- Lyrics Section -->
-            <Grid Grid.Column="1" HorizontalAlignment="Stretch"  >
+            <Grid Grid.Column="1" HorizontalAlignment="Stretch" >
                 <Grid.OpacityMask>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="#00000000" Offset="0"/>
@@ -121,7 +121,7 @@
                         <GradientStop Color="#00000000" Offset="1"/>
                     </LinearGradientBrush>
                 </Grid.OpacityMask>
-                <ListBox   x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
+                <ListBox Margin="20,0"    x:Name="LyricsListBox" ItemsSource="{Binding Lyrics}" SelectedItem="{Binding CurrentLyricLine}"
                 BorderThickness="0" HorizontalContentAlignment="Stretch"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.CanContentScroll="False"

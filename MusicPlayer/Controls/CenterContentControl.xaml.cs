@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+using MusicPlayer.Services.Messages;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,7 +19,16 @@ namespace MusicPlayer.Controls
         public CenterContentControl()
         {
             InitializeComponent();
-            // 注意：不再订阅LyricsUpdatedMessage，清理工作完全由CenterContentViewModel.SetLyrics()处理
+            
+            // 订阅重置歌词滚动位置消息
+            WeakReferenceMessenger.Default.Register<ResetLyricsScrollMessage>(this, (r, m) =>
+            {
+                if (LyricsListBox != null)
+                {
+                    System.Diagnostics.Debug.WriteLine("CenterContentControl: 收到重置滚动位置消息");
+                    Helper.LyricsScrollBehavior.ResetScrollPosition(LyricsListBox);
+                }
+            });
         }
 
        

@@ -934,8 +934,12 @@ namespace MusicPlayer.ViewModels
             // 替换整个集合，确保旧集合可以被GC回收
             _lyrics = newLyrics;
 
-            // 通知歌词已更新，触发滚动重置
+            // 通知歌词已更新
             OnPropertyChanged(nameof(Lyrics));
+            
+            // 发送重置滚动位置消息，确保新歌词从顶部开始显示
+            _messagingService.Send(new ResetLyricsScrollMessage());
+            System.Diagnostics.Debug.WriteLine("CenterContentViewModel: 已发送重置滚动位置消息");
             
             // 如果有歌词，设置第一句非空歌词为当前歌词
             if (Lyrics.Count > 0)

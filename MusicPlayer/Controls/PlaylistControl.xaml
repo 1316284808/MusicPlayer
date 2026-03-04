@@ -184,33 +184,31 @@ Padding="5" Margin="5">
                                 </MenuItem.Icon>
                                 <MenuItem.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
-                                        <!-- 确保IsEnabled=False时也能正常显示 --><!--
-                                        <Style.Triggers>
-                                            <Trigger Property="IsEnabled" Value="False">
-                                                <Setter Property="Opacity" Value="1"/>
-                                                <Setter Property="Foreground" Value="Black"/>
-                                                <Setter Property="Background" Value="Transparent"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                        <Setter Property="StaysOpenOnClick" Value="True"/>
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                        <Setter Property="Foreground" Value="Black"/>
-                                        <Setter Property="Opacity" Value="1"/>-->
                                         <Setter Property="Background" Value="#E6FFFFFF"/>
+                                        <Setter Property="MaxWidth" Value="300"/>
                                     </Style>
                                 </MenuItem.ItemContainerStyle>
                                 <!-- 歌曲名 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.Title, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='歌曲名'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 歌手 -->
-                                <MenuItem Header="{Binding PlacementTarget.SelectedItem.Artist, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='歌手'}"/>
+                                <MenuItem   MaxWidth="300" Header="{Binding PlacementTarget.SelectedItem.Artist, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='歌手'}"/>
+                                <Separator Margin="2"/>
+                                <!--专辑-->
+                                <MenuItem  MaxWidth="300"    Header="{Binding PlacementTarget.SelectedItem.Album, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='专辑'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 时长 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.TotalTimeText, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='时长'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 码率 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.Bitrate, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='码率'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 位深 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.BitsPerSample, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SongInfoFormatConverter}, ConverterParameter='位深'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 采样率 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.SampleRate, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SampleRateConverter}, ConverterParameter='采样率'}"/>
+                                <Separator Margin="2"/>
                                 <!-- 文件大小 -->
                                 <MenuItem Header="{Binding PlacementTarget.SelectedItem.FileSize, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource FileSizeConverter}, ConverterParameter='文件大小'}"/>
                             </MenuItem>

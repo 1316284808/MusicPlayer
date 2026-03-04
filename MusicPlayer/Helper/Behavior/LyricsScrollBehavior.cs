@@ -278,13 +278,101 @@ namespace MusicPlayer.Helper
         }
 
         /// <summary>
-        /// 滚动到指定项的中心位置 - 实现参考项目的两阶段滚动算法
+        /// 滚动到指定项的中心位置 - 单阶段平滑滚动算法
+        /// 移除ScrollIntoView，直接计算目标偏移量，避免两阶段算法导致的定位偏差
         /// </summary>
         public static void ScrollToCenter(ListBox listBox)
         {
             if (listBox.SelectedItem == null) return;
 
-            // 使用Dispatcher确保UI更新完成后再滚动
+            listBox.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    var scrollViewer = GetScrollViewer(listBox);
+                    if (scrollViewer == null) return;
+
+                    // 强制更新布局，确保容器已生成
+                    listBox.UpdateLayout();
+
+                    var container = listBox.ItemContainerGenerator
+                        .ContainerFromItem(listBox.SelectedItem) as ListBoxItem;
+
+                    if (container == null)
+                    {
+                        // 容器未生成（虚拟化），尝试先滚动到大致位置
+                        var index = listBox.Items.IndexOf(listBox.SelectedItem);
+                        if (index >= 0)
+                        {
+                            // 估算平均高度并滚动到大致位置
+                            var estimatedHeight = 60.0; // 基于字体大小估算
+                            var estimatedOffset = Math.Max(0, index * estimatedHeight - scrollViewer.ViewportHeight / 2 + estimatedHeight / 2);
+                            scrollViewer.ScrollToVerticalOffset(estimatedOffset);
+
+                            // 等待容器生成后再次尝试精确居中
+                            listBox.Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                listBox.UpdateLayout();
+                                ScrollToCenterInternal(listBox, scrollViewer);
+                            }), System.Windows.Threading.DispatcherPriority.Background);
+                        }
+                        return;
+                    }
+
+                    // 直接执行精确居中
+                    ScrollToCenterInternal(listBox, scrollViewer);
+                }
+                catch
+                {
+                    // 忽略任何滚动错误
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        /// <summary>
+        /// 内部方法：计算并执行精确居中滚动
+        /// </summary>
+        private static void ScrollToCenterInternal(ListBox listBox, ScrollViewer scrollViewer)
+        {
+            var container = listBox.ItemContainerGenerator
+                .ContainerFromItem(listBox.SelectedItem) as ListBoxItem;
+
+            if (container == null || !container.IsVisible) return;
+
+            // 计算累积偏移量：从内容顶部到当前项顶部的距离
+            double accumulatedOffset = 0;
+            var targetIndex = listBox.Items.IndexOf(listBox.SelectedItem);
+
+            for (int i = 0; i < targetIndex; i++)
+            {
+                var item = listBox.ItemContainerGenerator.ContainerFromIndex(i) as ListBoxItem;
+                if (item != null)
+                {
+                    accumulatedOffset += item.ActualHeight;
+                }
+                else
+                {
+                    // 容器未生成，使用估算高度
+                    accumulatedOffset += 60.0;
+                }
+            }
+
+            // 计算居中偏移：目标位置 = 累积高度 - (视口高度 - 项高度) / 2
+            var centerOffset = (scrollViewer.ViewportHeight - container.ActualHeight) / 2;
+            var targetOffset = Math.Max(0, accumulatedOffset - centerOffset);
+
+            // 执行平滑滚动
+            SmoothScrollToVerticalOffset(scrollViewer, targetOffset, GetScrollDuration(listBox));
+        }
+
+        /// <summary>
+        /// 重置滚动位置到顶部
+        /// 在歌词集合更新时调用，确保新歌词从顶部开始显示
+        /// </summary>
+        public static void ResetScrollPosition(ListBox listBox)
+        {
+            if (listBox == null) return;
+
             listBox.Dispatcher.BeginInvoke(new Action(() =>
             {
                 try
@@ -292,41 +380,16 @@ namespace MusicPlayer.Helper
                     var scrollViewer = GetScrollViewer(listBox);
                     if (scrollViewer != null)
                     {
-                        // 第一阶段：确保当前歌词行在视图中
-                        listBox.ScrollIntoView(listBox.SelectedItem);
-                        
-                        // 第二阶段：精确定位到中心位置
-                        // 使用多层Dispatcher调用确保UI完全渲染
-                        listBox.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            var container = listBox.ItemContainerGenerator
-                                .ContainerFromItem(listBox.SelectedItem) as ListBoxItem;
-                            
-                            if (container != null && container.IsVisible)
-                            {
-                                // 获取当前歌词项在ScrollViewer中的实际位置
-                                var transform = container.TransformToAncestor(scrollViewer);
-                                var itemPosition = transform.Transform(new Point(0, 0));
-                                
-                                // 计算中心偏移量：视口高度的一半减去歌词项高度的一半
-                                var centerOffset = (scrollViewer.ViewportHeight / 2) - (container.ActualHeight / 2);
-                                
-                                // 计算目标滚动偏移量
-                                var targetOffset = scrollViewer.VerticalOffset + itemPosition.Y - centerOffset;
-                                
-                                // 执行平滑滚动到目标位置
-                                SmoothScrollToVerticalOffset(
-                                    scrollViewer, 
-                                    Math.Max(0, targetOffset), 
-                                    GetScrollDuration(listBox)
-                                );
-                            }
-                        }), System.Windows.Threading.DispatcherPriority.Background);
+                        // 取消正在进行的动画
+                        scrollViewer.BeginAnimation(ScrollViewerBehavior.VerticalOffsetProperty, null);
+                        // 立即滚动到顶部
+                        scrollViewer.ScrollToTop();
+                        System.Diagnostics.Debug.WriteLine("LyricsScrollBehavior: 滚动位置已重置到顶部");
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 忽略任何滚动错误
+                    System.Diagnostics.Debug.WriteLine($"LyricsScrollBehavior: 重置滚动位置失败 - {ex.Message}");
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
